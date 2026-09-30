@@ -10,8 +10,11 @@ not close a phase.
 
 Blocked on: Supabase service key, Anthropic API key, n8n API key (see PROMPT.md §3).
 
-1. Apply `db/001_schema.sql`, `002_views.sql`, `003_seed.sql` to Supabase
-   (Studio → SQL Editor, or `psql`). Confirm: `select count(*) from sources;` → 16.
+1. Apply the migrations **in order**: `000_pre_migration.sql`, then `001_schema.sql`,
+   `002_views.sql`, `003_seed.sql` (Studio → SQL Editor, or `psql`).
+   `000` retires the v0 `opportunities` table from the original single-source
+   workflow — without it, `001`'s `create table if not exists` silently skips and
+   every later insert fails. Confirm: `select count(*) from sources;` → 16.
 2. Create the Anthropic HTTP Header Auth credential in n8n, put its id into
    `CRED_ANTHROPIC` in `n8n/build.py`, rebuild.
 3. `./scripts/n8n-import.sh` — expect 8 workflows created.
