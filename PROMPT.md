@@ -29,10 +29,21 @@ Report anything that disagrees with CONTEXT.md before changing code. Sources rot
 and this repo was last verified 2026-09-30.
 
 Then work through the phases in docs/roadmap.md in order, stopping at the end of
-each phase to report what you did and what you verified. Phase 1 is blocked on
-two secrets I have to provide (Supabase service key, Anthropic API key) and one
-manual step in the n8n UI (create the API key) — ask me for them rather than
-inventing a way around them.
+each phase to report what you did and what you verified.
+
+Phase 1 is blocked on things only I can do: provide the Supabase service key and
+the Anthropic API key, create an n8n API key in the UI, and run the migrations
+against Supabase. Ask me for those rather than inventing a way around them.
+Two notes on Phase 1 you must not skip:
+
+  * Migrations run in order 000, 001, 002, 003. `scripts/apply-migrations.sh`
+    does this (psql if SUPABASE_DB_URL is set, otherwise it copies one
+    concatenated file to the clipboard for Supabase Studio).
+  * 000 exists because the project's ORIGINAL workflow already created an
+    `opportunities` table keyed on `url`. Since 001 uses
+    `create table if not exists`, skipping 000 means 001 silently does nothing
+    and every later insert fails on a missing `fingerprint` column. If inserts
+    fail with a column error, check this first.
 
 Hard rules for this project:
 
