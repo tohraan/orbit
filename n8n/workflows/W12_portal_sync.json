@@ -1,0 +1,575 @@
+{
+  "name": "W12 · Portal Sync (Supabase -> Sheet mirror)",
+  "nodes": [
+    {
+      "name": "Every Day 06:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        -400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Run Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -220
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Get Portal Feed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -160,
+        -400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/v_portal_feed?select=*&order=deadline.asc.nullslast&limit=2000",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500
+    },
+    {
+      "name": "Portal Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -400
+      ],
+      "parameters": {
+        "jsCode": "/* W12 · flatten v_portal_feed into the Google Sheet the existing portal reads.\n * Arrays become pipe-delimited so the sheet stays human-scannable and the\n * portal's existing string parsing keeps working. */\nconst join = a => (Array.isArray(a) ? a : []).filter(Boolean).join(' | ');\nreturn $input.all().map(({ json: o }) => ({ json: {\n  id: o.id,\n  title: o.title,\n  organisation: o.organisation || '',\n  type: o.type,\n  degree_levels: join(o.degree_levels),\n  fields_of_study: join(o.fields_of_study),\n  host_country: o.host_country || '',\n  host_region: o.host_region || '',\n  is_remote: o.is_remote ? 'yes' : 'no',\n  funding: o.funding,\n  funding_detail: o.funding_detail || '',\n  deadline: o.deadline || '',\n  deadline_kind: o.deadline_kind,\n  deadline_note: o.deadline_note || '',\n  days_left: o.days_left === null || o.days_left === undefined ? '' : o.days_left,\n  duration: o.duration_text || '',\n  summary: o.summary || '',\n  eligibility: String(o.eligibility || '').slice(0, 20000),\n  benefits: String(o.benefits || '').slice(0, 20000),\n  how_to_apply: String(o.how_to_apply || '').slice(0, 20000),\n  documents: String(o.documents || '').slice(0, 5000),\n  apply_link: o.apply_link || '',\n  image_url: o.image_url || '',\n  status: o.status,\n  confidence: o.confidence,\n  sources: join(o.sources),\n  source_url: o.canonical_url || '',\n  last_verified_at: o.last_verified_at || '',\n  synced_at: new Date().toISOString(),\n}}));\n"
+      }
+    },
+    {
+      "name": "Mirror To Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        320,
+        -400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "79O5omw14NYFyi3U",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1tU6BT5xkbqNzl4p9kkK6QHriyujNuBSuiXcD90Q37o0"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "opportunities"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $json.id }}",
+            "title": "={{ $json.title }}",
+            "organisation": "={{ $json.organisation }}",
+            "type": "={{ $json.type }}",
+            "degree_levels": "={{ $json.degree_levels }}",
+            "fields_of_study": "={{ $json.fields_of_study }}",
+            "host_country": "={{ $json.host_country }}",
+            "host_region": "={{ $json.host_region }}",
+            "is_remote": "={{ $json.is_remote }}",
+            "funding": "={{ $json.funding }}",
+            "funding_detail": "={{ $json.funding_detail }}",
+            "deadline": "={{ $json.deadline }}",
+            "deadline_kind": "={{ $json.deadline_kind }}",
+            "deadline_note": "={{ $json.deadline_note }}",
+            "days_left": "={{ $json.days_left }}",
+            "duration": "={{ $json.duration }}",
+            "summary": "={{ $json.summary }}",
+            "eligibility": "={{ $json.eligibility }}",
+            "benefits": "={{ $json.benefits }}",
+            "how_to_apply": "={{ $json.how_to_apply }}",
+            "documents": "={{ $json.documents }}",
+            "apply_link": "={{ $json.apply_link }}",
+            "image_url": "={{ $json.image_url }}",
+            "status": "={{ $json.status }}",
+            "confidence": "={{ $json.confidence }}",
+            "sources": "={{ $json.sources }}",
+            "source_url": "={{ $json.source_url }}",
+            "last_verified_at": "={{ $json.last_verified_at }}",
+            "synced_at": "={{ $json.synced_at }}"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "organisation",
+              "displayName": "organisation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "degree_levels",
+              "displayName": "degree_levels",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fields_of_study",
+              "displayName": "fields_of_study",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "host_country",
+              "displayName": "host_country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "host_region",
+              "displayName": "host_region",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "is_remote",
+              "displayName": "is_remote",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "funding",
+              "displayName": "funding",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "funding_detail",
+              "displayName": "funding_detail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "deadline",
+              "displayName": "deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "deadline_kind",
+              "displayName": "deadline_kind",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "deadline_note",
+              "displayName": "deadline_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "days_left",
+              "displayName": "days_left",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "duration",
+              "displayName": "duration",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "eligibility",
+              "displayName": "eligibility",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "benefits",
+              "displayName": "benefits",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "how_to_apply",
+              "displayName": "how_to_apply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "documents",
+              "displayName": "documents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "apply_link",
+              "displayName": "apply_link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "image_url",
+              "displayName": "image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "confidence",
+              "displayName": "confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sources",
+              "displayName": "sources",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_url",
+              "displayName": "source_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_verified_at",
+              "displayName": "last_verified_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "synced_at",
+              "displayName": "synced_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Notify Portal Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        560,
+        -400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://REPLACE-WITH-PORTAL-HOST/api/opportunities/refreshed",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ synced_at: $now.toISO(), count: $('Portal Rows').all().length }) }}"
+      },
+      "onError": "continueRegularOutput",
+      "disabled": true
+    },
+    {
+      "name": "Log Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        800,
+        -400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/run_log",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify([{ workflow: \"W12_portal_sync\", finished_at: $now.toISO(), status: 'ok', notes: {} }]) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Every Day 06:00": {
+      "main": [
+        [
+          {
+            "node": "Get Portal Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Manually": {
+      "main": [
+        [
+          {
+            "node": "Get Portal Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Portal Feed": {
+      "main": [
+        [
+          {
+            "node": "Portal Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Portal Rows": {
+      "main": [
+        [
+          {
+            "node": "Mirror To Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mirror To Sheet": {
+      "main": [
+        [
+          {
+            "node": "Notify Portal Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Portal Webhook": {
+      "main": [
+        [
+          {
+            "node": "Log Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveExecutionProgress": true,
+    "timezone": "Asia/Dubai"
+  },
+  "tags": [
+    {
+      "name": "research-opps"
+    }
+  ]
+}

@@ -1,0 +1,592 @@
+{
+  "name": "W09 · Classify & Upsert Canonical",
+  "nodes": [
+    {
+      "name": "Every 15 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        -400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/15 * * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Run Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -220
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Get Unclassified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -160,
+        -400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/raw_items?classified_at=is.null&or=(needs_detail.is.false,detail_fetched_at.not.is.null)&select=id,source_slug,url,payload,detail&order=id.asc&limit=20",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500
+    },
+    {
+      "name": "Build Classifier Requests",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -400
+      ],
+      "parameters": {
+        "jsCode": "/* W09 · assemble one classifier request per unclassified raw_item.\n * Everything the model needs is already in the row — the model never fetches.\n * Output is an Anthropic Messages request with a forced tool call, so the\n * response is schema-valid JSON rather than prose we have to salvage. */\nconst CLASSIFIER_VERSION = 'v1.3.0';\nconst MODEL = 'claude-haiku-4-5-20251001';\n\nconst VOCAB = ['computer_science','engineering','physical_sciences','mathematics',\n  'life_sciences','medicine_health','environment','social_sciences',\n  'economics_business','law_governance','humanities','education','media_comms',\n  'interdisciplinary'];\n\nconst SCHEMA = {\n  name: 'record_opportunity',\n  description: 'Record the normalised, classified research opportunity.',\n  input_schema: {\n    type: 'object',\n    required: ['title','opportunity_type','degree_levels','fields_of_study',\n               'funding_kind','deadline_kind','confidence','is_opportunity'],\n    properties: {\n      is_opportunity: { type: 'boolean', description: 'False for news posts, listicles, course ads, or anything with no single application.' },\n      title:            { type: 'string' },\n      organisation:     { type: ['string','null'], description: 'Institution or funder actually awarding it, not the aggregator.' },\n      opportunity_type: { type: 'string', enum: ['scholarship','fellowship','research_internship','internship','grant','assistantship','exchange','summer_school','competition','conference','award','training','job','other'] },\n      degree_levels:    { type: 'array', items: { type: 'string', enum: ['high_school','bachelors','masters','phd','postdoc','faculty','any'] } },\n      fields_of_study:  { type: 'array', items: { type: 'string', enum: VOCAB } },\n      host_country:     { type: ['string','null'] },\n      host_region:      { type: ['string','null'], enum: ['Africa','Asia','Europe','Middle East','North America','South America','Oceania','Global',null] },\n      is_remote:        { type: 'boolean' },\n      funding_kind:     { type: 'string', enum: ['fully_funded','partially_funded','stipend_only','tuition_waiver','travel_only','unfunded','unknown'] },\n      funding_detail:   { type: ['string','null'], description: 'One line, e.g. \"full tuition + USD 30,000/yr stipend + travel\".' },\n      stipend_amount:   { type: ['number','null'] },\n      stipend_currency: { type: ['string','null'] },\n      deadline:         { type: ['string','null'], description: 'YYYY-MM-DD. Null unless a single explicit date applies.' },\n      deadline_kind:    { type: 'string', enum: ['fixed','rolling','varies','unknown'] },\n      deadline_note:    { type: ['string','null'] },\n      duration_text:    { type: ['string','null'] },\n      summary:          { type: 'string', description: '2 sentences max, factual, no marketing language.' },\n      eligibility:      { type: ['string','null'], description: 'Tightened prose: requirements only, lead-in chatter removed.' },\n      eligibility_flags:{ type: 'object', properties: {\n                            min_gpa: { type: ['number','null'] },\n                            languages: { type: 'array', items: { type: 'string' } },\n                            nationalities: { type: 'array', items: { type: 'string' } },\n                            excluded_nationalities: { type: 'array', items: { type: 'string' } },\n                            age_max: { type: ['number','null'] },\n                            needs_ielts: { type: 'boolean' }, needs_gre: { type: 'boolean' },\n                            needs_research_proposal: { type: 'boolean' },\n                            needs_supervisor: { type: 'boolean' },\n                            work_experience_years: { type: ['number','null'] } } },\n      benefits:         { type: ['string','null'] },\n      how_to_apply:     { type: ['string','null'] },\n      documents:        { type: ['string','null'] },\n      apply_link:       { type: ['string','null'], description: 'Official application URL. Null rather than a guess.' },\n      confidence:       { type: 'number', description: '0-1. Below 0.45 routes to human review.' },\n      review_reason:    { type: ['string','null'] },\n    },\n  },\n};\n\nconst SYSTEM = [\n  'You normalise scraped research-opportunity records for a university discovery portal.',\n  'Rules:',\n  '1. Extract only what the source states. Never invent a deadline, amount, or link.',\n  '2. organisation is the awarding body (university, ministry, foundation) — never the aggregator blog.',\n  '3. degree_levels: list every level genuinely eligible. Use [\"any\"] only when the source truly does not restrict level.',\n  '4. deadline: a single explicit calendar date, else null with the right deadline_kind (\"varies\" when it differs per course/university, \"rolling\" for continuous intake).',\n  '5. eligibility: rewrite as requirements only. Strip lead-in filler such as \"Are you ready to apply?\".',\n  '6. is_opportunity=false for news, roundups, listicles, paid course ads, and anything with no single application target. Everything else is still recorded.',\n  '7. Prefer a lower confidence over a confident guess. State why in review_reason.',\n].join('\\n');\n\nconst out = [];\nfor (const item of $input.all()) {\n  const r = item.json;\n  const p = r.payload || {};\n  const d = r.detail  || {};\n  const parts = [\n    `SOURCE: ${r.source_slug}`,\n    `URL: ${r.url || ''}`,\n    `TITLE: ${d.page_title || p.title || ''}`,\n    p.organisation      ? `ORGANISATION HINT: ${p.organisation}` : '',\n    p.country_hint      ? `COUNTRY HINT (source taxonomy): ${p.country_hint}` : '',\n    p.funding_hint      ? `FUNDING HINT (source taxonomy): ${p.funding_hint}` : '',\n    p.type_hint         ? `TYPE HINT (source category): ${p.type_hint}` : '',\n    (p.level_hints || []).length ? `DEGREE-LEVEL HINTS (source category): ${p.level_hints.join(', ')}` : '',\n    d.deadline          ? `DEADLINE PARSED FROM PAGE: ${d.deadline}` : '',\n    d.deadline_kind && d.deadline_kind !== 'unknown' ? `DEADLINE KIND PARSED: ${d.deadline_kind}${d.deadline_note ? ' — ' + d.deadline_note : ''}` : '',\n    d.apply_link        ? `APPLY LINK FOUND ON PAGE: ${d.apply_link}` : '',\n    '', `SUMMARY: ${d.description || p.summary || ''}`,\n    d.eligibility  ? `\\n--- ELIGIBILITY SECTION ---\\n${String(d.eligibility).slice(0, 3500)}`   : '',\n    d.benefits     ? `\\n--- BENEFITS SECTION ---\\n${String(d.benefits).slice(0, 2500)}`         : '',\n    d.how_to_apply ? `\\n--- APPLICATION PROCESS SECTION ---\\n${String(d.how_to_apply).slice(0, 2500)}` : '',\n    d.documents    ? `\\n--- DOCUMENTS SECTION ---\\n${String(d.documents).slice(0, 1200)}`       : '',\n    (!d.eligibility && !d.benefits && d.full_text) ? `\\n--- PAGE TEXT ---\\n${String(d.full_text).slice(0, 5000)}` : '',\n  ].filter(Boolean).join('\\n');\n\n  out.push({ json: {\n    raw_item_id: r.id,\n    source_slug: r.source_slug,\n    url: r.url,\n    classifier_version: CLASSIFIER_VERSION,\n    request: {\n      model: MODEL,\n      max_tokens: 2000,\n      temperature: 0,\n      system: SYSTEM,\n      tools: [SCHEMA],\n      tool_choice: { type: 'tool', name: 'record_opportunity' },\n      messages: [{ role: 'user', content: `Classify this record. Today is ${new Date().toISOString().slice(0,10)}.\\n\\n${parts}` }],\n    },\n  }});\n}\nreturn out;\n"
+      }
+    },
+    {
+      "name": "Call Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        320,
+        -400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          },
+          "timeout": 120000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.request) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_ANTHROPIC_CRED_ID",
+          "name": "Anthropic API (x-api-key)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2500,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "name": "Parse Classification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        -400
+      ],
+      "parameters": {
+        "jsCode": "/* W09 · validate the classifier's tool call and build the canonical\n * `opportunities` upsert row. Nothing reaches the portal without passing here.\n * LIB */\nconst plans = $('Build Classifier Requests').all();\nconst items = $input.all();\n// Images come from the source payload, never from the model.\nconst rawById = new Map($('Get Unclassified').all()\n  .map(i => [i.json.id, i.json]));\nconst nowISO = new Date().toISOString();\n\nconst TYPES  = ['scholarship','fellowship','research_internship','internship','grant','assistantship','exchange','summer_school','competition','conference','award','training','job','other'];\nconst LEVELS = ['high_school','bachelors','masters','phd','postdoc','faculty','any'];\nconst FUNDS  = ['fully_funded','partially_funded','stipend_only','tuition_waiver','travel_only','unfunded','unknown'];\nconst DKINDS = ['fixed','rolling','varies','unknown'];\nconst VOCAB  = ['computer_science','engineering','physical_sciences','mathematics','life_sciences','medicine_health','environment','social_sciences','economics_business','law_governance','humanities','education','media_comms','interdisciplinary'];\n\nconst oneOf = (v, list, dflt) => (list.includes(v) ? v : dflt);\nconst manyOf = (v, list) => [...new Set((Array.isArray(v) ? v : []).filter(x => list.includes(x)))];\n\nconst out = [];\nfor (let i = 0; i < items.length; i++) {\n  const plan = (plans[i] || {}).json || {};\n  const body = items[i].json.body !== undefined ? items[i].json.body : items[i].json;\n\n  const block = (body.content || []).find(c => c.type === 'tool_use');\n  if (!block || !block.input) {\n    out.push({ json: { __error: true, raw_item_id: plan.raw_item_id,\n      note: `no tool_use in response (stop_reason=${body.stop_reason || 'unknown'})` } });\n    continue;\n  }\n  const c = block.input;\n\n  if (c.is_opportunity === false) {\n    out.push({ json: { __skip: true, raw_item_id: plan.raw_item_id,\n      classifier_version: plan.classifier_version,\n      note: c.review_reason || 'classifier: not an opportunity' } });\n    continue;\n  }\n\n  const title = String(c.title || '').trim();\n  if (!title) { out.push({ json: { __error: true, raw_item_id: plan.raw_item_id, note: 'empty title' } }); continue; }\n\n  const deadline = /^\\d{4}-\\d{2}-\\d{2}$/.test(c.deadline || '') ? c.deadline : null;\n  const dkind    = oneOf(c.deadline_kind, DKINDS, deadline ? 'fixed' : 'unknown');\n  // A model-supplied date in the past means we have last year's edition.\n  const expired  = deadline && deadline < nowISO.slice(0, 10);\n  const daysLeft = deadline ? Math.round((new Date(deadline) - new Date(nowISO.slice(0,10))) / 864e5) : null;\n\n  let confidence = Number(c.confidence);\n  if (!Number.isFinite(confidence)) confidence = 0.4;\n  confidence = Math.max(0, Math.min(1, confidence));\n\n  const levels = manyOf(c.degree_levels, LEVELS);\n  const status = expired ? 'expired'\n               : confidence < 0.45 ? 'needs_review'\n               : (daysLeft !== null && daysLeft <= 30) ? 'closing_soon'\n               : 'active';\n\n  const applyLink = /^https?:\\/\\//i.test(c.apply_link || '') ? c.apply_link : null;\n  const org = c.organisation ? String(c.organisation).slice(0, 300) : null;\n\n  out.push({ json: {\n    __error: false, __skip: false,\n    raw_item_id: plan.raw_item_id,\n    source_slug: plan.source_slug,\n    classifier_version: plan.classifier_version,\n    usage: body.usage || {},\n    classification: c,\n    opportunity: {\n      fingerprint: fingerprint(title, org || c.host_country, deadline),\n      title: title.slice(0, 500),\n      organisation: org,\n      opportunity_type: oneOf(c.opportunity_type, TYPES, 'other'),\n      degree_levels: levels.length ? levels : ['any'],\n      fields_of_study: manyOf(c.fields_of_study, VOCAB),\n      host_country: c.host_country || null,\n      host_region: c.host_region || null,\n      is_remote: Boolean(c.is_remote),\n      funding_kind: oneOf(c.funding_kind, FUNDS, 'unknown'),\n      funding_detail: c.funding_detail || null,\n      stipend_amount: Number.isFinite(Number(c.stipend_amount)) ? Number(c.stipend_amount) : null,\n      stipend_currency: c.stipend_currency || null,\n      deadline, deadline_kind: dkind,\n      deadline_note: c.deadline_note || null,\n      duration_text: c.duration_text || null,\n      summary: (c.summary || '').slice(0, 2000),\n      eligibility: c.eligibility || null,\n      eligibility_flags: c.eligibility_flags || {},\n      benefits: c.benefits || null,\n      how_to_apply: c.how_to_apply || null,\n      documents: c.documents || null,\n      apply_link: applyLink,\n      image_url: (() => {\n        const raw = rawById.get(plan.raw_item_id) || {};\n        return (raw.detail || {}).image_url || (raw.payload || {}).image_url || null;\n      })(),\n      status,\n      confidence,\n      primary_source: plan.source_slug,\n      canonical_url: plan.url,\n      last_seen_at: nowISO,\n      last_verified_at: nowISO,\n      classifier_version: plan.classifier_version,\n    },\n  }});\n}\nreturn out;\n"
+      }
+    },
+    {
+      "name": "Usable?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        -400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ !$json.__error && !$json.__skip }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": false
+    },
+    {
+      "name": "Upsert Opportunity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1040,
+        -400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/opportunities?on_conflict=fingerprint",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            },
+            {
+              "name": "Content-Profile",
+              "value": "public"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($input.all().map(i => i.json.opportunity)) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500,
+      "onError": "continueRegularOutput",
+      "executeOnce": true
+    },
+    {
+      "name": "Pair Provenance",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        -400
+      ],
+      "parameters": {
+        "jsCode": "/* Link each upserted opportunity back to the raw item and source it came from,\n * so the portal can show \"also listed by\" and we can prefer tier-1 wording. */\nconst rows = $input.all().map(i => i.json);        // representation from the upsert\nconst cls  = $('Parse Classification').all().map(i => i.json).filter(j => !j.__error && !j.__skip);\nconst byFp = new Map(cls.map(j => [j.opportunity.fingerprint, j]));\nconst out = [];\nfor (const r of rows) {\n  const j = byFp.get(r.fingerprint);\n  if (!j) continue;\n  out.push({ json: { opportunity_id: r.id, source_slug: j.source_slug,\n                     raw_item_id: j.raw_item_id, source_url: j.opportunity.canonical_url,\n                     reported_at: new Date().toISOString() } });\n}\nreturn out;"
+      }
+    },
+    {
+      "name": "Link Provenance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1520,
+        -400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/opportunity_sources?on_conflict=opportunity_id,source_slug",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            },
+            {
+              "name": "Content-Profile",
+              "value": "public"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($input.all().map(i => i.json)) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500,
+      "onError": "continueRegularOutput",
+      "executeOnce": true
+    },
+    {
+      "name": "Collect Classified IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        -220
+      ],
+      "parameters": {
+        "jsCode": "/* One PATCH per run instead of one per item: build the id list, then stamp\n * classified_at with a single `id=in.(...)` filter. */\nconst all = $('Parse Classification').all().map(i => i.json);\nconst ids = all.filter(j => !j.__error).map(j => j.raw_item_id).filter(Boolean);\nconst version = (all.find(j => j.classifier_version) || {}).classifier_version || 'unknown';\nreturn [{ json: { ids, id_filter: ids.join(','), count: ids.length, classifier_version: version } }];"
+      }
+    },
+    {
+      "name": "Mark Classified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1280,
+        -220
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/raw_items?id=in.({{ $json.id_filter }})",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ classified_at: $now.toISO(), classifier_version: $json.classifier_version }) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500,
+      "onError": "continueRegularOutput",
+      "executeOnce": true
+    },
+    {
+      "name": "Log Classifier Usage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        -220
+      ],
+      "parameters": {
+        "jsCode": "/* Cost + latency trail, and the evidence you need when a prompt change makes\n * results worse. */\nconst plans = $('Build Classifier Requests').all().map(i => i.json);\nconst resps = $('Parse Classification').all().map(i => i.json);\nreturn resps.filter(r => !r.__error).map(r => ({ json: {\n  raw_item_id: r.raw_item_id,\n  model: (plans.find(p => p.raw_item_id === r.raw_item_id) || {}).request?.model || 'unknown',\n  version: r.classifier_version,\n  input_tokens: (r.usage || {}).input_tokens || null,\n  output_tokens: (r.usage || {}).output_tokens || null,\n  output: r.classification || {},\n}}));"
+      }
+    },
+    {
+      "name": "Save Classifications",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1760,
+        -220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/classifications",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($input.all().map(i => i.json)) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "executeOnce": true
+    },
+    {
+      "name": "Skipped / Not An Opportunity",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        -40
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Every 15 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Get Unclassified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Manually": {
+      "main": [
+        [
+          {
+            "node": "Get Unclassified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Unclassified": {
+      "main": [
+        [
+          {
+            "node": "Build Classifier Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Classifier Requests": {
+      "main": [
+        [
+          {
+            "node": "Call Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude": {
+      "main": [
+        [
+          {
+            "node": "Parse Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Classification": {
+      "main": [
+        [
+          {
+            "node": "Usable?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Usable?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skipped / Not An Opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Opportunity": {
+      "main": [
+        [
+          {
+            "node": "Pair Provenance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pair Provenance": {
+      "main": [
+        [
+          {
+            "node": "Link Provenance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link Provenance": {
+      "main": [
+        [
+          {
+            "node": "Collect Classified IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skipped / Not An Opportunity": {
+      "main": [
+        [
+          {
+            "node": "Collect Classified IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Classified IDs": {
+      "main": [
+        [
+          {
+            "node": "Mark Classified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Classified": {
+      "main": [
+        [
+          {
+            "node": "Log Classifier Usage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Classifier Usage": {
+      "main": [
+        [
+          {
+            "node": "Save Classifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveExecutionProgress": true,
+    "timezone": "Asia/Dubai"
+  },
+  "tags": [
+    {
+      "name": "research-opps"
+    }
+  ]
+}

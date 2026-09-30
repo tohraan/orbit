@@ -1,0 +1,6 @@
+.env
+.env.local
+node_modules/
+*.local.json
+tests/fixtures/*.html
+.DS_Store

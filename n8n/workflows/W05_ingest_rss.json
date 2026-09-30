@@ -1,0 +1,388 @@
+{
+  "name": "W05 · Ingest · RSS (UKRI, NSF, Erasmus+, MSCA, ERC, CSC, Scholars4dev)",
+  "nodes": [
+    {
+      "name": "Every Day 04:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        -400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 4 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Run Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -220
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Get RSS Sources",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -160,
+        -400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/sources?kind=eq.rss&enabled=is.true&select=*&order=slug",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500
+    },
+    {
+      "name": "Loop Sources",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        80,
+        -400
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "name": "Log Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        320,
+        -580
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/run_log",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify([{ workflow: \"W05_ingest_rss\", finished_at: $now.toISO(), status: 'ok', notes: {} }]) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "executeOnce": true
+    },
+    {
+      "name": "Expand Feed URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -400
+      ],
+      "parameters": {
+        "jsCode": "/* A source may declare several feeds (e.g. one per category). */\nconst s = $json;\nconst feeds = (s.config || {}).feed_urls || [];\nif (!feeds.length) return [];\nreturn feeds.map(u => ({ json: { source_slug: s.slug, feed_url: u } }));",
+        "mode": "runOnceForEachItem"
+      }
+    },
+    {
+      "name": "Read Feed",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        -400
+      ],
+      "parameters": {
+        "url": "={{ $json.feed_url }}",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
+    },
+    {
+      "name": "Normalize RSS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -400
+      ],
+      "parameters": {
+        "jsCode": "/* W05 · RSS item -> raw_items row. Feeds give title/link/date/summary only;\n * everything else is the detail fetch (W03) plus the classifier (W09).\n * LIB */\nconst src = $('Loop Sources').first().json;\nconst nowISO = new Date().toISOString();\n\nconst out = [];\nfor (const item of $input.all()) {\n  const r = item.json;\n  const link = r.link || r.guid || r.id;\n  if (!link) continue;\n  const title = plain(r.title || '');\n  if (!title) continue;\n  const summary = plain(r.contentSnippet || r.content || r.description || r.summary || '').slice(0, 4000);\n  const dl = extractDeadline(`${title} ${summary}`);\n  const payload = {\n    external_id: String(r.guid || r.id || link),\n    url: link,\n    title,\n    summary,\n    categories: [].concat(r.categories || []).map(c => (typeof c === 'string' ? c : c && c._ ? c._ : '')).filter(Boolean),\n    deadline: dl.deadline,\n    deadline_kind: dl.deadline_kind,\n    deadline_note: dl.deadline_note,\n    image_url: (r.enclosure || {}).url || null,\n    source_published_at: r.isoDate || r.pubDate || null,\n    country_hint: null, funding_hint: null, type_hint: null, level_hints: [],\n  };\n  out.push({ json: {\n    source_slug: src.slug,\n    external_id: payload.external_id,\n    url: link,\n    payload,\n    content_hash: fingerprint(title, src.slug, payload.source_published_at),\n    needs_detail: Boolean((src.config || {}).needs_detail),\n    last_seen_at: nowISO,\n  }});\n}\nreturn out;\n"
+      }
+    },
+    {
+      "name": "Upsert Raw Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1040,
+        -400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/raw_items?on_conflict=source_slug,external_id",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            },
+            {
+              "name": "Content-Profile",
+              "value": "public"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($input.all().map(i => i.json)) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500,
+      "onError": "continueRegularOutput",
+      "executeOnce": true
+    },
+    {
+      "name": "Mark Source OK",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1280,
+        -400
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/sources?slug=eq.{{ $('Loop Sources').item.json.slug }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ last_run_at: $now.toISO(), last_success_at: $now.toISO(), consecutive_fails: 0, last_error: null }) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500,
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Every Day 04:00": {
+      "main": [
+        [
+          {
+            "node": "Get RSS Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Manually": {
+      "main": [
+        [
+          {
+            "node": "Get RSS Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get RSS Sources": {
+      "main": [
+        [
+          {
+            "node": "Loop Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Sources": {
+      "main": [
+        [
+          {
+            "node": "Log Run",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Expand Feed URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand Feed URLs": {
+      "main": [
+        [
+          {
+            "node": "Read Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Feed": {
+      "main": [
+        [
+          {
+            "node": "Normalize RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize RSS": {
+      "main": [
+        [
+          {
+            "node": "Upsert Raw Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Raw Items": {
+      "main": [
+        [
+          {
+            "node": "Mark Source OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Source OK": {
+      "main": [
+        [
+          {
+            "node": "Loop Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveExecutionProgress": true,
+    "timezone": "Asia/Dubai"
+  },
+  "tags": [
+    {
+      "name": "research-opps"
+    }
+  ]
+}

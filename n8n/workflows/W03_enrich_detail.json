@@ -1,0 +1,361 @@
+{
+  "name": "W03 · Enrich · Detail Fetch & Parse",
+  "nodes": [
+    {
+      "name": "Every 3 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        -400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */3 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Called By Ingest",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -220
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Get Detail Queue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -160,
+        -400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/raw_items?needs_detail=is.true&detail_fetched_at=is.null&select=id,url,source_slug&order=id.asc&limit=40",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500
+    },
+    {
+      "name": "Loop Detail Queue",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        80,
+        -400
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "name": "Log Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        320,
+        -580
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/run_log",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify([{ workflow: \"W03_enrich_detail\", finished_at: $now.toISO(), status: 'ok', notes: {} }]) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "executeOnce": true
+    },
+    {
+      "name": "Fetch Detail Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        320,
+        -400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "text",
+              "outputPropertyName": "data",
+              "neverError": true
+            }
+          },
+          "timeout": 45000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en;q=0.9"
+            }
+          ]
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "name": "Parse Detail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        -400
+      ],
+      "parameters": {
+        "jsCode": "/* W03 · parse a fetched detail page into structured fields.\n * This replaces the old <article>+heading parser, whose sections came back empty\n * because an <h2> followed immediately by an <h3> captured only whitespace.\n * LIB */\nconst row  = $('Loop Detail Queue').first().json;\nconst resp = $input.first().json;\nconst html = typeof resp.data === 'string' ? resp.data\n           : typeof resp.body === 'string' ? resp.body\n           : typeof resp === 'string' ? resp : '';\n\nif (!html || html.length < 500) {\n  return { json: { id: row.id, detail_error: `empty or short response (${html.length} bytes)`,\n                   detail_fetched_at: new Date().toISOString(), detail: null } };\n}\n\nconst secs = sections(html);\nconst how  = pickSection(secs, ['how to apply', 'application process', 'application procedure', 'how do i apply']);\nconst dl   = extractDeadline(html);\n\nconst detail = {\n  page_title:  meta(html, 'og:title') || plain((html.match(/<h1[^>]*>([\\s\\S]*?)<\\/h1>/i) || [])[1]),\n  description: meta(html, 'og:description') || meta(html, 'description'),\n  image_url:   meta(html, 'og:image'),\n  published:   meta(html, 'article:published_time'),\n  modified:    meta(html, 'article:modified_time'),\n  deadline:      dl.deadline,\n  deadline_kind: dl.deadline_kind,\n  deadline_note: dl.deadline_note,\n  eligibility: pickSection(secs, ['eligib', 'who can apply', 'requirement', 'criteria']).slice(0, 8000),\n  benefits:    pickSection(secs, ['benefit', 'coverage', 'what you get', 'what will you get', 'award', 'funding covers']).slice(0, 8000),\n  how_to_apply: how.slice(0, 8000),\n  documents:   pickSection(secs, ['document', 'required document', 'checklist']).slice(0, 4000),\n  apply_link:  extractApplyLink(html, how),\n  headings:    secs.filter(s => s.level <= 3).map(s => s.heading).slice(0, 25),\n  full_text:   plain(html).slice(0, 12000),\n};\n\nreturn { json: {\n  id: row.id,\n  detail,\n  detail_fetched_at: new Date().toISOString(),\n  detail_error: null,\n  needs_detail: false,\n}};\n"
+      }
+    },
+    {
+      "name": "Save Detail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        800,
+        -400
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://pcctpzvhakdutzzwpmsh.supabase.co/rest/v1/raw_items?id=eq.{{ $json.id }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ detail: $json.detail, detail_fetched_at: $json.detail_fetched_at, detail_error: $json.detail_error, needs_detail: false }) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FluPv7K0v8r1zzx8",
+          "name": "Header Auth account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2500,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "name": "Throttle 2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        -400
+      ],
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      }
+    }
+  ],
+  "connections": {
+    "Every 3 Hours": {
+      "main": [
+        [
+          {
+            "node": "Get Detail Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Called By Ingest": {
+      "main": [
+        [
+          {
+            "node": "Get Detail Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Detail Queue": {
+      "main": [
+        [
+          {
+            "node": "Loop Detail Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Detail Queue": {
+      "main": [
+        [
+          {
+            "node": "Log Run",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Detail Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Detail Page": {
+      "main": [
+        [
+          {
+            "node": "Parse Detail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Detail": {
+      "main": [
+        [
+          {
+            "node": "Save Detail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Detail": {
+      "main": [
+        [
+          {
+            "node": "Throttle 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Throttle 2s": {
+      "main": [
+        [
+          {
+            "node": "Loop Detail Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveExecutionProgress": true,
+    "timezone": "Asia/Dubai"
+  },
+  "tags": [
+    {
+      "name": "research-opps"
+    }
+  ]
+}
