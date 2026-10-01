@@ -8,3 +8,4 @@ tests/fixtures/*.html
 __pycache__/
 *.pyc
 supabase/.temp/
+ui/opportunities.json

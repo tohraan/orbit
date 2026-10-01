@@ -1,0 +1,431 @@
+<title>Research Opportunity Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* Layout: sticky filter rail beside a dense result list; rail becomes a
+   collapsible sheet under 900px. Everything derives from the tokens below. */
+:root {
+  /* neutrals carry a slight cool-green bias toward the accent, never pure grey */
+  --paper:       #f6f8f7;
+  --surface:     #ffffff;
+  --surface-2:   #eef2f1;
+  --ink:         #10201d;
+  --ink-soft:    #4a605b;
+  --ink-faint:   #7b908a;
+  --line:        #d9e2df;
+  --accent:      #0f6f5c;
+  --accent-soft: #d7ece6;
+  --urgent:      #a3301f;
+  --urgent-soft: #f7e0db;
+  --soon:        #8a5a09;
+  --soon-soft:   #f8ecd4;
+  --open:        #1d6b4f;
+  --open-soft:   #dcefe4;
+  --shadow:      0 1px 2px rgba(16,32,29,.06), 0 8px 24px rgba(16,32,29,.06);
+  --f-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --f-body:    'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --f-mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:       #0c1513;
+    --surface:     #111d1a;
+    --surface-2:   #16241f;
+    --ink:         #e8f0ed;
+    --ink-soft:    #9db2ac;
+    --ink-faint:   #6d837d;
+    --line:        #223531;
+    --accent:      #4fd1b0;
+    --accent-soft: #10332c;
+    --urgent:      #ff8d78;
+    --urgent-soft: #3a1b16;
+    --soon:        #e8b765;
+    --soon-soft:   #352713;
+    --open:        #62c495;
+    --open-soft:   #11301f;
+    --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper:#0c1513; --surface:#111d1a; --surface-2:#16241f;
+  --ink:#e8f0ed; --ink-soft:#9db2ac; --ink-faint:#6d837d; --line:#223531;
+  --accent:#4fd1b0; --accent-soft:#10332c;
+  --urgent:#ff8d78; --urgent-soft:#3a1b16;
+  --soon:#e8b765; --soon-soft:#352713;
+  --open:#62c495; --open-soft:#11301f;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 0 56px; }
+
+/* ---------- masthead ---------- */
+header.mast {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  margin-bottom: 22px;
+}
+.mast-in { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 16px; }
+.eyebrow {
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-faint); margin: 0 0 6px;
+}
+h1 {
+  font-family: var(--f-display); font-weight: 700; font-size: clamp(25px, 4.4vw, 38px);
+  line-height: 1.08; letter-spacing: -.02em; margin: 0 0 8px; text-wrap: balance;
+}
+.lede { margin: 0; color: var(--ink-soft); max-width: 62ch; font-size: 14.5px; }
+
+.stats { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 16px; }
+.stat { display: flex; flex-direction: column; gap: 1px; }
+.stat b {
+  font-family: var(--f-mono); font-size: 19px; font-weight: 500;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+.stat span { font-size: 11.5px; color: var(--ink-faint); letter-spacing: .02em; }
+.stat.is-urgent b { color: var(--urgent); }
+
+/* ---------- controls ---------- */
+.board { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 900px) { .board { grid-template-columns: minmax(0,1fr); gap: 14px; } }
+
+.rail {
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px; box-shadow: var(--shadow); min-width: 0;
+}
+@media (max-width: 900px) { .rail { position: static; } }
+.rail h2 {
+  font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-faint); margin: 0 0 8px; font-weight: 500;
+}
+.group + .group { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.opt {
+  font: inherit; font-size: 12.5px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-soft);
+  border-radius: 999px; padding: 4px 10px; transition: background .12s, color .12s, border-color .12s;
+}
+.opt:hover { border-color: var(--accent); color: var(--ink); }
+.opt[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+.opt:focus-visible, .search input:focus-visible, select:focus-visible, a:focus-visible, .more:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.search { position: relative; flex: 1 1 260px; min-width: 0; }
+.search input {
+  width: 100%; font: inherit; font-size: 14.5px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 9px 12px 9px 34px;
+}
+.search input::placeholder { color: var(--ink-faint); }
+.search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); }
+select {
+  font: inherit; font-size: 13.5px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px;
+}
+.count { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+/* ---------- results ---------- */
+.list { display: grid; gap: 10px; }
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 15px; display: grid; gap: 9px; min-width: 0;
+  border-left: 3px solid var(--line);
+}
+.card.u-urgent { border-left-color: var(--urgent); }
+.card.u-soon   { border-left-color: var(--soon); }
+.card.u-open   { border-left-color: var(--open); }
+.card-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip {
+  font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+  border-radius: 5px; padding: 2.5px 7px; background: var(--surface-2); color: var(--ink-soft);
+  white-space: nowrap;
+}
+.chip.type { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.chip.dl.u-urgent { background: var(--urgent-soft); color: var(--urgent); font-weight: 500; }
+.chip.dl.u-soon   { background: var(--soon-soft);   color: var(--soon);   font-weight: 500; }
+.chip.dl.u-open   { background: var(--open-soft);   color: var(--open);   font-weight: 500; }
+
+.card h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 16.5px; line-height: 1.28; letter-spacing: -.01em; }
+.card h3 a { color: inherit; text-decoration: none; }
+.card h3 a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.card p.sum { margin: 0; font-size: 13.5px; color: var(--ink-soft); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 12.5px; color: var(--ink-faint); }
+.meta .k { font-family: var(--f-mono); font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+.src { display: inline-flex; align-items: center; gap: 5px; }
+.tier { font-family: var(--f-mono); font-size: 9.5px; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; color: var(--ink-faint); }
+.tier.t1 { border-color: var(--accent); color: var(--accent); }
+
+.empty, .loading {
+  text-align: center; padding: 54px 18px; border: 1px dashed var(--line);
+  border-radius: 12px; color: var(--ink-soft); background: var(--surface);
+}
+.empty b { display: block; font-family: var(--f-display); font-size: 17px; color: var(--ink); margin-bottom: 5px; }
+.more {
+  font: inherit; font-size: 14px; cursor: pointer; width: 100%; padding: 11px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+}
+.more:hover { border-color: var(--accent); color: var(--accent); }
+footer.note { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-faint); }
+footer.note code { font-family: var(--f-mono); font-size: 11.5px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<header class="mast">
+  <div class="mast-in">
+    <p class="eyebrow">Aggregated from 15 public sources</p>
+    <h1>Research Opportunity Finder</h1>
+    <p class="lede">Scholarships, fellowships, research internships and grants for bachelor's, master's and doctoral students — collected automatically, deduplicated, and dated.</p>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="board">
+    <aside class="rail" aria-label="Filters">
+      <div class="group">
+        <h2>Degree level</h2>
+        <div class="opts" id="f-level"></div>
+      </div>
+      <div class="group">
+        <h2>Opportunity type</h2>
+        <div class="opts" id="f-type"></div>
+      </div>
+      <div class="group">
+        <h2>Funding</h2>
+        <div class="opts" id="f-fund"></div>
+      </div>
+      <div class="group">
+        <h2>Closing</h2>
+        <div class="opts" id="f-when"></div>
+      </div>
+      <div class="group">
+        <h2>Source tier</h2>
+        <div class="opts" id="f-tier"></div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="toolbar">
+        <label class="search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="q" type="search" placeholder="Search title, field, country or source" autocomplete="off">
+        </label>
+        <select id="sort" aria-label="Sort by">
+          <option value="deadline">Deadline — soonest</option>
+          <option value="deadline-far">Deadline — latest</option>
+          <option value="title">Title A–Z</option>
+          <option value="source">Source</option>
+        </select>
+        <span class="count" id="count">—</span>
+      </div>
+      <div id="results" class="list"><div class="loading">Loading opportunities…</div></div>
+      <div id="morewrap" hidden><button class="more" id="more" type="button">Show more</button></div>
+      <footer class="note" id="foot"></footer>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var DATA = [], VIEW = [], shown = 0, PAGE = 60;
+  var TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
+
+  var state = { level: '', type: '', fund: '', when: '', tier: '', q: '', sort: 'deadline' };
+
+  var LEVELS = [['', 'Any'], ['bachelors', "Bachelor's"], ['masters', "Master's"], ['phd', 'PhD'], ['postdoc', 'Postdoc']];
+  var TYPES = [['', 'Any'], ['scholarship', 'Scholarship'], ['fellowship', 'Fellowship'], ['research_internship', 'Research internship'], ['internship', 'Internship'], ['grant', 'Grant'], ['summer_school', 'Summer school'], ['competition', 'Competition'], ['training', 'Training']];
+  var FUNDS = [['', 'Any'], ['fully_funded', 'Fully funded'], ['partially_funded', 'Partial'], ['stipend_only', 'Stipend'], ['tuition_waiver', 'Tuition'], ['paid', 'Paid']];
+  var WHENS = [['', 'Any'], ['30', 'Next 30 days'], ['90', 'Next 90 days'], ['year', 'By 31 Dec'], ['dated', 'Has a date'], ['rolling', 'Rolling / open']];
+  var TIERS = [['', 'Any'], ['1', 'Tier 1 funder'], ['2', 'Tier 2 national'], ['3', 'Tier 3 aggregator']];
+
+  function days(d) {
+    if (!d) return null;
+    var t = new Date(d + 'T00:00:00');
+    if (isNaN(t)) return null;
+    return Math.round((t - TODAY) / 86400000);
+  }
+  function urgency(n) {
+    if (n === null) return 'open';
+    if (n <= 7) return 'urgent';
+    if (n <= 30) return 'soon';
+    return 'open';
+  }
+  function deadlineLabel(o) {
+    var n = days(o.d);
+    if (n === null) return o.dk === 'rolling' ? 'Rolling' : (o.dk === 'varies' ? 'Varies' : 'No date');
+    if (n === 0) return 'Closes today';
+    if (n === 1) return 'Closes tomorrow';
+    if (n < 0) return 'Closed';
+    if (n <= 60) return n + ' days left';
+    return new Date(o.d + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function titleCase(s) { return String(s || '').replace(/_/g, ' ').replace(/\b\w/g, function (m) { return m.toUpperCase(); }); }
+  function fmtAmount(a) {
+    if (!a || !a.v) return '';
+    var n = a.v >= 1000 ? Math.round(a.v).toLocaleString() : a.v;
+    return (a.c || '') + ' ' + n + (a.p ? '/' + a.p : '');
+  }
+
+  function buildFilters() {
+    var defs = [['f-level', LEVELS, 'level'], ['f-type', TYPES, 'type'], ['f-fund', FUNDS, 'fund'], ['f-when', WHENS, 'when'], ['f-tier', TIERS, 'tier']];
+    defs.forEach(function (d) {
+      var el = document.getElementById(d[0]);
+      el.innerHTML = d[1].map(function (o) {
+        return '<button class="opt" type="button" data-k="' + d[2] + '" data-v="' + o[0] + '" aria-pressed="' + (state[d[2]] === o[0]) + '">' + esc(o[1]) + '</button>';
+      }).join('');
+    });
+  }
+
+  function matches(o) {
+    if (state.level && (o.lv || []).indexOf(state.level) < 0 && (o.lv || []).indexOf('any') < 0) return false;
+    if (state.type && o.ty !== state.type) return false;
+    if (state.fund && String(o.f || '') !== state.fund) return false;
+    if (state.tier && String(o.st || '') !== state.tier) return false;
+    if (state.when) {
+      var n = days(o.d);
+      if (state.when === 'rolling') { if (o.d) return false; }
+      else if (state.when === 'dated') { if (!o.d) return false; }
+      else if (state.when === 'year') { if (!o.d || o.d > (TODAY.getFullYear() + '-12-31')) return false; }
+      else { if (n === null || n > Number(state.when)) return false; }
+      if (n !== null && n < 0) return false;
+    }
+    if (state.q) {
+      var hay = (o.t + ' ' + (o.g || '') + ' ' + (o.c || '') + ' ' + (o.sn || '') + ' ' + (o.fs || []).join(' ') + ' ' + (o.ty || '')).toLowerCase();
+      if (hay.indexOf(state.q) < 0) return false;
+    }
+    return true;
+  }
+
+  function sortView(a, b) {
+    if (state.sort === 'title') return a.t.localeCompare(b.t);
+    if (state.sort === 'source') return (a.sn || '').localeCompare(b.sn || '') || a.t.localeCompare(b.t);
+    var x = a.d, y = b.d;
+    if (!x && !y) return a.t.localeCompare(b.t);
+    if (!x) return 1;
+    if (!y) return -1;
+    return state.sort === 'deadline-far' ? (y < x ? -1 : 1) : (x < y ? -1 : 1);
+  }
+
+  function cardHTML(o) {
+    var n = days(o.d), u = urgency(n);
+    var bits = [];
+    if (o.c) bits.push('<span>' + esc(titleCase(o.c)) + '</span>');
+    if (o.du) bits.push('<span class="k">' + esc(o.du) + '</span>');
+    var amt = fmtAmount(o.a);
+    if (amt) bits.push('<span class="k">' + esc(amt) + '</span>');
+    if (o.fs && o.fs.length) bits.push('<span>' + esc(o.fs.slice(0, 2).join(', ')) + '</span>');
+    var levels = (o.lv || []).filter(function (l) { return l !== 'any'; })
+      .map(function (l) { return '<span class="chip">' + esc(titleCase(l)) + '</span>'; }).join('');
+    return '<article class="card u-' + u + '">' +
+      '<div class="card-top">' +
+        (o.ty ? '<span class="chip type">' + esc(titleCase(o.ty)) + '</span>' : '') +
+        '<span class="chip dl u-' + u + '">' + esc(deadlineLabel(o)) + '</span>' +
+        levels +
+        (o.f ? '<span class="chip">' + esc(titleCase(o.f)) + '</span>' : '') +
+      '</div>' +
+      '<h3><a href="' + esc(o.u) + '" target="_blank" rel="noopener noreferrer">' + esc(o.t) + '</a></h3>' +
+      (o.g ? '<p class="sum">' + esc(o.g) + '</p>' : '') +
+      '<div class="meta">' +
+        '<span class="src">' + esc(o.sn) + (o.st ? ' <span class="tier' + (String(o.st) === '1' ? ' t1' : '') + '">T' + esc(o.st) + '</span>' : '') + '</span>' +
+        bits.join('') +
+      '</div>' +
+    '</article>';
+  }
+
+  function render(reset) {
+    if (reset) { VIEW = DATA.filter(matches).sort(sortView); shown = 0; }
+    var box = document.getElementById('results');
+    if (!VIEW.length) {
+      box.innerHTML = '<div class="empty"><b>Nothing matches those filters</b>Try widening the deadline window or clearing the degree level.</div>';
+      document.getElementById('morewrap').hidden = true;
+      document.getElementById('count').textContent = '0 results';
+      return;
+    }
+    var next = VIEW.slice(shown, shown + PAGE).map(cardHTML).join('');
+    if (shown === 0) box.innerHTML = next; else box.insertAdjacentHTML('beforeend', next);
+    shown = Math.min(shown + PAGE, VIEW.length);
+    document.getElementById('count').textContent = VIEW.length.toLocaleString() + ' result' + (VIEW.length === 1 ? '' : 's');
+    document.getElementById('morewrap').hidden = shown >= VIEW.length;
+    document.getElementById('more').textContent = 'Show more (' + (VIEW.length - shown).toLocaleString() + ' remaining)';
+  }
+
+  function renderStats() {
+    var dated = DATA.filter(function (o) { return o.d; });
+    var soon = dated.filter(function (o) { var n = days(o.d); return n !== null && n >= 0 && n <= 30; });
+    var eoy = dated.filter(function (o) { return o.d >= isoToday() && o.d <= (TODAY.getFullYear() + '-12-31'); });
+    var srcs = {};
+    DATA.forEach(function (o) { srcs[o.s] = 1; });
+    var items = [
+      [DATA.length.toLocaleString(), 'opportunities', ''],
+      [eoy.length.toLocaleString(), 'closing by 31 Dec', ''],
+      [soon.length.toLocaleString(), 'within 30 days', 'is-urgent'],
+      [Object.keys(srcs).length, 'sources', ''],
+      [dated.length.toLocaleString(), 'with a firm date', '']
+    ];
+    document.getElementById('stats').innerHTML = items.map(function (s) {
+      return '<div class="stat ' + s[2] + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></div>';
+    }).join('');
+  }
+  function isoToday() {
+    var m = TODAY.getMonth() + 1, d = TODAY.getDate();
+    return TODAY.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.opt');
+    if (b) {
+      state[b.dataset.k] = b.dataset.v;
+      b.parentNode.querySelectorAll('.opt').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      render(true);
+      return;
+    }
+    if (e.target.id === 'more') render(false);
+  });
+  var tmr;
+  document.getElementById('q').addEventListener('input', function (e) {
+    clearTimeout(tmr);
+    var v = e.target.value.trim().toLowerCase();
+    tmr = setTimeout(function () { state.q = v; render(true); }, 160);
+  });
+  document.getElementById('sort').addEventListener('change', function (e) { state.sort = e.target.value; render(true); });
+
+  buildFilters();
+
+  fetch('opportunities.json')
+    .then(function (r) { return r.json(); })
+    .then(function (rows) {
+      DATA = rows;
+      renderStats();
+      render(true);
+      document.getElementById('foot').innerHTML =
+        'Collected by a scheduled n8n workflow from 15 public sources — WordPress REST, RSS and JSON/POST APIs — then deduplicated on <code>(source, external_id)</code>. ' +
+        'Closed opportunities are discarded at ingest; sentinel dates such as grants.gov’s <code>2099-01-01</code> are recorded as rolling rather than shown as a deadline. ' +
+        'Snapshot of ' + DATA.length.toLocaleString() + ' records taken ' + new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) + '.';
+    })
+    .catch(function () {
+      document.getElementById('results').innerHTML =
+        '<div class="empty"><b>Could not load the data file</b>opportunities.json did not load. Republish the page with its data file alongside it.</div>';
+    });
+})();
+</script>
