@@ -1,10 +1,16 @@
 #!/usr/bin/env node
 /* Build ui/opportunities.json -- the finder's data file.
  *
- * Only `record_kind = 'open_call'` sources are included. nsf_awards,
- * nih_reporter, openaire and cordis are registers of money ALREADY GRANTED
- * (db/012): valuable for finding a lab to write to, wrong for an apply-now
- * list, and actively misleading next to a deadline and a dollar figure.
+ * Only `record_kind = 'open_call'` sources are included. The other three kinds
+ * each answer a real question, but none of them is "what can I apply to":
+ *
+ *   awarded        nsf_awards, nih_reporter, openaire, cordis -- money ALREADY
+ *                  granted. Good for finding a lab to write to; misleading
+ *                  next to a deadline and a dollar figure (db/012).
+ *   institutional  grants_gov -- NIH/NSF/DoD mechanisms whose applicant is a
+ *                  university or a faculty PI (db/013).
+ *   programme      daad_programmes -- a course catalogue you enrol in and pay
+ *                  for, with an admissions date, not a funding one (db/013).
  *
  * Keys are one or two letters because the file is served whole to the browser
  * and the long names tripled its size. The map is right here:
@@ -35,8 +41,11 @@ const get = async (path) => {
 };
 
 const sources = await get('sources?select=slug,name,authority_tier,config');
+/* ALLOWLIST, not a blocklist: db/013 added `programme` and `institutional`
+ * alongside `awarded`, and a kind invented later must stay out of the student
+ * finder until someone decides it belongs, rather than leak in by default. */
 const openCall = new Set(sources
-  .filter(s => (s.config || {}).record_kind !== 'awarded')
+  .filter(s => ((s.config || {}).record_kind || 'open_call') === 'open_call')
   .map(s => s.slug));
 const meta = Object.fromEntries(sources.map(s => [s.slug, s]));
 
@@ -92,5 +101,10 @@ console.log(`wrote ${out.length} open calls to ui/opportunities.json `
 for (const [k, v] of Object.entries(bySrc).sort((a, b) => b[1] - a[1])) console.log(`  ${k.padEnd(22)}${v}`);
 console.log(`  ${'with a deadline'.padEnd(22)}${out.filter(o => o.d).length}`);
 console.log(`  ${'detail-enriched'.padEnd(22)}${out.filter(o => o.el || o.ap).length}`);
-console.log(`excluded ${rows.length - out.length} awarded-record rows `
-          + `(${sources.filter(s => (s.config || {}).record_kind === 'awarded').map(s => s.slug).join(', ')})`);
+const byKind = {};
+for (const s of sources) {
+  const k = (s.config || {}).record_kind || 'open_call';
+  if (k !== 'open_call') (byKind[k] = byKind[k] || []).push(s.slug);
+}
+console.log(`excluded ${rows.length - out.length} rows not open to a student:`);
+for (const [k, slugs] of Object.entries(byKind)) console.log(`  ${k.padEnd(14)}${slugs.join(', ')}`);
