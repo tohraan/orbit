@@ -48,7 +48,7 @@ else
   echo "==> wrote $out — $lines lines$copied"
   echo
   echo "   Next: open https://supabase.com/dashboard/project/pcctpzvhakdutzzwpmsh/sql/new"
-  echo "         paste, Run. Then confirm:  select count(*) from sources;   -- expect 16"
+  echo "         paste, Run. Then confirm:  select count(*) from sources;   -- expect 15"
   echo
   echo "   (To use psql instead: put SUPABASE_DB_URL in .env and re-run.)"
 fi
