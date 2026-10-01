@@ -151,5 +151,79 @@ for (const f of readdirSync('tests/fixtures').filter(f => f.endsWith('.html'))) 
   ok(r.benefits.length > 20,    `${f}: benefits non-empty`);
   ok(!!r.apply,                 `${f}: apply link found`);
 }
+
+/* ---------------------------------------------------------------------------
+ * audience fit — db/012. Every case below is a REAL title or excerpt pulled
+ * from the live corpus; the "must keep" half is the expensive half, because a
+ * dropped row is invisible and a kept row is only annoying.
+ * ------------------------------------------------------------------------- */
+console.log('\n# isRoundup — a listicle is an index of opportunities, not one');
+const ROUNDUP_DROP = [
+  '20 Hot Jobs and Internships Currently Open – April 16, 2026',
+  '34 Scholarships, Fellowships, Conferences and Travel Opportunities Currently Open – September 16, 2026',
+  '69 Master’s and PhD Scholarships and Fellowships You Can Apply for Now – June 2026',
+  '20 Hot Jobs With Deadline Fast Approaching – April 9, 2026',
+  "Top 15 Bachelor's Degree Scholarships for International Students",
+  'Top 5+ Scholarships for Study in Any Country or Anywhere',
+  '25 Scholarships in Europe + 15 Development Courses with Scholarships',
+  '10 Canada Scholarships + 10 Development Courses with Scholarships',
+];
+const ROUNDUP_KEEP = [
+  // NIH and NSF title real calls this way. Dropping these would be a disaster.
+  'Opportunities for Collaborative Research at the NIH Clinical Center (U01 Clinical Trial)',
+  'REU Site: Coastal Marine Science Research Opportunities for Undergraduates',
+  // "Top N" with no plural opportunity noun behind it is an award name.
+  'Canada’s Top 100 Women to Watch Award 2026',
+  'IMF Research Analyst Program (RAP) 2026',
+  'Brooke Owens Fellowship – Class of 2027',
+  '2026 Schmidt Science Fellows Program',
+];
+for (const t of ROUNDUP_DROP) ok(L.isRoundup(t) === true,  `drop: ${t.slice(0, 58)}`);
+for (const t of ROUNDUP_KEEP) ok(L.isRoundup(t) === false, `keep: ${t.slice(0, 58)}`);
+
+console.log('\n# geoLock — host country is NOT a nationality restriction');
+const GEO_DROP = [
+  ['STIAS Iso Lomso Fellowship 2026 for African Scholars', 'africa'],
+  ['ACARE African Women in Science Program 2026', 'africa'],
+  ['NYU Wagner Public Service Fellowships for African Women', 'africa'],
+  ['Graça Machel Scholarships for South African Women', 'africa'],
+  ['Global British Citizens Scholarship 2026-27 in UK', 'europe'],
+  ['The Swedish Scholarship Challenge 2014 for Chinese Students', 'china_japan_korea'],
+  ['McGraw Fellowship for Business Journalism: open to journalists who are US citizens/residents', 'americas'],
+  ['Eligibility: applicants must be a Nigerian citizen', 'africa'],
+  ['Open only to Ghanaian nationals', 'africa'],
+  // identity groups lock on a bare mention
+  ['CJF-CBC Indigenous Journalism Fellowship 2026', 'identity'],
+  ['Native American Library Services Enhancement Grants (2027)', 'identity'],
+  ['Programme for refugees and asylum seekers', 'identity'],
+];
+const GEO_KEEP = [
+  'DAAD Masters Scholarship 2026 in Germany',          // host country only
+  'Chevening Scholarship 2026 in UK | Fully Funded',
+  'African Studies: Language, Arts, Philosophy',        // a FIELD, not an audience
+  'European Research Council Advanced Grant 2026',      // a funder's name
+  'Australian National University RTP Scholarship 2026-27',          // "National" is an adjective
+  'U.S. National Science Foundation State and Regional AI Institutes', // ditto
+  'Berlin Intensive: German for Engineers and Technicians',          // a language course
+  'Glasgow International Leadership Scholarship: awarded to international and EU students',
+  'Woven Toyota Japan Internship: are you an international or Japanese student?',
+  // WordPress truncates excerpts mid-phrase; the trailing arm still re-opens it
+  'Ontario Graduate Scholarship Program 2026 in Canada — open to Canadian citizens, permanent residents, and international [&hellip;]',
+  'Fellowship for African researchers, open to all nationalities',
+  'Scholarships for Indian students at University of Melbourne',
+  'Open to international students from any country',
+];
+for (const [t, region] of GEO_DROP) {
+  const g = L.geoLock(t);
+  ok(g.locked === true && g.region === region, `lock ${region}: ${t.slice(0, 52)}`);
+}
+for (const t of GEO_KEEP) ok(L.geoLock(t).locked === false, `open: ${t.slice(0, 58)}`);
+
+console.log('\n# audienceReject — the one call the normalisers make');
+ok(L.audienceReject('20 Hot Jobs Currently Open – April 16, 2026', '') === 'roundup', 'roundup reason');
+ok(L.audienceReject('Fellowship for African Scholars', '') === 'geo:africa', 'geo reason carries the region');
+ok(L.audienceReject('DAAD Masters Scholarship 2026 in Germany', 'Open to applicants worldwide.') === null, 'clean row returns null');
+ok(L.audienceReject('Scholarship 2026', 'Restricted to Kenyan nationals.') === 'geo:africa', 'restriction found in the summary, not the title');
+
 console.log(fail ? `\n${fail} FAILURE(S)` : '\nall assertions passed');
 process.exit(fail ? 1 : 0);

@@ -387,9 +387,123 @@ function sourceFilter(cfg) {
   };
 }
 
+/* ---------- audience fit --------------------------------------------------
+ * Two shapes of noise that no per-source config can express, because they are
+ * properties of the POST, not of the site:
+ *
+ *   isRoundup()  a listicle bundling N opportunities into one blog post
+ *                ("20 Hot Jobs Currently Open - April 16, 2026"). It is not an
+ *                opportunity, it is an index of them: no single deadline, link
+ *                or eligibility. Storing it means a student clicks through to
+ *                another list.
+ *
+ *   geoLock()    the post restricts itself to a nationality, region or identity
+ *                group that does not include our students. Deliberately NOT a
+ *                source config key (cf. PROMPT.md rule 3, which forbids
+ *                hardcoding a HOSTNAME in a node -- this is not per-source):
+ *                the same restriction appears on every aggregator, and
+ *                duplicating the demonym list 15 times is how it rots.
+ *
+ * geoLock separates HOST COUNTRY from NATIONALITY. "Scholarship 2026 in UK" is
+ * open to an Indian student; "Global British Citizens Scholarship" is not. Only
+ * citizenship / nationality / residency language, a demonym sitting directly on
+ * a people-noun, or a closed identity group counts as a lock. A field of study
+ * never does, so "African Studies" and "European Research Council" pass.
+ */
+
+const ROUNDUP = [
+  // "20 Hot Jobs ...", "34 Scholarships, Fellowships and Travel Opportunities ..."
+  // Anchored at the start, so "Opportunities for Collaborative Research at the
+  // NIH Clinical Center" and "REU Site: Research Opportunities for
+  // Undergraduates" -- both real calls -- are untouched.
+  /^\s*\d{1,3}\s*\+?\s+[a-z].{0,70}?\b(opportunit|scholarship|fellowship|grant|job|internship|competition|conference|award|programme|program|course)/i,
+  // "Top 15 Bachelor's Degree Scholarships". Requires a PLURAL opportunity noun
+  // close behind, so "Canada's Top 100 Women to Watch Award" stays.
+  /\b(?:top|best)\s+\d{1,3}\s*\+?\s+(?:[a-z'’-]+\s+){0,4}(?:scholarships|fellowships|grants|internships|opportunities|programmes|programs|courses|universities|jobs|calls)\b/i,
+  // dated weekly digests
+  /\bcurrently\s+open\b[^.]{0,20}[–—-]\s*[a-z]+\s+\d{1,2},?\s+\d{4}/i,
+  /\bdeadlines?\s+fast\s+approaching\b/i,
+  /\b(?:round[\s-]?up|weekly\s+digest|opportunities\s+of\s+the\s+(?:week|month)|this\s+week\s+in)\b/i,
+  // "25 Scholarships in Europe + 15 Development Courses with Scholarships"
+  /\b\d{1,3}\s+[a-z][a-z'’\s-]{0,30}\s\+\s\d{1,3}\s+[a-z]/i,
+];
+
+function isRoundup(title, summary) {
+  const t = String(title || '');
+  if (!t) return false;
+  if (ROUNDUP.some(r => r.test(t))) return true;
+  // A listing page announces its plurality in the excerpt too, but only trust
+  // that when the title also opened with a count.
+  return /^\s*\d{1,3}\s/.test(t) && /\b(?:see|check)\s+(?:the\s+)?(?:full\s+)?list\b/i.test(String(summary || ''));
+}
+
+/* BARE demonyms and country names -- no trailing noun. The noun is supplied by
+ * the rules in geoLock(), which is what keeps "African Studies" (a field) apart
+ * from "African scholars" (a restriction). */
+const GEO_GROUPS = {
+  africa: "africans?|african|nigerians?|nigeria|ghanaians?|ghana|kenyans?|kenya|ugandans?|uganda|tanzanians?|tanzania|ethiopians?|ethiopia|rwandans?|rwanda|zambians?|zambia|zimbabweans?|zimbabwe|senegalese|senegal|ivorians?|côte d.?ivoire|cote d.?ivoire|cameroonians?|cameroon|malawians?|malawi|mozambicans?|mozambique|botswanan?s?|botswana|namibians?|namibia|sudanese|sudan|somalis?|somalia|liberians?|liberia|sierra leoneans?|sierra leone|burkina faso|beninese|togolese|malians?|gambians?|gambia|lesotho|eswatini|swazi|south africans?|sub[\\s-]?saharan",
+  americas: "u\\.?s\\.?|us|american|americans|latin american?s?|caribbean|mexicans?|brazilians?|colombians?|chileans?|peruvians?|argentinians?",
+  europe: "eu|eea|european|europeans|british|uk|irish|german|germans|french|italian|spanish|dutch|nordic|scandinavian|polish|portuguese|greek|swiss|austrian|belgian|danish|swedish|norwegian|finnish",
+  oceania: "australian|australians|new zealand|pacific island(?:er)?s?",
+  mena: "arabs?|mena|palestinians?|syrians?|lebanese|jordanians?|egyptians?|iraqis?|yemenis?|moroccans?|tunisians?|algerians?",
+  other_asia: "asean|southeast asian?s?|south[\\s-]?east asian?s?|central asian?s?|afghans?|afghanistan|ukrainians?|ukraine|vietnamese|filipinos?|indonesians?|thai|malaysians?",
+  canada: "canadian|canadians",
+  china_japan_korea: "chinese|japanese|korean|koreans?",
+};
+
+/* Identity groups that lock on a BARE mention: in this corpus these words are
+ * only ever used to restrict who may apply, never as a field or a venue. */
+const GEO_STANDALONE = /\b(?:indigenous|first nations|aboriginal|māori|maori|native american|alaska native|refugees?|asylum[\s-]seekers?|internally displaced|displaced persons?)\b/i;
+
+/* Nouns that turn an adjacent demonym into a restriction on PEOPLE. */
+const GEO_PEOPLE = "citizens?|nationals|residents?|passport holders?|students?|pupils?|scholars?|researchers?|graduates?|postgraduates?|undergraduates?|applicants?|candidates?|nominees?|women|men|girls?|boys?|youth|professionals?|journalists?|entrepreneurs?|innovators?|teachers?|educators?|artists?|leaders?|scientists?|engineers?|lawyers?|physicians?|doctors?|nurses?|founders?|alumni";
+/* NB: `nationals` is plural-only on purpose. The singular also matches the
+ * adjective "National", which locked "Australian National University RTP
+ * Scholarship" and "U.S. National Science Foundation" -- both open to Indians. */
+
+/* The one word allowed between a demonym and its people-noun must be an
+ * adjective, never a preposition. Any word at all let "Berlin Intensive: German
+ * FOR Engineers" lock as a nationality restriction; it is a language course. */
+const GEO_ADJ = "(?!for\\b|of\\b|in\\b|to\\b|and\\b|with\\b|at\\b|on\\b|by\\b|the\\b|an?\\b)[a-z]+";
+
+/* Language that re-opens a post to everyone. Checked AFTER a lock fires, so an
+ * explicit "open to all nationalities" beats an incidental regional mention. */
+const GEO_OPEN = /\b(?:india|indians?|south asia|south asian?s?|all nationalit|any nationalit|every nationalit|worldwide|world[\s-]?wide|any country|all countries|globally|open to all|international students|international applicants|international (?:and|or) |(?:and|or) international\b|developing countr|low[\s-]?and[\s-]?middle[\s-]?income|commonwealth)\b/i;
+
+function geoLock(text) {
+  const t = String(text || '');
+  if (!t) return { locked: false, region: null };
+  const open = GEO_OPEN.test(t);
+  if (GEO_STANDALONE.test(t) && !open) return { locked: true, region: 'identity' };
+  for (const region of Object.keys(GEO_GROUPS)) {
+    const alt = GEO_GROUPS[region];
+    const rules = [
+      // demonym sitting on a people-noun, with at most one adjective between:
+      // "African Women", "Nigerian female students", "British Citizens"
+      new RegExp("\\b(?:" + alt + ")\\s+(?:" + GEO_ADJ + "\\s+)?(?:" + GEO_PEOPLE + ")\\b", 'i'),
+      new RegExp("\\b(?:" + alt + ")\\s+only\\b", 'i'),
+      new RegExp("\\b(?:must|should)\\s+be\\s+(?:an?\\s+)?(?:" + alt + ")\\b", 'i'),
+      // "restricted to Ghana", "exclusively for Kenya" -- a bare country name
+      // after an explicit restriction verb needs no people-noun.
+      new RegExp("\\b(?:restricted to|reserved for|limited to|exclusively for|open only to)\\s+(?:" + alt + ")\\b", 'i'),
+    ];
+    if (rules.some(r => r.test(t))) return open ? { locked: false, region: null } : { locked: true, region };
+  }
+  return { locked: false, region: null };
+}
+
+/* One call per item at ingest. null when the item is fine, otherwise a short
+ * reason string, so a sweep can be audited and reversed. */
+function audienceReject(title, summary) {
+  if (isRoundup(title, summary)) return 'roundup';
+  const g = geoLock(String(title || '') + ' ' + String(summary || ''));
+  return g.locked ? 'geo:' + g.region : null;
+}
+
 if (typeof module !== 'undefined') module.exports = {
   plain, sections, pickSection, toISODate, extractDeadline,
   extractApplyLink, meta, fingerprint, sourceFilter, qs, robotsAllows,
   extractAmounts, extractFunding, extractDuration, extractTimeline,
   isPastDeadline, plausibleDeadline, LINK_DENY, MONTHS,
+  isRoundup, geoLock, audienceReject, GEO_GROUPS, GEO_STANDALONE, GEO_OPEN,
 };

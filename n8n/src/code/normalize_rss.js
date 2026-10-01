@@ -5,6 +5,7 @@ const src = $('Loop Sources').first().json;
 const nowISO = new Date().toISOString();
 // Some funder feeds are site-wide news; the registry decides what counts.
 const passes = sourceFilter(src.config);
+const rejected = {};   // reason -> count, logged below for auditability
 let dropped = 0;
 
 const out = [];
@@ -34,6 +35,9 @@ for (const item of $input.all()) {
     country_hint: null, funding_hint: null, type_hint: null, level_hints: [],
   };
   if (isPastDeadline(payload.deadline)) continue;   // already closed -> never stored
+  // listicle, or restricted to a nationality that is not ours -- see audienceReject()
+  const reject = audienceReject(payload.title, payload.summary);
+  if (reject) { rejected[reject] = (rejected[reject] || 0) + 1; continue; }
   if (payload.deadline && !plausibleDeadline(payload.deadline)) {
     payload.deadline = null;
     payload.deadline_kind = 'rolling';

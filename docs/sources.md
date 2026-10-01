@@ -6,6 +6,10 @@ set and exits non-zero if a tier-1 source is down.
 **Last full probe: 2026-10-01 — 15/15 accepted sources returned items** (not just
 200: the probe now asserts the body carries records, see below).
 
+Of those 15: **14 are enabled** (`opportunity_desk` is off, db/012) and **10 feed
+the student finder** — the other 4 are registers of already-awarded grants. See
+*Audience fit* below.
+
 Tiers: **1** primary funder (authoritative), **2** government / national scheme,
 **3** aggregator blog (broad and fast, but must be verified before students see it).
 
@@ -28,7 +32,7 @@ Tiers: **1** primary funder (authoritative), **2** government / national scheme,
 | 2 | `commonwealth_cscuk` | rss | `GET cscuk.fcdo.gov.uk/feed/` | none | `200 application/rss+xml` |
 | 2 | `daad_programmes` | json_api | `GET www2.daad.de/…/international-programmes/api/solr/en/search.json` | none | `200`, 23.8 kB |
 | 3 | `opportunities_circle` | wp_rest | `GET www.opportunitiescircle.com/wp-json/wp/v2/posts` | none | `200`; see the deep-dive below |
-| 3 | `opportunity_desk` | wp_rest | `GET opportunitydesk.org/wp-json/wp/v2/posts` | none | `200`, 7 kB |
+| 3 | ~~`opportunity_desk`~~ | wp_rest | `GET opportunitydesk.org/wp-json/wp/v2/posts` | none | `200`, 7 kB — **disabled, db/012**, see below |
 | 3 | `scholars4dev` | rss | `GET scholars4dev.com/feed/` | none | `200 application/rss+xml` |
 
 ### Why these, over a paid scholarship API
@@ -126,3 +130,89 @@ funnel links (`opcircleacademy.com`, `nextgenyouthcamp.com`, `bit.ly`) plus ad a
 analytics hosts. Order of preference: Elementor `button.default` widget → anchor
 text matching apply/official/register → a link inside the application-process
 section → last external link.
+
+---
+
+## Audience fit — what never reaches the finder
+
+The platform serves BITS Pilani Dubai, where ~99% of students are Indian
+nationals. Three classes of row were reaching the finder that no student there
+could act on. `db/012_audience_fit.sql` closes all three.
+
+### 1. `opportunity_desk` — disabled, not deleted
+
+opportunitydesk.org is a Lagos-based, Africa-oriented aggregator. 132 of its
+2,009 stored titles named an African country or demonym outright, and the real
+figure is higher — most of its posts put the nationality restriction only in the
+eligibility prose, which we had fetched for 169 of 2,009. It was also the main
+producer of roundup posts (below) and is an aggregator-of-aggregators, so its
+tier-1-worthy rows arrive through `grants_gov` / `ukri_opportunities` /
+`daad_programmes` anyway. It was 46% of the corpus and the wrong 46%.
+
+The registry row stays, `enabled = false`. Re-enable with one UPDATE.
+
+### 2. Roundup posts — rejected at ingest
+
+A listicle ("20 Hot Jobs Currently Open – April 16, 2026", "Top 15 Bachelor's
+Degree Scholarships") is an *index* of opportunities, not an opportunity: no
+single deadline, link or eligibility. `_lib_html.js:isRoundup()` rejects them.
+
+The patterns are anchored so that real calls survive: NIH titles funding
+announcements "Opportunities for Collaborative Research at the NIH Clinical
+Center", and NSF titles REU sites "Research Opportunities for Undergraduates".
+Only a *leading count* or a "Top N &lt;plural opportunity noun&gt;" counts.
+
+### 3. Nationality locks — rejected at ingest
+
+`_lib_html.js:geoLock()` answers one question: *does this post restrict itself
+to a group that excludes a South Asian applicant?* It separates **host country**
+from **nationality** — "Scholarship 2026 in UK" is open to an Indian student,
+"Global British Citizens Scholarship" is not. A lock needs citizenship /
+nationality / residency language, a demonym sitting directly on a people-noun
+("African Women", "Chinese Students"), or a closed identity group (Indigenous,
+refugee). A field of study never locks, so "African Studies" and "European
+Research Council" pass.
+
+`GEO_OPEN` overrides a lock when the post says it is open to everyone —
+including the half-truncated form WordPress serves, `"open to Canadian
+citizens, permanent residents, and international [&hellip;]"`.
+
+Changing audience means editing `GEO_GROUPS`, not 15 source rows.
+
+### 4. `record_kind` — awarded registers are a different product
+
+`sources.config.record_kind` is `open_call` (default) or `awarded`.
+
+| `record_kind` | sources | why |
+| --- | --- | --- |
+| `awarded` | `nsf_awards`, `nih_reporter`, `openaire`, `cordis` | registers of money **already granted** and projects already finished — CORDIS is mostly 2014-15 "European Researchers' Night" events. The finder was rendering them as open calls with a dollar figure and `deadline: rolling`. |
+| `open_call` | the other 11 | something a student can apply to. |
+
+Awarded rows stay ingested: a funded grant names a lab and a PI a student can
+write to. They are simply a **different product** and must never sit in the
+apply-now list. `scripts/build-ui-data.mjs` reads the config key — not a
+hardcoded source list (CLAUDE.md rule 3).
+
+### Reproducing / auditing
+
+```bash
+node tests/parse.test.mjs            # 54 assertions on isRoundup / geoLock, half of them "must keep"
+node scripts/sweep-audience.mjs      # dry run over the live corpus
+node scripts/sweep-audience.mjs --apply
+node scripts/build-ui-data.mjs       # rebuild ui/opportunities.json
+```
+
+The sweep imports `_lib_html.js` rather than restating its regexes in SQL, so
+the tested implementation is the only implementation.
+
+### Effect, measured 2026-10-01
+
+| | rows |
+| --- | --- |
+| before | 4,362 |
+| `opportunity_desk` removed (db/012) | −2,009 |
+| roundups + nationality locks swept | −80 |
+| **stored** | **2,273** |
+| of which `awarded` (not in the finder) | 910 |
+| **open calls in the finder** | **1,363** |
+| &nbsp;&nbsp;with a firm deadline | 697 |

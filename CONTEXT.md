@@ -62,6 +62,16 @@ the portal on their own.
   `erasmus_plus` correctly return 0 (see §13.10).
 - All 15 endpoints probed green, and the probe now asserts the response *carries
   records* rather than merely returning 200.
+- **Audience fit (db/012, 2026-10-01).** The finder is for BITS Pilani Dubai,
+  where ~99% of students are Indian nationals. `opportunity_desk` is **disabled**
+  (Africa-targeted aggregator, 46% of the corpus and the wrong 46%); roundup
+  listicles and nationality-locked listings are rejected at ingest by
+  `_lib_html.js:audienceReject()`; and `nsf_awards` / `nih_reporter` /
+  `openaire` / `cordis` carry `config.record_kind = 'awarded'` because they are
+  registers of money already granted, so they are ingested but kept out of the
+  apply-now list. **2,273 rows stored, 1,363 of them open calls, 697 with a
+  firm deadline.** Full rationale and the measured before/after in
+  `docs/sources.md` § Audience fit.
 
 **NOT done yet — do not assume otherwise:**
 1. **W01 has never run inside n8n.** It has not been imported, because there is

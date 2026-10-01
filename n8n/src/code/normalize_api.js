@@ -20,6 +20,7 @@ const dig = (obj, path) => (path || '').split('.').filter(Boolean)
   .reduce((o, k) => (o == null ? o : o[k]), obj);
 
 const out = [];
+const rejected = {};   // reason -> count, logged below for auditability
 // HTTP Request emits exactly one item per input item, so index pairing is safe
 // and cheaper than threading the request descriptor through the response body.
 const plans = $('Plan API Requests').all();
@@ -232,6 +233,9 @@ for (let i = 0; i < items.length; i++) {
     }
     if (!p.title) continue;
     if (isPastDeadline(p.deadline)) continue;   // already closed -> never stored
+    // listicle, or restricted to a nationality that is not ours -- see audienceReject()
+    const reject = audienceReject(p.title, p.summary);
+    if (reject) { rejected[reject] = (rejected[reject] || 0) + 1; continue; }
     // A sentinel date (grants.gov uses 2099-01-01 for "no real close date") is
     // not a deadline. Keep the row, drop the fake date, say it is rolling.
     if (p.deadline && !plausibleDeadline(p.deadline)) {
@@ -258,4 +262,5 @@ for (let i = 0; i < items.length; i++) {
     }});
   }
 }
+if (Object.keys(rejected).length) console.log('audience rejects', JSON.stringify(rejected));
 return out;

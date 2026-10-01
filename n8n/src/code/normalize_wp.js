@@ -8,6 +8,7 @@ const cfg = src.config || {};
 const catMap = cfg.category_map || {};
 
 const out = [];
+const rejected = {};   // reason -> count, logged below for auditability
 for (const item of $input.all()) {
   const posts = Array.isArray(item.json.body) ? item.json.body
               : Array.isArray(item.json)      ? item.json
@@ -102,6 +103,12 @@ for (const item of $input.all()) {
     // Unknown deadlines are KEPT -- absence of a date is not evidence it closed.
     if (payload.source_says_expired || isPastDeadline(scheduledExpiry)) continue;
 
+    // Neither is this a listicle ("20 Hot Jobs Currently Open - April 16") nor
+    // an opportunity closed to our students by nationality. audienceReject()
+    // explains both; it returns null for everything we keep.
+    const reject = audienceReject(payload.title, payload.summary);
+    if (reject) { rejected[reject] = (rejected[reject] || 0) + 1; continue; }
+
     // The site's own "Expired" bucket is authoritative and free — don't spend a
     // detail fetch on 1100+ dead posts. robots.txt is honoured here rather than
     // at fetch time, so a disallowed page is never even queued.
@@ -122,4 +129,5 @@ for (const item of $input.all()) {
     }});
   }
 }
+if (Object.keys(rejected).length) console.log(src.slug, 'audience rejects', JSON.stringify(rejected));
 return out;
