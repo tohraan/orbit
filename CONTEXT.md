@@ -72,6 +72,17 @@ the portal on their own.
   apply-now list. **2,273 rows stored, 1,363 of them open calls, 697 with a
   firm deadline.** Full rationale and the measured before/after in
   `docs/sources.md` § Audience fit.
+- **db/013** then split `record_kind` four ways and cut the finder to **431
+  rows**, all student-actionable: `grants_gov` is `institutional` (NIH/NSF/DoD
+  mechanisms whose applicant is a university or a faculty PI, and `search2`
+  returns only 10 fields so eligibility is not even knowable), and
+  `daad_programmes` is `programme` (a course catalogue you enrol in and pay
+  for). Nothing deleted; `scripts/build-ui-data.mjs` allowlists `open_call`.
+- **`docs/opportunity-landscape.md`** — who students worldwide actually use to
+  find opportunities, where those sites get their data, and a ranked candidate
+  list for `sources`. Key finding: the student-facing layer is advertiser-funded
+  and therefore closed, while the open machine-readable layer is funder-facing
+  and therefore institutional. Read it before adding a source.
 
 **NOT done yet — do not assume otherwise:**
 1. **W01 has never run inside n8n.** It has not been imported, because there is
