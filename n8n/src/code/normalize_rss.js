@@ -3,6 +3,9 @@
  * LIB */
 const src = $('Loop Sources').first().json;
 const nowISO = new Date().toISOString();
+// Some funder feeds are site-wide news; the registry decides what counts.
+const passes = sourceFilter(src.config);
+let dropped = 0;
 
 const out = [];
 for (const item of $input.all()) {
@@ -12,6 +15,7 @@ for (const item of $input.all()) {
   const title = plain(r.title || '');
   if (!title) continue;
   const summary = plain(r.contentSnippet || r.content || r.description || r.summary || '').slice(0, 4000);
+  if (!passes(`${title} ${summary}`)) { dropped++; continue; }
   const dl = extractDeadline(`${title} ${summary}`);
   const payload = {
     external_id: String(r.guid || r.id || link),
@@ -23,9 +27,13 @@ for (const item of $input.all()) {
     deadline_kind: dl.deadline_kind,
     deadline_note: dl.deadline_note,
     image_url: (r.enclosure || {}).url || null,
+    source_name: src.name || src.slug,
+    source_tier: src.authority_tier,
+    source_trust: src.trust_score,
     source_published_at: r.isoDate || r.pubDate || null,
     country_hint: null, funding_hint: null, type_hint: null, level_hints: [],
   };
+  if (isPastDeadline(payload.deadline)) continue;   // already closed -> never stored
   out.push({ json: {
     source_slug: src.slug,
     external_id: payload.external_id,
@@ -36,4 +44,5 @@ for (const item of $input.all()) {
     last_seen_at: nowISO,
   }});
 }
+if (dropped) console.log(`${src.slug}: dropped ${dropped} off-topic item(s) by registry filter`);
 return out;

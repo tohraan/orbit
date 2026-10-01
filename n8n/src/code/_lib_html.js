@@ -80,6 +80,22 @@ function toISODate(s) {
     const i = MONTHS.findIndex(x => x.startsWith(m[2].toLowerCase().slice(0, 3)));
     if (i >= 0) return `${m[3]}-${String(i + 1).padStart(2, '0')}-${m[1].padStart(2, '0')}`;
   }
+  // Slash form. grants.gov returns closeDate as MM/DD/YYYY ("10/14/2030") and
+  // every one of its 651 rows was losing its deadline here.
+  // a/b/YYYY is genuinely ambiguous, so: a>12 means a is the day (DD/MM),
+  // b>12 means b is the day (MM/DD), and an ambiguous pair falls back to US
+  // MM/DD because that is the only slash-format source in the registry.
+  m = t.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})/);
+  if (m) {
+    let a = parseInt(m[1], 10), b = parseInt(m[2], 10);
+    let month, day;
+    if (a > 12 && b <= 12) { day = a; month = b; }
+    else if (b > 12 && a <= 12) { month = a; day = b; }
+    else if (a <= 12 && b <= 12) { month = a; day = b; }   // ambiguous -> US
+    else return null;
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return `${m[3]}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
   return null;
 }
 
@@ -114,7 +130,7 @@ function extractDeadline(html) {
 }
 
 /* Hosts that are the aggregator's own funnel/ads, never the real apply target. */
-const LINK_DENY = /(opportunitiescircle|opcircleacademy|nextgenyouthcamp|opportunitydesk|scholars4dev|youthop|facebook|fb\.me|twitter|x\.com|linkedin|whatsapp|wa\.me|telegram|t\.me|instagram|youtube|pinterest|reddit|tiktok|bit\.ly|rebrand\.ly|tinyurl|cutt\.ly|shorturl|googletagmanager|google-analytics|doubleclick|googlesyndication|gstatic|adservice|yandex|larapush|onesignal|gravatar|wp\.com|jetpack|gmpg\.org|w3\.org|schema\.org|paypal|amzn|amazon\.)/i;
+const LINK_DENY = /(opportunitiescircle|opcircleacademy|nextgenyouthcamp|svfellow|opportunitydesk|scholars4dev|youthop|facebook|fb\.me|twitter|x\.com|linkedin|whatsapp|wa\.me|telegram|t\.me|instagram|youtube|pinterest|reddit|tiktok|bit\.ly|rebrand\.ly|tinyurl|cutt\.ly|shorturl|googletagmanager|google-analytics|doubleclick|googlesyndication|gstatic|adservice|yandex|larapush|onesignal|gravatar|wp\.com|jetpack|gmpg\.org|w3\.org|schema\.org|paypal|amzn|amazon\.)/i;
 
 /** Best-effort official application URL. */
 function extractApplyLink(html, sectionText) {
@@ -166,7 +182,197 @@ function fingerprint(title, orgOrCountry, deadline) {
   return (h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0'));
 }
 
+/* Is this deadline already gone? Compared in UTC, date-only -- a deadline has
+ * no timezone (CONTEXT.md §9.7). Unknown/!parseable -> false, i.e. keep it:
+ * never discard an opportunity just because we could not read its date. */
+function isPastDeadline(d, today) {
+  if (!d || !/^\d{4}-\d{2}-\d{2}/.test(String(d))) return false;
+  const ref = today || new Date().toISOString().slice(0, 10);
+  return String(d).slice(0, 10) < ref;
+}
+
+/* ---- funding / duration / timeline extraction -------------------------------
+ * Students cannot judge an opportunity from a title and a deadline. These pull
+ * the money, the length and the start out of the rendered page.
+ *
+ * Measured over 40 live detail pages (2026-10-01): a currency amount appears in
+ * 97%, stipend wording in 57%, a duration in 37%, timeline wording in 32%.
+ * Benefits text alone only carried money in 19/40, so these read the whole page.
+ * Everything returns null rather than a guess when nothing matches. */
+
+const CUR_SYMBOL = { '$': 'USD', '£': 'GBP', '€': 'EUR', '₹': 'INR' };
+const CUR_WORD = /^(USD|EUR|GBP|CHF|AED|INR|CAD|AUD|SGD|JPY|SEK|NOK|DKK)$/i;
+const PERIOD_RE = /\b(per|a|each|\/)\s*(month|year|annum|week|semester|term)\b/i;
+
+/* Every monetary amount on the page, newest-style first. Returns
+ * [{ currency, amount, period, raw }] -- period is null when unqualified. */
+function extractAmounts(text, limit = 8) {
+  const t = String(text || '').replace(/\s+/g, ' ');
+  const out = [];
+  const seen = new Set();
+  // symbol-prefixed ($45,000) or word-suffixed (45000 EUR)
+  const re = /(US\$|[\$£€₹])\s?([\d][\d,]*(?:\.\d+)?)|([\d][\d,]*(?:\.\d+)?)\s?([A-Z]{3})\b/g;
+  let m;
+  while ((m = re.exec(t)) !== null && out.length < limit) {
+    let currency, digits;
+    if (m[1]) {
+      currency = m[1] === 'US$' ? 'USD' : (CUR_SYMBOL[m[1]] || null);
+      digits = m[2];
+    } else {
+      if (!CUR_WORD.test(m[4])) continue;
+      currency = m[4].toUpperCase();
+      digits = m[3];
+    }
+    const amount = Number(String(digits).replace(/,/g, ''));
+    if (!isFinite(amount) || amount <= 0) continue;
+    // a bare year like 2027 is not money
+    if (!m[1] && amount >= 1900 && amount <= 2100 && !/[.,]/.test(digits)) continue;
+    const tail = t.slice(m.index + m[0].length, m.index + m[0].length + 24);
+    const pm = tail.match(PERIOD_RE);
+    const period = pm ? pm[2].toLowerCase().replace('annum', 'year') : null;
+    const key = `${currency}|${amount}|${period || ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ currency, amount, period, raw: m[0].trim() });
+  }
+  return out;
+}
+
+/* Does the page actually promise money, and how much of it? */
+function extractFunding(text) {
+  const t = String(text || '');
+  const amounts = extractAmounts(t);
+  const has = (re) => re.test(t);
+  const fully = has(/\bfully[-\s]?funded\b/i);
+  const partial = has(/\bpartial(?:ly)?[-\s]?fund/i);
+  const stipend = has(/\b(stipend|monthly allowance|living allowance|living (?:cost|expenses)|salary|honorarium)\b/i);
+  const tuition = has(/\btuition\b/i);
+  const travel = has(/\b(travel|airfare|flight)\s*(?:allowance|cost|expense|ticket)?s?\b/i);
+  const accommodation = has(/\b(accommodation|housing|lodging|hostel)\b/i);
+  const insurance = has(/\b(health|medical)\s+insurance\b/i);
+  const unfunded = has(/\b(self[-\s]funded|unfunded|no funding|unpaid)\b/i);
+
+  let kind = 'unknown';
+  if (fully) kind = 'fully_funded';
+  else if (unfunded) kind = 'unfunded';
+  else if (partial) kind = 'partially_funded';
+  else if (stipend && !tuition) kind = 'stipend_only';
+  else if (tuition && !stipend) kind = 'tuition_waiver';
+  else if (amounts.length || stipend || tuition) kind = 'partially_funded';
+
+  const covers = [];
+  if (stipend) covers.push('stipend');
+  if (tuition) covers.push('tuition');
+  if (travel) covers.push('travel');
+  if (accommodation) covers.push('accommodation');
+  if (insurance) covers.push('insurance');
+
+  // the headline figure: prefer a periodic amount, else the largest
+  let headline = amounts.find(a => a.period) || null;
+  if (!headline && amounts.length) {
+    headline = amounts.reduce((a, b) => (b.amount > a.amount ? b : a));
+  }
+  return { funding_kind: kind, covers, amounts, stipend: headline };
+}
+
+/* "12 months", "12-14 weeks", "two years" -> a normalised string. */
+const WORD_NUM = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8,
+                   nine:9, ten:10, eleven:11, twelve:12 };
+function extractDuration(text) {
+  const t = String(text || '').replace(/\s+/g, ' ');
+  let m = t.match(/\b(\d{1,2})\s*(?:-|–|to)\s*(\d{1,2})\s*(month|year|week|semester)s?\b/i);
+  if (m) return `${m[1]}-${m[2]} ${m[3].toLowerCase()}s`;
+  m = t.match(/\b(\d{1,2})\s*(month|year|week|semester)s?\b/i);
+  if (m) return `${m[1]} ${m[2].toLowerCase()}${m[1] === '1' ? '' : 's'}`;
+  m = t.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)[-\s](month|year|week|semester)s?\b/i);
+  if (m) {
+    const n = WORD_NUM[m[1].toLowerCase()];
+    return `${n} ${m[2].toLowerCase()}${n === 1 ? '' : 's'}`;
+  }
+  return null;
+}
+
+/* When it runs: an explicit start date, or a labelled programme period. */
+function extractTimeline(text) {
+  const t = String(text || '').replace(/\s+/g, ' ');
+  let m = t.match(/\b(?:programme?|course|fellowship|internship|session)\s+dates?\s*:?\s*([^.;|]{4,70})/i);
+  if (m) return m[1].trim();
+  m = t.match(/\b(?:start(?:s|ing)?|commenc(?:es|ing)|begin(?:s|ning)?)\s+(?:in|on|from)\s+([A-Z][a-z]+\s+\d{4}|\d{1,2}\s+[A-Z][a-z]+\s+\d{4}|[A-Z][a-z]+\s+\d{1,2},?\s+\d{4})/);
+  if (m) return `starts ${m[1].trim()}`;
+  m = t.match(/\b(?:duration|period)\s*(?:of the programme?)?\s*:?\s*([^.;|]{3,50})/i);
+  if (m) return m[1].trim();
+  return null;
+}
+
+/* robots.txt compliance, driven by the registry rather than by re-fetching
+ * robots.txt on every run. `sources.config.robots_disallow` holds the Disallow
+ * prefixes that matter for the pages we would actually fetch, and a URL whose
+ * path starts with one of them is never queued for a detail fetch.
+ *
+ * Example -- scholars4dev.com allows /wp-json/ (so the listing API is fine) but
+ * disallows /archives/, every /tag/... path, /about/about-us/, /io/ and four
+ * specific post pages. Checked 2026-10-01. Empty/absent list -> allow. */
+function robotsAllows(url, disallow) {
+  if (!Array.isArray(disallow) || !disallow.length) return true;
+  let path;
+  try {
+    const m = String(url || '').match(/^https?:\/\/[^/]+(\/[^?#]*)/);
+    path = m ? m[1] : '/';
+  } catch (e) { return true; }
+  return !disallow.some(d => d && path.toLowerCase().startsWith(String(d).toLowerCase()));
+}
+
+/* Query-string builder, because n8n's Code node runs in a VM that does NOT
+ * expose URLSearchParams -- it throws `URLSearchParams is not defined` at
+ * runtime, which structural validation and a plain-Node harness both miss
+ * (plain Node has the global; the n8n sandbox does not).
+ *
+ * Deliberately a drop-in for the subset we used: qs({...}) stands in for the
+ * WHATWG constructor, and .set()/.toString() behave the same. Empty,
+ * null and undefined values are skipped rather than serialised as "k=".
+ * Uses only Map and encodeURIComponent, both available in the sandbox. */
+function qs(init) {
+  const m = new Map(Object.entries(init || {}));
+  return {
+    set(k, v) { m.set(k, v); return this; },
+    has(k) { return m.has(k); },
+    toString() {
+      const out = [];
+      for (const [k, v] of m) {
+        if (v === undefined || v === null || v === '') continue;
+        out.push(encodeURIComponent(k) + '=' + encodeURIComponent(String(v)));
+      }
+      return out.join('&');
+    },
+  };
+}
+
+/* Registry-driven relevance filter. Several funder RSS feeds are site-wide news
+ * feeds, not opportunity feeds -- erc.europa.eu/rss.xml carries staff vacancies
+ * and presidential speeches, and erasmus-plus rss.xml carries form annexes. With
+ * no classifier in the pipeline, the registry has to do the filtering, so the
+ * patterns live in `sources.config.include_patterns` / `.exclude_patterns`
+ * (PROMPT.md rule 3: a config key, never a hostname in a node).
+ *
+ * Returns a predicate. No patterns configured -> everything passes, so existing
+ * sources are unaffected. */
+function sourceFilter(cfg) {
+  const build = (k) => ((cfg || {})[k] || []).map((p) => {
+    try { return new RegExp(p, 'i'); } catch { return null; }
+  }).filter(Boolean);
+  const inc = build('include_patterns');
+  const exc = build('exclude_patterns');
+  return function passes(text) {
+    const t = String(text || '');
+    if (exc.some(r => r.test(t))) return false;
+    if (inc.length && !inc.some(r => r.test(t))) return false;
+    return true;
+  };
+}
+
 if (typeof module !== 'undefined') module.exports = {
   plain, sections, pickSection, toISODate, extractDeadline,
-  extractApplyLink, meta, fingerprint, LINK_DENY, MONTHS,
+  extractApplyLink, meta, fingerprint, sourceFilter, qs, robotsAllows,
+  extractAmounts, extractFunding, extractDuration, extractTimeline,
+  isPastDeadline, LINK_DENY, MONTHS,
 };
