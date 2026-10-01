@@ -170,6 +170,22 @@ select {
 .tier { font-family: var(--f-mono); font-size: 9.5px; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; color: var(--ink-faint); }
 .tier.t1 { border-color: var(--accent); color: var(--accent); }
 
+.card p.elig {
+  margin: 0; font-size: 12.5px; color: var(--ink-soft);
+  background: var(--surface-2); border-radius: 8px; padding: 8px 10px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.card p.elig span {
+  display: block; font-family: var(--f-mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 3px;
+}
+.covers { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip.cover { background: var(--open-soft); color: var(--open); }
+.apply {
+  margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--accent);
+  text-decoration: none; white-space: nowrap;
+}
+.apply:hover { text-decoration: underline; text-underline-offset: 3px; }
 .empty, .loading {
   text-align: center; padding: 54px 18px; border: 1px dashed var(--line);
   border-radius: 12px; color: var(--ink-soft); background: var(--surface);
@@ -217,6 +233,10 @@ footer.note code { font-family: var(--f-mono); font-size: 11.5px; }
         <h2>Source tier</h2>
         <div class="opts" id="f-tier"></div>
       </div>
+      <div class="group">
+        <h2>Detail available</h2>
+        <div class="opts" id="f-detail"></div>
+      </div>
     </aside>
 
     <main>
@@ -246,13 +266,14 @@ footer.note code { font-family: var(--f-mono); font-size: 11.5px; }
   var DATA = [], VIEW = [], shown = 0, PAGE = 60;
   var TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
 
-  var state = { level: '', type: '', fund: '', when: '', tier: '', q: '', sort: 'deadline' };
+  var state = { level: '', type: '', fund: '', when: '', tier: '', detail: '', q: '', sort: 'deadline' };
 
   var LEVELS = [['', 'Any'], ['bachelors', "Bachelor's"], ['masters', "Master's"], ['phd', 'PhD'], ['postdoc', 'Postdoc']];
   var TYPES = [['', 'Any'], ['scholarship', 'Scholarship'], ['fellowship', 'Fellowship'], ['research_internship', 'Research internship'], ['internship', 'Internship'], ['grant', 'Grant'], ['summer_school', 'Summer school'], ['competition', 'Competition'], ['training', 'Training']];
   var FUNDS = [['', 'Any'], ['fully_funded', 'Fully funded'], ['partially_funded', 'Partial'], ['stipend_only', 'Stipend'], ['tuition_waiver', 'Tuition'], ['paid', 'Paid']];
   var WHENS = [['', 'Any'], ['30', 'Next 30 days'], ['90', 'Next 90 days'], ['year', 'By 31 Dec'], ['dated', 'Has a date'], ['rolling', 'Rolling / open']];
   var TIERS = [['', 'Any'], ['1', 'Tier 1 funder'], ['2', 'Tier 2 national'], ['3', 'Tier 3 aggregator']];
+  var DETAIL = [['', 'Any'], ['apply', 'Has apply link'], ['elig', 'Has eligibility'], ['money', 'Has an amount']];
 
   function days(d) {
     if (!d) return null;
@@ -288,7 +309,7 @@ footer.note code { font-family: var(--f-mono); font-size: 11.5px; }
   }
 
   function buildFilters() {
-    var defs = [['f-level', LEVELS, 'level'], ['f-type', TYPES, 'type'], ['f-fund', FUNDS, 'fund'], ['f-when', WHENS, 'when'], ['f-tier', TIERS, 'tier']];
+    var defs = [['f-level', LEVELS, 'level'], ['f-type', TYPES, 'type'], ['f-fund', FUNDS, 'fund'], ['f-when', WHENS, 'when'], ['f-tier', TIERS, 'tier'], ['f-detail', DETAIL, 'detail']];
     defs.forEach(function (d) {
       var el = document.getElementById(d[0]);
       el.innerHTML = d[1].map(function (o) {
@@ -302,6 +323,9 @@ footer.note code { font-family: var(--f-mono); font-size: 11.5px; }
     if (state.type && o.ty !== state.type) return false;
     if (state.fund && String(o.f || '') !== state.fund) return false;
     if (state.tier && String(o.st || '') !== state.tier) return false;
+    if (state.detail === 'apply' && !o.ap) return false;
+    if (state.detail === 'elig' && !o.el) return false;
+    if (state.detail === 'money' && !o.a) return false;
     if (state.when) {
       var n = days(o.d);
       if (state.when === 'rolling') { if (o.d) return false; }
@@ -346,9 +370,13 @@ footer.note code { font-family: var(--f-mono); font-size: 11.5px; }
       '</div>' +
       '<h3><a href="' + esc(o.u) + '" target="_blank" rel="noopener noreferrer">' + esc(o.t) + '</a></h3>' +
       (o.g ? '<p class="sum">' + esc(o.g) + '</p>' : '') +
+      (o.el ? '<p class="elig"><span>Eligibility</span>' + esc(o.el) + '</p>' : '') +
+      (o.cv && o.cv.length ? '<div class="covers">' + o.cv.map(function (c) {
+          return '<span class="chip cover">' + esc(titleCase(c)) + '</span>'; }).join('') + '</div>' : '') +
       '<div class="meta">' +
         '<span class="src">' + esc(o.sn) + (o.st ? ' <span class="tier' + (String(o.st) === '1' ? ' t1' : '') + '">T' + esc(o.st) + '</span>' : '') + '</span>' +
         bits.join('') +
+        (o.ap ? '<a class="apply" href="' + esc(o.ap) + '" target="_blank" rel="noopener noreferrer">Apply &rarr;</a>' : '') +
       '</div>' +
     '</article>';
   }
