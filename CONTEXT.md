@@ -27,7 +27,7 @@ Required capabilities, and where each one lives in this repo:
 
 | Requirement from the brief | Where it is implemented |
 | --- | --- |
-| Automatically collect from public sources | `n8n/workflows/W02,W04,W05,W06` — 16 registered sources |
+| Automatically collect from public sources | `n8n/workflows/W01` — 15 registered sources |
 | Organise by degree level (Bachelor's / Master's / PhD) | `opportunities.degree_levels` — source category hints + `W09` classifier |
 | Classify by field of study, eligibility, funding type | `opportunities.fields_of_study`, `eligibility_flags`, `funding_kind` — `W09` |
 | Extract and maintain deadlines + eligibility | `W03` detail parser, `W09` classifier |
@@ -45,35 +45,48 @@ the portal on their own.
 
 ## 2. Current state — what is real and what is not
 
-**Built, tested, in this repo:**
-- Postgres schema, views and the seeded source registry (`db/001`–`003`).
-- 8 n8n workflows, generated from source and structurally validated
-  (`python3 n8n/build.py` — checks node-name uniqueness, connection targets, and
-  that every `$('Node Name')` reference resolves).
-- The HTML/date parsing library, with unit tests that pass against three live
-  pages (`node tests/parse.test.mjs`).
-- All 16 source endpoints probed green (`./scripts/probe-sources.sh`).
+**Built, tested, in this repo (updated 2026-10-01):**
+- Postgres schema, views and the seeded source registry — **applied to Supabase**
+  (`000`→`005`). `select count(*) from sources` → 15. The legacy v0 table was
+  retired by `000` to `opportunities_v0_20261001`.
+- `W01 · Scrape Opportunities` — one registry-driven workflow, 28 nodes,
+  generated and structurally validated.
+- The HTML/date parsing library, with 30 passing assertions
+  (`node tests/parse.test.mjs`).
+- Normaliser tests against cached live API payloads — 27 passing assertions
+  (`node tests/normalize.test.mjs`).
+- A local harness that runs the real code nodes against the live internet with
+  no n8n and no Supabase (`node scripts/scrape-local.mjs`). **Last run
+  (2026-10-01): 1,491 items, 100% with a title and a URL, type hint on 91%,
+  degree level on 70%.** 13 of 15 sources return items; `erc` and
+  `erasmus_plus` correctly return 0 (see §13.10).
+- All 15 endpoints probed green, and the probe now asserts the response *carries
+  records* rather than merely returning 200.
 
 **NOT done yet — do not assume otherwise:**
-1. **The schema has never been applied to Supabase.** `db/*.sql` is unexecuted.
-2. **No workflow has ever run.** They have not been imported into n8n, because
-   there is no n8n API key yet. Structural validation is not execution.
-3. **No Anthropic credential exists in n8n**, so `W09` cannot run. Its node
-   carries the placeholder credential id `REPLACE_WITH_ANTHROPIC_CRED_ID`.
-4. **W13 (student matching + digest) does not exist.** Tables are there, logic is not.
-5. **The portal integration is one-way and mocked.** `W12` mirrors to the
-   existing Google Sheet; the webhook node is disabled and points at
-   `REPLACE-WITH-PORTAL-HOST`.
-6. `opportunity_sources` cross-source dedupe is written but never exercised — no
-   two sources have yet produced the same `fingerprint`.
-
----
+1. **W01 has never run inside n8n.** It has not been imported, because there is
+   still no `N8N_API_KEY`. The local harness exercises the parsing and planning
+   logic, *not* n8n's own nodes — its RSS reader, the PostgREST upsert
+   round-trip, or `splitInBatches` semantics. Those are still unproven.
+2. **Nothing has been written to `raw_items` yet.** It is empty.
+3. **There is no classifier.** `W09` was removed, so `opportunity_type`,
+   `degree_levels` and `fields_of_study` are only ever populated from source
+   taxonomy or a per-source branch. 9% of rows still have no type and 30% no
+   degree level, and **`fields_of_study` is empty on every row** — nothing in
+   the current pipeline can infer it.
+4. **Feed relevance is pattern-based, not semantic.** Migrations `006`/`007`
+   filter four news-heavy feeds by regex (§13.10). It works on today's titles;
+   it is not robust to a feed rewording things, and it is the one piece here
+   that would be better done by the classifier.
+5. **W13 (student matching + digest) does not exist.** Tables are there, logic is not.
+6. **The portal integration is gone** with `W12`; `v_portal_feed` still exists.
+7. `opportunity_sources` cross-source dedupe is written but never exercised.
 
 ## 3. Architecture
 
 ```
                    ┌──────────────────────────────────────────┐
-                   │  sources   (registry: 16 rows, tiers 1-3) │
+                   │  sources   (registry: 15 rows, tiers 1-3) │
                    └──────────────────────────────────────────┘
                         │ every fetch is driven by a row here
     ┌───────────────────┼───────────────────┬───────────────────┐
@@ -107,7 +120,7 @@ the portal on their own.
 
 **Why a landing zone.** `raw_items` keeps the verbatim source payload. When the
 classifier prompt changes, you re-run `W09` over stored rows — you do not
-re-crawl 16 sources. This is both cheaper and the polite thing to do.
+re-crawl 15 sources. This is both cheaper and the polite thing to do.
 
 ---
 
@@ -283,14 +296,26 @@ on the next import.
 
 | id | name | trigger | what it does |
 | --- | --- | --- | --- |
-| `W02` | Ingest · WordPress REST | daily 02:00 | probes `x-wp-totalpages`, plans exact page URLs, incremental via `modified_after`, normalises → `raw_items` |
-| `W03` | Enrich · Detail Fetch & Parse | every 3h, or called | drains `needs_detail`, fetches the rendered page, parses deadline / eligibility / benefits / how-to-apply / apply link, 2 s throttle |
-| `W04` | Ingest · POST APIs | daily 03:00 | grants.gov + NIH RePORTER; keyword matrix × pages |
-| `W05` | Ingest · RSS | daily 04:00 | 7 funder feeds; one item per `feed_urls[]` entry |
-| `W06` | Ingest · GET JSON APIs | daily 05:00 | NSF, CORDIS, OpenAIRE, DAAD |
-| `W09` | Classify & Upsert Canonical | every 15 min | Claude Haiku 4.5 with a **forced tool call** → schema-valid JSON → validate → upsert `opportunities` + provenance + audit row |
-| `W11` | Freshness Sweeper | daily 05:30 | expires past deadlines, flags `closing_soon` (≤30 d), re-opens recovered, checks ≤60 apply links per run |
-| `W12` | Portal Sync | daily 06:00 | `v_portal_feed` → Google Sheet (`appendOrUpdate` on `id`); webhook node disabled |
+| `W01` | Scrape Opportunities | daily 02:00, or manual | reads every enabled row in `sources`, routes by `kind` through `Route By Kind`, normalises → `raw_items`, then drains the detail queue in the same run |
+
+**W01 replaced W02–W06 on 2026-10-01** (one workflow, by request). Its four
+branches converge on one upsert:
+
+| branch | sources | nodes |
+| --- | --- | --- |
+| `wp_rest` | 3 | Build Probe URL → Probe Total Pages → Plan Pages → Fetch WP Page → Normalize WP |
+| `rss` | 6 | Expand Feed URLs → Read Feed → Normalize RSS |
+| `post_api` | 2 | Plan API Requests → Is POST? → Call POST API → Normalize API |
+| `json_api` | 4 | Plan API Requests → Is POST? → Call GET API → Normalize API |
+
+`post_api` and `json_api` share one planner (`plan_api.js`) and one normaliser;
+`Is POST?` picks the HTTP node. Because `Loop Sources` has `batchSize: 1`, only
+one kind is ever in flight per iteration, which is what makes the index pairing
+in `normalize_api.js` (`$('Plan API Requests').all()[i]`) safe.
+
+**Removed from the build** (2026-10-01, out of scope): `W09` classify, `W11`
+freshness sweeper, `W12` portal sync. Recoverable from git history — they were
+deleted, not rewritten. Their code nodes went with them.
 
 **Invariants every workflow must keep:**
 - Idempotent. Re-running must not duplicate rows — always `on_conflict`.
@@ -318,8 +343,10 @@ so you can tell which rows need reprocessing.
 1. **`python3 n8n/build.py` after every change.** `--check` fails on drift; use
    it as a pre-commit / CI gate.
 2. **Shared parsing lives in `_lib_html.js`.** Any code node whose header
-   comment contains a line with just `* LIB` gets the library injected at build
-   time. Fix a parser once, and every workflow gets the fix.
+   comment contains a line with just `* LIB` — with or without the closing
+   `*/` — gets the library injected at build time. Fix a parser once, and every
+   workflow gets the fix. `build.py` **fails the build** if a node calls a lib
+   helper without the lib injected; see §13.1 for why that guard exists.
 3. **`node tests/parse.test.mjs` must pass.** It asserts against three cached
    live pages in `tests/fixtures/`. Add a fixture whenever a new source shape
    appears — a parser change that breaks an old source is the main regression risk.
@@ -335,11 +362,18 @@ so you can tell which rows need reprocessing.
 ## 10. Verification loop
 
 ```bash
-node tests/parse.test.mjs          # parser unit + live-fixture tests
+node tests/parse.test.mjs          # parser unit + live-fixture tests (21 assertions)
+node tests/normalize.test.mjs      # normalisers vs cached API payloads (27 assertions)
 python3 n8n/build.py --check       # workflows match source
-./scripts/probe-sources.sh         # all 16 endpoints live
+./scripts/probe-sources.sh         # 15 endpoints, asserts records not just 200
+node scripts/scrape-local.mjs      # run the real code nodes against live sources
 ./scripts/n8n-import.sh            # push to n8n (needs N8N_API_KEY)
 ```
+
+`scrape-local.mjs` reads the **live** `sources` table when Supabase is reachable
+and falls back to `db/003_seed.sql` otherwise, so it always tests the config the
+workflow would actually read. `--only <kind|slug>` narrows it; `--detail N` also
+fetches and parses N detail pages.
 
 After the schema is applied, the smoke test is:
 
@@ -384,9 +418,98 @@ relative to total.
 
 ---
 
+## 13. Bugs found by actually running it (2026-10-01)
+
+Every one of these was invisible to `build.py` and to `probe-sources.sh`. They
+are recorded because each cost real time to find.
+
+1. **The shared library was never injected into any code node.** `build.py`
+   matched the marker with `^\s*\*\s*LIB\s*$`, but every code node writes it as
+   ` * LIB */` — the marker closes the header comment on the same line. So the
+   regex never matched and `plain`, `fingerprint`, `toISODate`,
+   `extractDeadline`, `sections` and `extractApplyLink` were **absent from the
+   generated JSON**. All four normalisers would have thrown
+   `plain is not defined` on their first execution — and the original W02–W12
+   shipped the same way (verified against git HEAD). Structural validation
+   passed throughout, because it only checked node names and `$()` references.
+   Fixed, and `validate()` now fails the build if a node calls a lib helper
+   without the lib. **If you add a code node that uses the lib, the build will
+   tell you — do not bypass that check.**
+
+2. **`class_list` is not always an array.** `opportunitydesk.org` returns it as
+   an object keyed by index (`{"0":"post-178813",…}`), so `.filter()` threw and
+   killed the run for every source queued behind it. `normalize_wp.js` now
+   coerces `class_list`, `categories` and `di_urgency` through one `arr()`
+   helper. Fixture: `tests/fixtures/api/wp_opportunity_desk.json`.
+
+3. **A 200 is not evidence a source still works.** `scholars4dev.com/feed/`
+   returned a valid, well-formed, **completely empty** RSS channel — 1,290 bytes,
+   zero `<item>` elements. The probe called it green while ingest got nothing.
+   `probe-sources.sh` now has `chk_has`, which asserts the body carries records.
+   The same site exposes a full WP REST API (`X-WP-Total: 477`), so migration
+   `004` changed its `kind` from `rss` to `wp_rest` — a registry edit, no
+   workflow change, which is the property rule 3 protects.
+
+4. **`cscuk.fcdo.gov.uk` sends `content-encoding: gzip` even with no
+   `Accept-Encoding`.** Plain `curl` pipes binary into `grep`, which is why the
+   new content assertion first reported 0 items for a feed that actually has 10.
+   `probe-sources.sh` uses `--compressed`. `fetch()` handles this by itself.
+
+5. **CORDIS `item_path` was wrong** (`hits.hits`; the API serves
+   `payload.results`). Beware `payload.records` — it is a *range string*
+   (`"1-5"`), not the records. Its dates are unresolved templates
+   (`1 {{month_01}} 2014`) and are deliberately not stored.
+
+6. **DAAD drops every row through a generic mapper**, because its courses are
+   keyed on `courseName`, not `title`, and `link` is relative.
+   `preparationForDegree` is null on every row of the unfiltered query, and
+   `courseType`'s numeric mapping is undocumented — so degree level is inferred
+   from the course name and `courseType` is kept in `raw`.
+
+7. **~13% of OpenAIRE project records are placeholders** whose title is the
+   literal string `"unidentified"` and whose `websiteUrl` is always null. They
+   are dropped, and the project URL is built from `id`.
+
+8. **A post's type must be chosen, not taken from the first category.**
+   `opportunitydesk` files "AfDB Internship Program" under both *Hot Jobs* and
+   *Internships*; `mapped[0]` made it a `job`. `normalize_wp.js` now resolves
+   type through an explicit `TYPE_RANK` precedence list.
+
+9. **The apply-link denylist needed `svfellow`.** All three sampled
+   opportunitiescircle detail pages returned `svfellow.com` — an unrelated
+   programme promoted through an Elementor button that outranks the real target.
+   The genuine links were `theforage.com`, `unicef.org/careers/internships` and
+   `erasmusintern.org/traineeships`. Guarded by an inline assertion in
+   `parse.test.mjs` (`tests/fixtures/*.html` is gitignored, so a file fixture
+   would not travel).
+
+10. **Four "funder" RSS feeds are site-wide news feeds.** Measured yields
+    before filtering: `erc` 0/10 real (staff vacancies, presidential speeches,
+    Davos), `erasmus_plus` 0/10 (form annexes, privacy statements, EU news),
+    `msca` 2/10, `commonwealth_cscuk` 2/10. For contrast `ukri_opportunities`
+    was 20/20 genuine calls and `nsf_funding` 10/10, so this is per-source, not
+    a global property of RSS. No dedicated opportunity feed exists for either EU
+    body — `erc.europa.eu/funding/rss.xml`, `/news-events/rss.xml`,
+    `/calls-proposals/feed`, and the erasmus-plus `/opportunities/` and `/calls/`
+    equivalents all 404. Handled by `sourceFilter()` in `_lib_html.js` driven by
+    `config.include_patterns` / `.exclude_patterns` (migrations `006`, `007`).
+    **Exclusions are evaluated before includes**, which matters because several
+    MSCA news items contain the word "fellowship". `erc` and `erasmus_plus`
+    staying at 0 items is the correct outcome, not a failure — they remain
+    enabled as a standing watch.
+
+11. **`nih_reporter` was labelling 200 awarded projects `research_internship`.**
+    They are awarded grants, not advertised openings, so this overstated that
+    category by 200 rows and implied a post a student could apply to. Now
+    `grant`, consistent with `nsf_awards` (non-REU), `cordis` and `openaire`.
+    REU sites in `nsf_awards` *are* genuinely `research_internship` and keep
+    that type, with `bachelors` as the level.
+
+---
+
 ## 12. Definition of done for the hackathon demo
 
-1. Schema applied; `v_source_health` shows 16 sources, none failing.
+1. Schema applied; `v_source_health` shows 15 sources, none failing.
 2. ≥ 300 classified opportunities with non-null `deadline` or an explicit
    `deadline_kind`, spanning bachelors / masters / phd.
 3. `W02` demonstrably incremental — show a run touching ~18 records.

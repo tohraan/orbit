@@ -4,3 +4,7 @@ node_modules/
 *.local.json
 tests/fixtures/*.html
 .DS_Store
+.local/
+__pycache__/
+*.pyc
+supabase/.temp/

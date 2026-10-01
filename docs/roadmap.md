@@ -14,7 +14,7 @@ Blocked on: Supabase service key, Anthropic API key, n8n API key (see PROMPT.md 
    `002_views.sql`, `003_seed.sql` (Studio → SQL Editor, or `psql`).
    `000` retires the v0 `opportunities` table from the original single-source
    workflow — without it, `001`'s `create table if not exists` silently skips and
-   every later insert fails. Confirm: `select count(*) from sources;` → 16.
+   every later insert fails. Confirm: `select count(*) from sources;` → 15.
 2. Create the Anthropic HTTP Header Auth credential in n8n, put its id into
    `CRED_ANTHROPIC` in `n8n/build.py`, rebuild.
 3. `./scripts/n8n-import.sh` — expect 8 workflows created.
@@ -43,7 +43,7 @@ fixed (CONTEXT.md §6.10).
 
 ---
 
-## Phase 2 — all 16 sources, backfilled
+## Phase 2 — all 15 sources, backfilled
 
 1. `update sources set enabled = true;` then run W04, W05, W06 manually.
 2. Expect per-source breakage; the generic normaliser has a fall-through branch,

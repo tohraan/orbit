@@ -26,5 +26,5 @@ Verify loop:
 ```bash
 node tests/parse.test.mjs      # parser unit + live-fixture tests
 python3 n8n/build.py --check   # generated JSON matches source
-./scripts/probe-sources.sh     # all 16 source endpoints reachable
+./scripts/probe-sources.sh     # all 15 source endpoints reachable
 ```

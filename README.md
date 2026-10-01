@@ -24,7 +24,7 @@ n8n/
   src/code/*.js     code nodes; _lib_html.js is the shared parsing library
   workflows/*.json  GENERATED — never hand-edit
 scripts/
-  probe-sources.sh  re-verify all 16 endpoints (non-zero exit if tier 1 is down)
+  probe-sources.sh  re-verify all 15 endpoints (non-zero exit if tier 1 is down)
   n8n-import.sh     push workflows to n8n, matched by name (needs N8N_API_KEY)
 tests/parse.test.mjs  parser unit tests + assertions against cached live pages
 ```
@@ -34,7 +34,7 @@ tests/parse.test.mjs  parser unit tests + assertions against cached live pages
 ```bash
 node tests/parse.test.mjs      # parser tests
 python3 n8n/build.py --check   # generated JSON matches source
-./scripts/probe-sources.sh     # all 16 endpoints reachable
+./scripts/probe-sources.sh     # all 15 endpoints reachable
 ```
 
 ## Pipeline

@@ -3,7 +3,8 @@
 Every row was probed live. `scripts/probe-sources.sh` reproduces the accepted
 set and exits non-zero if a tier-1 source is down.
 
-**Last full probe: 2026-09-30 — 16/16 accepted sources returned 200.**
+**Last full probe: 2026-10-01 — 15/15 accepted sources returned items** (not just
+200: the probe now asserts the body carries records, see below).
 
 Tiers: **1** primary funder (authoritative), **2** government / national scheme,
 **3** aggregator blog (broad and fast, but must be verified before students see it).
