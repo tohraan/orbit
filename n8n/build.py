@@ -395,6 +395,7 @@ return [{ json: { slug: s.slug, at: new Date().toISOString() } }];""",
     n_code("Parse Detail", "parse_detail.js", at(7, 3)),
     supa_patch("Save Detail", "raw_items?id=eq.{{ $json.id }}", at(8, 3),
                body=("={{ JSON.stringify({ detail: $json.detail, "
+                     "deadline: $json.deadline, deadline_kind: $json.deadline_kind, "
                      "detail_fetched_at: $json.detail_fetched_at, "
                      "detail_error: $json.detail_error, needs_detail: false }) }}")),
     n_wait("Throttle 2s", at(9, 3), 2),

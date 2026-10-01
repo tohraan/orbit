@@ -49,9 +49,22 @@ detail.duration       = extractDuration(text);  // "12 months", "12-14 weeks"
 detail.timeline       = extractTimeline(text);  // "starts September 2027"
 
 
+// For most sources the detail page is the ONLY place a deadline exists --
+// opportunity_desk and scholars4dev publish none in their listing API. Promote
+// what we parsed into the real column, but never over a date the listing
+// already gave us: a structured field beats prose. A sentinel or past date is
+// rejected by plausibleDeadline() rather than written.
+const parsedDeadline = plausibleDeadline(detail.deadline);
+const finalDeadline  = row.deadline || parsedDeadline || null;
+const finalKind      = row.deadline ? (row.deadline_kind || 'fixed')
+                     : parsedDeadline ? 'fixed'
+                     : (detail.deadline_kind || 'unknown');
+
 return { json: {
   id: row.id,
   detail,
+  deadline: finalDeadline,
+  deadline_kind: finalKind,
   detail_fetched_at: new Date().toISOString(),
   detail_error: null,
   needs_detail: false,
