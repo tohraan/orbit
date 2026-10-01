@@ -373,12 +373,20 @@ return [{ json: { slug: s.slug, at: new Date().toISOString() } }];""",
     # NOTE: rows with a NULL deadline are deliberately NOT queued here -- that is
     # where most of the saving comes from. They keep needs_detail = true, so
     # nothing is lost and widening the window later picks them up.
+    # Two tiers in one query: opportunities closing between today and 31 Dec
+    # FIRST (soonest deadline leads), then rows whose deadline is still unknown.
+    # The second tier matters because opportunity_desk and scholars4dev publish
+    # no structured deadline at all -- their date only exists on the detail
+    # page, so a window-only queue excluded exactly the rows it needed to fetch
+    # in order to learn the date. Ordering uses the promoted `deadline` column
+    # because PostgREST silently ignores ORDER BY on a jsonb path.
     supa_get("Get Detail Queue",
              "raw_items?needs_detail=is.true&detail_fetched_at=is.null"
-             "&payload->>deadline=gte.{{ $now.toISODate() }}"
-             "&payload->>deadline=lte.{{ $now.endOf('year').toISODate() }}"
-             "&select=id,url,source_slug,payload->>deadline"
-             "&order=payload->>deadline.asc&limit=200", at(4, 3)),
+             "&or=(deadline.is.null,"
+             "and(deadline.gte.{{ $now.toISODate() }},"
+             "deadline.lte.{{ $now.endOf('year').toISODate() }}))"
+             "&select=id,url,source_slug,deadline"
+             "&order=deadline.asc.nullslast&limit=200", at(4, 3)),
     n_loop("Loop Detail Queue", at(5, 3)),
     n_http("Fetch Detail Page", at(6, 3), url="={{ $json.url }}",
            headers={"User-Agent": UA, "Accept": "text/html,application/xhtml+xml",

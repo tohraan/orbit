@@ -34,11 +34,18 @@ for (const item of $input.all()) {
     country_hint: null, funding_hint: null, type_hint: null, level_hints: [],
   };
   if (isPastDeadline(payload.deadline)) continue;   // already closed -> never stored
+  if (payload.deadline && !plausibleDeadline(payload.deadline)) {
+    payload.deadline = null;
+    payload.deadline_kind = 'rolling';
+  }
   out.push({ json: {
     source_slug: src.slug,
     external_id: payload.external_id,
     url: link,
     payload,
+    // promoted out of the payload: PostgREST cannot ORDER BY a jsonb path
+    deadline: payload.deadline || null,
+    deadline_kind: payload.deadline_kind || null,
     content_hash: fingerprint(title, src.slug, payload.source_published_at),
     needs_detail: Boolean((src.config || {}).needs_detail),
     last_seen_at: nowISO,

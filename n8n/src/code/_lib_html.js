@@ -191,6 +191,23 @@ function isPastDeadline(d, today) {
   return String(d).slice(0, 10) < ref;
 }
 
+/* A deadline far enough out is not a deadline -- it is a sentinel. grants.gov
+ * uses 2099-01-01 to mean "no real close date", and showing a student a date 73
+ * years away is worse than showing none. Returns the date when it is plausible,
+ * otherwise null so the caller can fall back to a rolling/unknown kind.
+ *
+ * Window: not before `today`, and not more than `maxYears` ahead (default 10 --
+ * the longest genuine deadline seen in the registry is grants.gov's 2030). */
+function plausibleDeadline(d, today, maxYears) {
+  if (!d || !/^\d{4}-\d{2}-\d{2}/.test(String(d))) return null;
+  const date = String(d).slice(0, 10);
+  const ref = today || new Date().toISOString().slice(0, 10);
+  if (date < ref) return null;                       // already closed
+  const horizon = String(Number(ref.slice(0, 4)) + (maxYears || 10)) + ref.slice(4);
+  if (date > horizon) return null;                   // sentinel / data error
+  return date;
+}
+
 /* ---- funding / duration / timeline extraction -------------------------------
  * Students cannot judge an opportunity from a title and a deadline. These pull
  * the money, the length and the start out of the rendered page.
@@ -374,5 +391,5 @@ if (typeof module !== 'undefined') module.exports = {
   plain, sections, pickSection, toISODate, extractDeadline,
   extractApplyLink, meta, fingerprint, sourceFilter, qs, robotsAllows,
   extractAmounts, extractFunding, extractDuration, extractTimeline,
-  isPastDeadline, LINK_DENY, MONTHS,
+  isPastDeadline, plausibleDeadline, LINK_DENY, MONTHS,
 };

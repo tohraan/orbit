@@ -232,6 +232,14 @@ for (let i = 0; i < items.length; i++) {
     }
     if (!p.title) continue;
     if (isPastDeadline(p.deadline)) continue;   // already closed -> never stored
+    // A sentinel date (grants.gov uses 2099-01-01 for "no real close date") is
+    // not a deadline. Keep the row, drop the fake date, say it is rolling.
+    if (p.deadline && !plausibleDeadline(p.deadline)) {
+      p.deadline_note = p.deadline_note
+        || `Source listed ${p.deadline}, treated as no fixed deadline.`;
+      p.deadline = null;
+      p.deadline_kind = 'rolling';
+    }
     // provenance, so the portal can show "listed by <source>" and prefer tier 1
     p.source_name  = meta0.source_name || slug;
     p.source_tier  = meta0.source_tier;
@@ -241,6 +249,9 @@ for (let i = 0; i < items.length; i++) {
       external_id: p.external_id,
       url: p.url,
       payload: p,
+      // promoted out of the payload: PostgREST cannot ORDER BY a jsonb path
+      deadline: p.deadline || null,
+      deadline_kind: p.deadline_kind || null,
       content_hash: fingerprint(p.title, p.organisation || p.country_hint, p.deadline),
       needs_detail: false,
       last_seen_at: nowISO,

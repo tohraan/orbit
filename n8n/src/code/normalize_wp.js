@@ -52,6 +52,9 @@ for (const item of $input.all()) {
     const ppIsExpiry = Boolean(pp.enabled) && ppTerms.some(x => excl.includes(x));
     const ppDate = typeof pp.date === 'string' ? pp.date.slice(0, 10) : null;
     const scheduledExpiry = ppIsExpiry && /^\d{4}-\d{2}-\d{2}$/.test(ppDate || '') ? ppDate : null;
+    // A sentinel or implausibly distant date is not a deadline -- see
+    // plausibleDeadline(). Keep the row, just do not claim a date we do not have.
+    const safeExpiry = plausibleDeadline(scheduledExpiry);
 
     // --- tag-* terms carry funding / level / country / deadline-month hints
     const tagTerms = tag('tag-');
@@ -78,9 +81,9 @@ for (const item of $input.all()) {
       country_hint: tag('country-')[0] || null,
       funding_hint: tag('funding_type-')[0] || fundingFromTags || null,
       tags: tagTerms,
-      deadline: scheduledExpiry,
-      deadline_kind: scheduledExpiry ? 'fixed' : 'unknown',
-      deadline_source: scheduledExpiry ? 'site_scheduled_expiry' : null,
+      deadline: safeExpiry,
+      deadline_kind: safeExpiry ? 'fixed' : 'unknown',
+      deadline_source: safeExpiry ? 'site_scheduled_expiry' : null,
       category_ids: cats,
       type_hint: pickType(mapped),
       level_hints: [...new Set([...levels, ...levelsFromTags])],
@@ -110,6 +113,9 @@ for (const item of $input.all()) {
       external_id: payload.external_id,
       url: payload.url,
       payload,
+      // promoted out of the payload: PostgREST cannot ORDER BY a jsonb path
+      deadline: payload.deadline || null,
+      deadline_kind: payload.deadline_kind || null,
       content_hash: fingerprint(payload.title + payload.summary, payload.country_hint, payload.source_modified_at),
       needs_detail: Boolean(cfg.needs_detail) && !skipDetail,
       last_seen_at: new Date().toISOString(),

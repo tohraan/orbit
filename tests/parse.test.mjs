@@ -41,6 +41,21 @@ console.log('\n# isPastDeadline — closed opportunities are never stored');
   ok(L.isPastDeadline('2026-09-30T23:59:00', T) === true, 'timestamp form compares date-only');
 }
 
+console.log('\n# plausibleDeadline — sentinel dates are not deadlines');
+{
+  const T = '2026-10-01';
+  // grants.gov uses 2099-01-01 to mean "no real close date". Showing a student
+  // a deadline 73 years out is worse than showing none.
+  ok(L.plausibleDeadline('2099-01-01', T) === null, '2099 sentinel rejected');
+  ok(L.plausibleDeadline('2040-01-01', T) === null, 'beyond the 10y horizon rejected');
+  ok(L.plausibleDeadline('2026-09-30', T) === null, 'already-closed rejected');
+  ok(L.plausibleDeadline('2030-10-14', T) === '2030-10-14', 'genuine far deadline kept');
+  ok(L.plausibleDeadline('2026-10-01', T) === '2026-10-01', 'today kept');
+  ok(L.plausibleDeadline('2026-12-31', T) === '2026-12-31', 'end of year kept');
+  ok(L.plausibleDeadline(null, T) === null, 'null in, null out');
+  ok(L.plausibleDeadline('varies', T) === null, 'unparseable in, null out');
+}
+
 console.log('\n# robotsAllows — registry-driven robots.txt compliance');
 {
   // scholars4dev.com/robots.txt, read 2026-10-01.
