@@ -23,7 +23,8 @@ import { BentoSkeleton } from "@/components/feedback/Skeletons";
 import { useItemsByIds } from "@/lib/useApi";
 import { FUNDING_LABELS, countryLabel, deadlineState, fundingBucket, relativeTime, titleCase, typeLabel } from "@rof/core";
 import type { OpportunityDetail, OpportunitySummary } from "@rof/core";
-import { MAX_COMPARE, useCompare } from "@/lib/store";
+import { MAX_COMPARE, useCompare } from "@/lib/data";
+import { StartHere } from "@/components/feedback/StartHere";
 
 type Row = { key: string; label: string; render: (o: OpportunitySummary) => React.ReactNode; has: (o: OpportunitySummary) => boolean };
 
@@ -119,11 +120,7 @@ export default function ComparePage() {
           icon="compare"
           title="Nothing selected to compare"
           body="Press Compare on two opportunities while browsing, and they will appear here side by side."
-          actions={
-            <ButtonLink href="/explore" variant="primary">
-              Explore opportunities
-            </ButtonLink>
-          }
+          actions={<StartHere />}
         />
       ) : error ? (
         <ErrorState

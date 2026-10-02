@@ -42,7 +42,7 @@
   text-transform: uppercase;
   color: var(--color-text-muted);
   padding: 5px var(--s-3);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
 }
 .stepPipOn { color: var(--color-action-text); background: var(--color-action); }

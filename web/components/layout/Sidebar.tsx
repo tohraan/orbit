@@ -14,7 +14,8 @@ import s from "./layout.module.css";
 import { Icon } from "../ui/Icon";
 import { PRIMARY_NAV, SECONDARY_NAV, type NavItem } from "./nav";
 import { APP_NAME, APP_TAGLINE } from "./brand";
-import { useCompare, useProfile, useSaved, useTracker } from "@/lib/store";
+import { useCompare, useProfile, useSaved, useTracker } from "@/lib/data";
+import { useAuth } from "@/lib/auth";
 
 function Row({ item, counts }: { item: NavItem; counts: Record<string, number> }) {
   const pathname = usePathname();
@@ -42,6 +43,8 @@ export function Sidebar() {
   const { compare } = useCompare();
   const { entries } = useTracker();
   const { profile, started } = useProfile();
+  const { status, user, configured } = useAuth();
+  const signedIn = status === "signed-in";
   const counts = { saved: saved.length, compare: compare.length, tracker: entries.length };
 
   const name = profile.name.trim();
@@ -49,7 +52,7 @@ export function Sidebar() {
     name
       .split(/\s+/)
       .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase())
+      .map((part: string) => part[0]?.toUpperCase())
       .join("") || "·";
 
   return (
@@ -79,14 +82,20 @@ export function Sidebar() {
       <div className={s.sidebarFoot}>
         {/* The account slab: who is signed in on this device, and the way into
             their details. Last element in the rail, by design. */}
-        <Link href={started ? "/profile" : "/welcome"} className={s.account}>
+        <Link href={signedIn ? "/account" : configured ? "/account" : started ? "/profile" : "/welcome"} className={s.account}>
           <span className={s.avatar} aria-hidden="true">
             {initials}
           </span>
           <span className={s.accountBody}>
-            <span className={s.accountName}>{name || "Set up your profile"}</span>
+            <span className={s.accountName}>{name || (signedIn ? user?.email : "Sign in to sync") || "Set up your profile"}</span>
             <span className={s.accountSub}>
-              {started ? profile.email || profile.course || "View your details" : "Takes about a minute"}
+              {signedIn
+                ? user?.email || "Signed in"
+                : configured
+                  ? "Keep your work across devices"
+                  : started
+                    ? profile.course || "View your details"
+                    : "Takes about a minute"}
             </span>
           </span>
           <Icon name="chevron-right" size={15} />

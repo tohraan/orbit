@@ -17,15 +17,28 @@
 
 .bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s-6); }
 
+/* §24: bento sizing follows content importance, never a wish to fill space.
+   The match panel is the screen's one real call to action, so it takes the
+   largest cell and the strongest surface; the counts and the deadline spread
+   are reference, so they sit narrower beside it. */
+.hero { grid-column: span 8; }
+.rail { grid-column: span 4; }
 .wide { grid-column: span 7; }
 .narrow { grid-column: span 5; }
 .half { grid-column: span 6; }
+.third { grid-column: span 4; }
 .full { grid-column: span 12; }
 
 /* §66: reflow the bento, do not shrink it until the text breaks. */
+@media (max-width: 1279px) {
+  /* A 4-wide rail stops being readable before the grid does, so the pair
+     breaks to full width one step earlier than everything else. */
+  .hero, .rail { grid-column: span 12; }
+  .third { grid-column: span 6; }
+}
 @media (max-width: 1023px) {
   .bento { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--s-5); }
-  .wide, .narrow, .half, .full { grid-column: span 6; }
+  .hero, .rail, .wide, .narrow, .half, .third, .full { grid-column: span 6; }
 }
 @media (max-width: 639px) { .bento { gap: var(--s-4); } }
 
@@ -113,3 +126,33 @@
  * look deliberate and say nothing. */
 .bandFill { display: block; height: 100%; border-radius: 3px; background: var(--color-action); }
 .bandCount { flex: none; width: 34px; text-align: right; font-family: var(--font-mono); font-size: var(--text-meta); font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+
+
+/* The high-CTA cell. Tinted one step off the page so it reads as the thing to
+   act on without a border treatment that would make it look like an alert. */
+.boxAccent {
+  background: linear-gradient(0deg, var(--surface-compare), var(--surface-compare)),
+              var(--color-surface);
+  border-color: var(--surface-compare-border);
+}
+
+/* A compact stat strip for the rail: four numbers, no chrome. */
+.statRows { display: flex; flex-direction: column; }
+.statRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-block: var(--s-3);
+  border-bottom: 1px solid var(--color-border);
+}
+.statRow:last-child { border-bottom: 0; }
+.statRow:hover .statLabel { color: var(--color-link); }
+.statLabel { font-size: var(--text-body-sm); color: var(--color-text-secondary); }
+.statValue {
+  font-family: var(--font-mono);
+  font-size: var(--text-section);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.statValueUrgent { color: var(--color-danger); }

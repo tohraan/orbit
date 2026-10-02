@@ -98,12 +98,15 @@ export function DetailScreen({ id }: { id: string }) {
           </div>
 
           <div className={s.heroActions}>
-            <ExternalButton href={applyHref} variant="primary" size="lg">
+            {/* One height across the whole row. The primary action is
+                dominant through colour (§50), not through being taller than
+                the controls beside it. */}
+            <ExternalButton href={applyHref} variant="primary">
               {o.applyLink ? "Apply on the official page" : "Open the official listing"}
             </ExternalButton>
-            <SaveButton id={o.id} title={o.title} labelled />
-            <CompareButton id={o.id} title={o.title} />
-            <TrackControl id={o.id} />
+            <SaveButton id={o.id} title={o.title} labelled size="md" />
+            <CompareButton id={o.id} title={o.title} size="md" />
+            <TrackControl id={o.id} size="md" />
           </div>
         </div>
 

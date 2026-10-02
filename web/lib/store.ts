@@ -345,6 +345,10 @@ export function useUserId(): string {
 
 export function useProfile() {
   const { value, ready, commit } = usePersisted<Profile>("profile", profile, EMPTY_PROFILE);
+  /* Exposed so lib/data.ts can hand the whole local state to the migration
+   * when an account first signs in on this browser. */
+  const localSaved = usePersisted<number[]>("saved", ids, []);
+  const localTracker = usePersisted<TrackerEntry[]>("tracker", tracker, []);
 
   const started = Boolean(value.name || value.level || value.fields.trim());
   const reviewedDays = value.reviewedAt
@@ -354,6 +358,8 @@ export function useProfile() {
   return {
     profile: value,
     ready,
+    saved: localSaved.value,
+    entries: localTracker.value,
     /** Has the student filled in anything at all? Drives the onboarding prompt. */
     started,
     /** Stale enough to ask them to look it over again. */

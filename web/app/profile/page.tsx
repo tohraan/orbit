@@ -20,7 +20,7 @@ import u from "@/components/ui/ui.module.css";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { CampusEmail, PhoneField, Select, TagPicker } from "@/components/ui/Field";
 import { useToast } from "@/components/feedback/Toast";
-import { EMPTY_PROFILE, useProfile, useSaved, useTracker, type Profile } from "@/lib/store";
+import { EMPTY_PROFILE, useProfile, useSaved, useTracker, type Profile } from "@/lib/data";
 import { RATES_AS_OF } from "@rof/core";
 
 const LEVELS = [

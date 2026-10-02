@@ -17,6 +17,7 @@ import { Header, MobileHeader } from "./Header";
 import { CompareTray } from "../comparison/CompareTray";
 import { ToastProvider } from "../feedback/Toast";
 import { CommandPalette, useCommandPalette } from "../command/CommandPalette";
+import { AuthProvider } from "@/lib/auth";
 
 export function AppShell({ children }: { children: ReactNode }) {
   /* ⌘K / Ctrl-K lives at the shell, so the shortcut works on every screen and
@@ -24,6 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { open, setOpen } = useCommandPalette();
 
   return (
+    <AuthProvider>
     <ToastProvider>
       <div className={s.shell}>
         <Sidebar />
@@ -39,6 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <CommandPalette open={open} onClose={() => setOpen(false)} />
       </div>
     </ToastProvider>
+    </AuthProvider>
   );
 }
 

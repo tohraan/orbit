@@ -8,7 +8,7 @@ import s from "../ui/ui.module.css";
 import { Icon } from "../ui/Icon";
 import { useToast } from "../feedback/Toast";
 import { Select } from "../ui/Field";
-import { MAX_COMPARE, STATUSES, STATUS_LABELS, useCompare, useSaved, useTracker, type Status } from "@/lib/store";
+import { MAX_COMPARE, STATUSES, STATUS_LABELS, useCompare, useSaved, useTracker, type Status } from "@/lib/data";
 
 /* §78: the saved state is a FILLED bookmark — a state change, not a second
  * icon style (§59). aria-pressed carries the same information for anyone not
@@ -17,10 +17,15 @@ export function SaveButton({
   id,
   title,
   labelled,
+  size = "sm",
 }: {
   id: number;
   title?: string;
   labelled?: boolean;
+  /* So a row of actions can be made one height. A primary button that is
+   * taller than the controls beside it is the kind of detail that makes an
+   * interface look unfinished, however good the rest of it is. */
+  size?: "sm" | "md";
 }) {
   const { isSaved, toggle, ready } = useSaved();
   const toast = useToast();
@@ -35,7 +40,7 @@ export function SaveButton({
     return (
       <button
         type="button"
-        className={[s.btn, s.secondary, s.sm].join(" ")}
+        className={[s.btn, s.secondary, size === "sm" ? s.sm : null].filter(Boolean).join(" ")}
         aria-pressed={on}
         onClick={click}
         disabled={!ready}
@@ -66,7 +71,7 @@ export function SaveButton({
  * stronger border when selected, and the count lives in the tray. The limit is
  * two; useCompare() displaces the oldest rather than refusing the click, and
  * the toast says which one went. */
-export function CompareButton({ id, title }: { id: number; title?: string }) {
+export function CompareButton({ id, title, size = "sm" }: { id: number; title?: string; size?: "sm" | "md" }) {
   const { isCompared, toggle, ready } = useCompare();
   const toast = useToast();
   const on = isCompared(id);
@@ -74,7 +79,7 @@ export function CompareButton({ id, title }: { id: number; title?: string }) {
   return (
     <button
       type="button"
-      className={[s.btn, on ? s.primary : s.secondary, s.sm].join(" ")}
+      className={[s.btn, on ? s.primary : s.secondary, size === "sm" ? s.sm : null].filter(Boolean).join(" ")}
       aria-pressed={on}
       aria-label={on ? `Remove ${title ?? "this opportunity"} from comparison` : `Compare ${title ?? "this opportunity"}`}
       onClick={() => {
@@ -93,7 +98,7 @@ export function CompareButton({ id, title }: { id: number; title?: string }) {
 
 /* §53: the status model, and §53 again — the status is visually secondary to
  * the opportunity. So this is a plain select, not six coloured buttons. */
-export function TrackControl({ id }: { id: number }) {
+export function TrackControl({ id, size = "sm" }: { id: number; size?: "sm" | "md" }) {
   const { statusOf, set, remove, ready } = useTracker();
   const toast = useToast();
   const current = statusOf(id);
@@ -101,7 +106,7 @@ export function TrackControl({ id }: { id: number }) {
   return (
     <span style={{ minWidth: 150, display: "inline-block" }}>
       <Select
-        size="sm"
+        size={size}
         value={current ?? ""}
         ariaLabel="Application status"
         options={[

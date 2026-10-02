@@ -21,7 +21,8 @@ import { Chip } from "@/components/ui/Chip";
 import { useItemsByIds } from "@/lib/useApi";
 import { relativeTime, typeLabel } from "@rof/core";
 import type { OpportunitySummary } from "@rof/core";
-import { STATUSES, STATUS_LABELS, STATUS_TONE, useTracker, type Status } from "@/lib/store";
+import { STATUSES, STATUS_LABELS, STATUS_TONE, useTracker, type Status } from "@/lib/data";
+import { StartHere } from "@/components/feedback/StartHere";
 
 export default function ApplicationsPage() {
   const { entries, ready, clear } = useTracker();
@@ -69,11 +70,7 @@ export default function ApplicationsPage() {
           icon="applications"
           title="No applications tracked yet"
           body="Open any opportunity and set a status — Interested, Planning, Applied — and it will appear here beside its deadline."
-          actions={
-            <ButtonLink href="/explore" variant="primary">
-              Explore opportunities
-            </ButtonLink>
-          }
+          actions={<StartHere />}
         />
       ) : error ? (
         <ErrorState

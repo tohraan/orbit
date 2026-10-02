@@ -179,7 +179,12 @@
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-2xl: 24px;
+  /* Reserved for the one element that is genuinely a circle — the avatar.
+     §11: "Do not make every element pill-shaped." Chips, badges and step
+     markers all use the square scale, so a chip reads as a label rather than
+     as a button someone forgot to finish. */
   --radius-pill: 999px;
+  --radius-chip: 6px;
   --radius-control: 10px;
 
   /* --- shadow (§13): borders carry the weight, not elevation --- */
@@ -200,7 +205,7 @@
   --mobile-nav-h: 68px;
   --container-max: 1280px;
   --page-pad-x: 40px;
-  --card-h: 344px;
+  --card-h: 392px;
 }
 
 /* --- dark theme ---------------------------------------------------------

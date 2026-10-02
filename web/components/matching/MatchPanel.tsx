@@ -27,11 +27,13 @@ export function MatchPanel({
   items,
   profile,
   started,
-  limit = 3,
+  loading,
+  limit = 4,
 }: {
   items: OpportunitySummary[];
   profile: StudentProfile;
   started: boolean;
+  loading?: boolean;
   limit?: number;
 }) {
   const missing = useMemo(() => gaps(profile), [profile]);
@@ -39,6 +41,21 @@ export function MatchPanel({
     () => (started ? rank(items, profile).slice(0, limit) : []),
     [items, profile, started, limit],
   );
+
+  /* Loading is its own state. Rendering the weights footnote under nothing at
+   * all made the panel look like a disclaimer with no content attached. */
+  if (loading) {
+    return (
+      <div className={s.panel}>
+        <div className={s.head}>
+          <h2 className="t-section">Matched for you</h2>
+        </div>
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="skeleton" style={{ height: 62, borderRadius: 10, display: "block" }} />
+        ))}
+      </div>
+    );
+  }
 
   if (!started) {
     return (
@@ -121,12 +138,14 @@ export function MatchPanel({
         );
       })}
 
-      <p className={s.confidence}>
+      {ranked.length ? (
+        <p className={s.confidence}>
         Scores come from a published set of weights — degree level {34}%, field {26}%, funding {18}%,
         country {12}%, time to prepare {10}% — not from a trained model. Every point above is
-        attributable to one of the reasons shown, and the ranking is a starting point, not a judgement
-        about whether you will be accepted.
-      </p>
+          attributable to one of the reasons shown, and the ranking is a starting point, not a judgement
+          about whether you will be accepted.
+        </p>
+      ) : null}
     </div>
   );
 }

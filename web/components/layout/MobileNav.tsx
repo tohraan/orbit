@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import s from "./layout.module.css";
 import { Icon } from "../ui/Icon";
 import { MOBILE_NAV } from "./nav";
-import { useCompare, useSaved, useTracker } from "@/lib/store";
+import { useCompare, useSaved, useTracker } from "@/lib/data";
 
 /* §19: the desktop sidebar becomes this. §67: never both at once — the CSS in
  * layout.module.css makes them mutually exclusive at 1024px. */

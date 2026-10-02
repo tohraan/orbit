@@ -81,9 +81,9 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 22px;
-  padding-inline: var(--s-2);
-  border-radius: var(--radius-sm);
+  height: 24px;
+  padding-inline: 7px;
+  border-radius: var(--radius-chip);
   border: 1px solid var(--color-border);
   background: var(--color-surface-secondary);
   color: var(--color-text-secondary);

@@ -87,17 +87,74 @@
   flex: none;
 }
 
-/* §62: two to four metadata fields, no more. §3.2 forbids stacking badges, and
- * a wrapped third row of chips is exactly the stacking it means -- so the row
- * is allowed to wrap once and no further. */
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
+/* ----------------------------------------------------- structured facts ---
+   A loose row of chips makes the eye hunt: funding, country and level all look
+   alike, so finding "which country" means reading all of them. An inset panel
+   with labelled rows means each fact has a fixed place on every card in the
+   grid, and the eye goes straight to the line it wants (§3.1 — identical
+   metadata placement; §110 — scan title, funding, deadline, action).
+
+   One surface level down from the card, per §95's four-surface limit. */
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 7px var(--s-3);
+  align-items: baseline;
+  padding: var(--s-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
   flex: none;
-  max-height: 52px;
-  overflow: hidden;
 }
+
+.factLabel {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.factValue {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.factValueMuted { color: var(--color-text-muted); }
+
+/* The two facts that decide whether to open a listing at all get their own
+   band, tinted by urgency so the row is readable at a glance from across the
+   grid. §33: the tint follows the deadline, not the card. */
+.decide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
+  flex: none;
+  min-height: 42px;
+}
+.decideUrgent { background: var(--surface-urgent); border-color: var(--surface-urgent-border); }
+.decideSoon { background: var(--surface-soon); border-color: var(--surface-soon-border); }
+.decideFunded { background: var(--surface-funding); border-color: var(--surface-funding-border); }
+
+.decideLeft { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.decideLabel {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.decideValue { font-size: var(--text-body-sm); font-weight: 600; }
+.decideRight { flex: none; text-align: right; min-width: 0; }
 
 /* Everything below is pinned to the bottom so the deadline and the actions sit
    on the same line across the whole row (§3.1, §79). */

@@ -20,7 +20,8 @@ import { APP_NAME } from "./brand";
 import { useItemsByIds } from "@/lib/useApi";
 import { daysUntil } from "@rof/core";
 import type { OpportunitySummary } from "@rof/core";
-import { useProfile, useSaved, useTracker } from "@/lib/store";
+import { useProfile, useSaved, useTracker } from "@/lib/data";
+import { useAuth } from "@/lib/auth";
 
 /* In-site notifications, derived rather than stored: anything saved or tracked
  * that is closing soon, plus a nudge when the profile is empty. Nothing is
@@ -132,19 +133,22 @@ function AccountMenu() {
   const [open, setOpen] = useState(false);
   const ref = useAway(() => setOpen(false));
   const router = useRouter();
-  const { profile, started } = useProfile();
+  const { profile, started, isStaff } = useProfile();
+  const { status, user, signOut, configured } = useAuth();
+  const signedIn = status === "signed-in";
 
   const initials =
-    profile.name
+    (profile.name || user?.email || "")
       .trim()
-      .split(/\s+/)
+      .split(/[\s@.]+/)
       .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase())
+      .map((part: string) => part[0]?.toUpperCase())
       .join("") || "·";
 
-  /* "Sign out" with no accounts would be a lie, so the destructive action is
-   * named for what it actually does: clears this student's data from this
-   * browser. It asks first, because it cannot be undone. */
+  /* Two different destructive actions, named for what they actually do.
+   * Signed in, the data lives in Supabase and signing out simply ends the
+   * session. Signed out, there is no session — only this browser's copy — so
+   * the honest action is to clear it, and it asks first. */
   function clearDevice() {
     const ok = window.confirm(
       "This clears your profile, saved list and tracked applications from this browser. It cannot be undone. Continue?",
@@ -172,14 +176,22 @@ function AccountMenu() {
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        {started ? <span style={{ fontSize: 12, fontWeight: 600 }}>{initials}</span> : <Icon name="user" size={17} />}
+        {signedIn || started ? <span style={{ fontSize: 12, fontWeight: 600 }}>{initials}</span> : <Icon name="user" size={17} />}
       </button>
 
       {open ? (
         <div className={[s.menu, s.menuNarrow].join(" ")} role="menu">
           <div className={s.menuHead}>
-            <span className={s.menuTitle}>{profile.name.trim() || "Your account"}</span>
+            <span className={s.menuTitle}>{profile.name.trim() || user?.email || "Your account"}</span>
           </div>
+
+          {configured && !signedIn ? (
+            <Link href="/account" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
+              <Icon name="user" size={16} />
+              Sign in or create an account
+            </Link>
+          ) : null}
+
           <Link href="/profile" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
             <Icon name="user" size={16} />
             Profile and preferences
@@ -188,15 +200,35 @@ function AccountMenu() {
             <Icon name="sparkle" size={16} />
             Re-run setup
           </Link>
-          <Link href="/admin" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
-            <Icon name="shield" size={16} />
-            College desk
-          </Link>
+          {isStaff || !configured ? (
+            <Link href="/admin" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
+              <Icon name="shield" size={16} />
+              College desk
+            </Link>
+          ) : null}
+
           <div className={s.menuRule} />
-          <button type="button" className={[s.menuItem, s.menuItemDanger].join(" ")} role="menuitem" onClick={clearDevice}>
-            <Icon name="trash" size={16} />
-            Clear my data
-          </button>
+
+          {signedIn ? (
+            <button
+              type="button"
+              className={s.menuItem}
+              role="menuitem"
+              onClick={async () => {
+                await signOut();
+                setOpen(false);
+                router.push("/");
+              }}
+            >
+              <Icon name="close" size={16} />
+              Sign out
+            </button>
+          ) : (
+            <button type="button" className={[s.menuItem, s.menuItemDanger].join(" ")} role="menuitem" onClick={clearDevice}>
+              <Icon name="trash" size={16} />
+              Clear my data
+            </button>
+          )}
         </div>
       ) : null}
     </div>

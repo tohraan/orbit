@@ -30,7 +30,7 @@
   min-width: 18px;
   height: 18px;
   padding-inline: 5px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-chip);
   background: var(--color-action);
   color: var(--color-action-text);
   font-family: var(--font-mono);

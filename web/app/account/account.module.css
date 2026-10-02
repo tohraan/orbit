@@ -1,0 +1,107 @@
+/* Sign in and sign up. One screen, two modes — a separate /signup route would
+   double the surface for a form with one extra field.
+
+   Micro-interaction, not animation for its own sake: the panel settles in on
+   mount, the mode swap cross-fades the fields that change, and the submit
+   button shows real state. Everything is under 200ms and everything is
+   disabled under prefers-reduced-motion (§76). */
+
+.shell {
+  max-width: 440px;
+  margin-inline: auto;
+  padding-block: var(--s-10);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding: var(--s-8) var(--s-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  animation: settle 220ms var(--ease) both;
+}
+@keyframes settle {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.mark { width: 44px; height: 44px; object-fit: contain; }
+
+.head { display: flex; flex-direction: column; gap: var(--s-2); }
+
+.fields { display: flex; flex-direction: column; gap: var(--s-4); }
+.field { display: flex; flex-direction: column; gap: var(--s-2); }
+.label { font-size: var(--text-body-sm); font-weight: 500; }
+.hint { font-size: var(--text-meta); color: var(--color-text-muted); }
+
+.input {
+  height: 44px;
+  padding-inline: var(--s-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-primary);
+  width: 100%;
+  transition: border-color var(--motion-fast) var(--ease);
+}
+.input:focus { outline: 2px solid var(--color-action); outline-offset: 2px; border-color: var(--color-border-active); }
+
+/* A field that only exists in one mode slides in rather than appearing, so the
+   form does not look like it jumped. */
+.conditional { animation: reveal 180ms var(--ease) both; }
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.error {
+  display: flex;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-urgent);
+  border: 1px solid var(--surface-urgent-border);
+  color: var(--ink-urgent);
+  font-size: var(--text-body-sm);
+  animation: reveal 180ms var(--ease) both;
+}
+
+.ok {
+  display: flex;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-funding);
+  border: 1px solid var(--surface-funding-border);
+  color: var(--ink-funding);
+  font-size: var(--text-body-sm);
+  animation: reveal 180ms var(--ease) both;
+}
+
+.foot { display: flex; flex-direction: column; gap: var(--s-3); padding-top: var(--s-4); border-top: 1px solid var(--color-border); }
+.switch { font-size: var(--text-body-sm); color: var(--color-text-secondary); text-align: center; }
+.switchBtn { color: var(--color-link); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
+
+.note { font-size: var(--text-meta); color: var(--color-text-muted); line-height: 1.5; }
+
+/* Signed-in view */
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding-block: var(--s-3);
+  border-bottom: 1px solid var(--color-border);
+}
+.row:last-child { border-bottom: 0; }
+.rowKey { font-size: var(--text-meta); color: var(--color-text-muted); }
+.rowVal { font-size: var(--text-body-sm); text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+@media (prefers-reduced-motion: reduce) {
+  .panel, .conditional, .error, .ok { animation: none; }
+}

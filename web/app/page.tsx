@@ -26,7 +26,7 @@ import { Icon } from "@/components/ui/Icon";
 import { useApi } from "@/lib/useApi";
 import { relativeTime, typeLabel } from "@rof/core";
 import type { OpportunitySummary, Stats } from "@rof/core";
-import { STATUS_LABELS, STATUS_TONE, useProfile, useSaved, useSessionSeed, useTracker } from "@/lib/store";
+import { STATUS_LABELS, STATUS_TONE, useProfile, useSaved, useSessionSeed, useTracker } from "@/lib/data";
 import { MatchPanel } from "@/components/matching/MatchPanel";
 import { api } from "@/lib/api-base";
 
@@ -83,62 +83,43 @@ export default function HomePage() {
       />
 
       <div className={s.bento}>
-        {/* ---- the three figures that lead somewhere ---- */}
-        <div className={`${s.box} ${s.wide}`}>
+        {/* The screen's one real call to action, so it gets the largest cell
+            and the only tinted surface (§24: bento sizing follows importance). */}
+        <div className={`${s.box} ${s.boxAccent} ${s.hero}`}>
+          <MatchPanel items={data?.items ?? []} profile={profile} started={started} loading={initial} />
+        </div>
+
+        {/* Reference figures, narrower beside it. */}
+        <div className={`${s.box} ${s.rail}`}>
           <div className={s.boxHead}>
-            <h2 className={s.boxTitle}>What is open right now</h2>
+            <h2 className={s.boxTitle}>What is open</h2>
             {data?.freshestAt ? <span className="t-meta c-muted">Updated {relativeTime(data.freshestAt)}</span> : null}
           </div>
-
-          {error && !data ? (
-            <ErrorState
-              compact
-              title="Couldn't load the figures"
-              body={error}
-              actions={
-                <Button variant="secondary" icon="refresh" onClick={reload}>
-                  Try again
-                </Button>
-              }
-            />
-          ) : initial || !stats ? (
-            <div className={s.metrics} aria-hidden="true">
-              {[1, 2, 3].map((i) => (
-                <span key={i} className={`skeleton skeleton-stagger-${i}`} style={{ height: 86, borderRadius: 12 }} />
+          {initial || !stats ? (
+            <BentoSkeleton lines={4} />
+          ) : (
+            <div className={s.statRows}>
+              {(
+                [
+                  ["Open calls", stats.total, "/explore", false],
+                  ["Closing within 7 days", stats.closingIn7, "/explore?deadline=d7&sort=deadline", true],
+                  ["Closing within 30 days", stats.closingIn30, "/explore?deadline=d30&sort=deadline", false],
+                  ["State an amount", stats.withAmount, "/explore?requires=amount", false],
+                ] as const
+              ).map(([label, value, href, urgent]) => (
+                <Link href={href} key={label} className={s.statRow}>
+                  <span className={s.statLabel}>{label}</span>
+                  <span className={[s.statValue, urgent ? s.statValueUrgent : null].filter(Boolean).join(" ")}>
+                    {value}
+                  </span>
+                </Link>
               ))}
             </div>
-          ) : (
-            <div className={s.metrics}>
-              <Link href="/explore" className={s.metric}>
-                <span className={s.metricValue}>{stats.total}</span>
-                <span className={s.metricLabel}>Open calls</span>
-              </Link>
-              <Link href="/explore?deadline=d30&sort=deadline" className={`${s.metric} ${s.metricUrgent}`}>
-                <span className={s.metricValue}>{stats.closingIn30}</span>
-                <span className={s.metricLabel}>Closing within 30 days</span>
-              </Link>
-              <Link href="/explore?funding=fully_funded" className={`${s.metric} ${s.metricFunding}`}>
-                <span className={s.metricValue}>{stats.withAmount}</span>
-                <span className={s.metricLabel}>State an amount</span>
-              </Link>
-            </div>
           )}
-
-          <p className="t-body-sm c-secondary">
-            Every listing here links back to the site that published it. Check the eligibility on the source
-            page before you spend time on an application — the index records what a page said, not what a
-            selection committee will decide.
-          </p>
-
-          <div className={s.boxFoot}>
-            <ButtonLink href="/explore?deadline=d30&sort=deadline" variant="secondary" iconAfter="arrow-right">
-              See what closes soonest
-            </ButtonLink>
-          </div>
         </div>
 
         {/* ---- deadline spread ---- */}
-        <div className={`${s.box} ${s.narrow}`}>
+        <div className={`${s.box} ${s.half}`}>
           <div className={s.boxHead}>
             <h2 className={s.boxTitle}>Deadline spread</h2>
             <Link href="/deadlines" className="t-meta c-muted">
@@ -170,8 +151,9 @@ export default function HomePage() {
                 </Link>
               ))}
               <p className="t-micro c-muted">
-                {stats.withDeadline} of {stats.total} listings published a date. The rest are rolling, or the
-                source page did not state one.
+                {stats.withDeadline} of {stats.total} listings published a date; the rest are rolling or did
+                not state one. Every listing links back to the site that published it — check eligibility
+                there before spending an evening on an application.
               </p>
             </>
           )}
@@ -273,12 +255,6 @@ export default function HomePage() {
           )}
         </div>
       </div>
-
-      {/* Ranked against the student's own profile, from the chunk already on
-          screen — no extra request, and the scorer is pure (packages/core). */}
-      <Section title="For you">
-        <MatchPanel items={data?.items ?? []} profile={profile} started={started} />
-      </Section>
 
       {/* The first discovery chunk, from the same request. Twelve cards with a
           spread of urgency rather than twelve that all close this week. */}

@@ -15,7 +15,7 @@
 import s from "./opportunity.module.css";
 import { RATES_AS_OF, formatAed, formatMoney, isExact, supports, toAed } from "@rof/core";
 import type { Money as MoneyValue } from "@rof/core";
-import { useCurrency } from "@/lib/store";
+import { useCurrency } from "@/lib/data";
 
 export function Money({
   value,

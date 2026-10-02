@@ -68,6 +68,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       { id: "apps", title: "Applications", sub: "What you are tracking", icon: "applications", group: "Go to", keywords: "tracker status applied progress", run: () => go("/applications") },
       { id: "compare", title: "Compare", sub: "Two opportunities side by side", icon: "compare", group: "Go to", keywords: "versus side by side difference", run: () => go("/compare") },
       { id: "profile", title: "Profile", sub: "Your details and preferences", icon: "user", group: "Go to", keywords: "account settings preferences me", run: () => go("/profile") },
+      { id: "account", title: "Account", sub: "Sign in, sign up, or sign out", icon: "user", group: "Go to", keywords: "login signin signup register logout session", run: () => go("/account") },
       { id: "admin", title: "College desk", sub: "Staff — add an opportunity", icon: "shield", group: "Go to", keywords: "admin staff publish add manage", run: () => go("/admin") },
 
       { id: "onboard", title: "Set up your profile", sub: "Three short steps", icon: "sparkle", group: "Actions", keywords: "onboarding welcome setup start", run: () => go("/welcome") },

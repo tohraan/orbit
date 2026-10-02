@@ -7,7 +7,7 @@
 
 import s from "./currency.module.css";
 import { RATES_AS_OF } from "@rof/core";
-import { useCurrency } from "@/lib/store";
+import { useCurrency } from "@/lib/data";
 
 export function CurrencySwitch() {
   const { currency, setCurrency } = useCurrency();

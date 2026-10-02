@@ -7,7 +7,7 @@
 import { usePathname } from "next/navigation";
 import s from "./comparison.module.css";
 import { Button, ButtonLink } from "../ui/Button";
-import { MAX_COMPARE, useCompare } from "@/lib/store";
+import { MAX_COMPARE, useCompare } from "@/lib/data";
 
 export function CompareTray() {
   const { compare, clear, ready } = useCompare();

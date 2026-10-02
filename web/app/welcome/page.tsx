@@ -23,7 +23,7 @@ import s from "./onboarding.module.css";
 import { Button } from "@/components/ui/Button";
 import { CampusEmail, PhoneField, Select, TagPicker } from "@/components/ui/Field";
 import { useToast } from "@/components/feedback/Toast";
-import { EMPTY_PROFILE, useProfile, type Profile } from "@/lib/store";
+import { EMPTY_PROFILE, useProfile, type Profile } from "@/lib/data";
 
 /* The degrees BITS Pilani Dubai actually awards. */
 const DEGREES = [

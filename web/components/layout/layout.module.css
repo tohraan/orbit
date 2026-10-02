@@ -219,7 +219,7 @@
   min-width: 15px;
   height: 15px;
   padding-inline: 4px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-chip);
   background: var(--color-action);
   color: var(--color-action-text);
   font-family: var(--font-mono);
@@ -339,7 +339,7 @@
   min-width: 17px;
   height: 17px;
   padding-inline: 4px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-chip);
   background: var(--color-danger);
   color: #fff;
   font-family: var(--font-mono);

@@ -27,7 +27,7 @@ import { Icon } from "@/components/ui/Icon";
 import { useApi, useChunks } from "@/lib/useApi";
 import { relativeTime } from "@rof/core";
 import type { Facets, OpportunitySummary } from "@rof/core";
-import { useSessionSeed } from "@/lib/store";
+import { useSessionSeed } from "@/lib/data";
 import { api } from "@/lib/api-base";
 
 /* One screen of cards: the grid is three columns at desktop and a card is

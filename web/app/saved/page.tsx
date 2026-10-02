@@ -15,7 +15,8 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { useItemsByIds } from "@/lib/useApi";
 import { typeLabel } from "@rof/core";
 import type { OpportunitySummary } from "@rof/core";
-import { useSaved } from "@/lib/store";
+import { useSaved } from "@/lib/data";
+import { StartHere } from "@/components/feedback/StartHere";
 
 export default function SavedPage() {
   const { saved, ready, clear } = useSaved();
@@ -75,11 +76,7 @@ export default function SavedPage() {
           icon="bookmark"
           title="Your saved opportunities will appear here"
           body="Save opportunities while browsing so you can return to them later."
-          actions={
-            <ButtonLink href="/explore" variant="primary">
-              Explore opportunities
-            </ButtonLink>
-          }
+          actions={<StartHere />}
         />
       ) : (
         <>

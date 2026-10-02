@@ -13,6 +13,7 @@
   "dependencies": {
     "@rof/core": "0.1.0",
     "@rof/server": "0.1.0",
+    "@supabase/supabase-js": "^2.117.2",
     "next": "16.3.8",
     "react": "19.2.0",
     "react-dom": "19.2.0"

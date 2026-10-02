@@ -25,7 +25,7 @@
  *     can only ever reward a match, never penalise a blank
  */
 
-import { daysUntil } from "./format";
+import { countryLabel, daysUntil } from "./format";
 import { fundingBucket } from "./query";
 import type { OpportunitySummary } from "./types";
 
@@ -180,9 +180,13 @@ export function score(item: OpportunitySummary, profile: StudentProfile): MatchR
       const hit = mine.some((m) => c.includes(m) || m.includes(c));
       const pts = hit ? w : 0;
       judged += pts;
+      /* countryLabel, not the raw hint: the index stores "usa" and "canada"
+       * lowercased off the source page, and a reason chip reading "In canada"
+       * undermines every careful thing above it. */
+      const where = countryLabel(item.country);
       reasons.push({
         factor: "country",
-        label: hit ? `In ${item.country}` : `In ${item.country}, which is not on your list`,
+        label: hit ? `In ${where}` : `In ${where}, which is not on your list`,
         points: pts,
         of: w,
       });
@@ -205,7 +209,12 @@ export function score(item: OpportunitySummary, profile: StudentProfile): MatchR
       reasons.push({ factor: "timing", label: `Only ${d} days to prepare`, points: Math.round(w * 0.6), of: w });
     } else {
       judged += Math.round(w * 0.2);
-      reasons.push({ factor: "timing", label: `Closing in ${d} day${d === 1 ? "" : "s"}`, points: Math.round(w * 0.2), of: w });
+      reasons.push({
+        factor: "timing",
+        label: d === 0 ? "Closes today" : `Closing in ${d} day${d === 1 ? "" : "s"}`,
+        points: Math.round(w * 0.2),
+        of: w,
+      });
     }
   }
 

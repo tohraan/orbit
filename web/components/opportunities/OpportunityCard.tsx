@@ -10,14 +10,14 @@
 
 import Link from "next/link";
 import s from "./opportunity.module.css";
-import { DeadlineIndicator, FundingIndicator, LevelChips, LocationIndicator, Provenance } from "./Indicators";
-import { Money } from "./Money";
+import { Provenance } from "./Indicators";
+import { CardDecide, CardFacts } from "./CardFacts";
 import { CompareButton, SaveButton } from "./Actions";
 import { ButtonLink } from "../ui/Button";
 import { Chip } from "../ui/Chip";
 import { deadlineState, typeLabel } from "@rof/core";
 import type { OpportunitySummary } from "@rof/core";
-import { useCompare } from "@/lib/store";
+import { useCompare } from "@/lib/data";
 
 export function OpportunityCard({ item }: { item: OpportunitySummary }) {
   const { isCompared } = useCompare();
@@ -59,17 +59,10 @@ export function OpportunityCard({ item }: { item: OpportunitySummary }) {
         {item.summary ?? "No summary was published for this opportunity."}
       </p>
 
-      <div className={s.meta}>
-        <FundingIndicator funding={item.funding} />
-        <LocationIndicator country={item.country} />
-        <LevelChips levels={item.levels} max={1} />
-      </div>
+      <CardFacts item={item} />
 
       <div className={s.foot}>
-        <div className={s.deadlineRow}>
-          <DeadlineIndicator item={item} withLabel />
-          {item.amount ? <Money value={item.amount} size="sm" /> : null}
-        </div>
+        <CardDecide item={item} />
 
         <Provenance item={item} />
 

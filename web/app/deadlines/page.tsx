@@ -31,7 +31,7 @@ import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api-base";
 import { daysUntil, typeLabel } from "@rof/core";
 import type { ListResponse, OpportunitySummary } from "@rof/core";
-import { STATUS_LABELS, STATUS_TONE, useSaved, useTracker } from "@/lib/store";
+import { STATUS_LABELS, STATUS_TONE, useSaved, useTracker } from "@/lib/data";
 
 const RANGES: { value: TimelineRange; label: string; window: string; wide?: boolean }[] = [
   { value: 30, label: "30 days", window: "d30" },
