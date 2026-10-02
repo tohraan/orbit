@@ -17,7 +17,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import s from "./account.module.css";
 import { PageHead } from "@/components/layout/AppShell";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -33,9 +33,16 @@ type Mode = "in" | "up" | "reset";
 export default function AccountPage() {
   const { status, configured, signIn, signUp, resetPassword, recovery, updatePassword } = useAuth();
   const router = useRouter();
+  const params = useSearchParams();
   const toast = useToast();
 
-  const [mode, setMode] = useState<Mode>("in");
+  /* Where the student was when the gate stopped them. Same-origin paths only:
+   * `next` arrives from the address bar, so an absolute URL in it would make
+   * this an open redirect — somebody else's login page wearing our domain. */
+  const raw = params.get("next") ?? "";
+  const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+
+  const [mode, setMode] = useState<Mode>(params.get("mode") === "up" ? "up" : "in");
   const [name, setName] = useState("");
   const [local, setLocal] = useState("");
   const [password, setPassword] = useState("");
@@ -51,8 +58,8 @@ export default function AccountPage() {
   /* A session means there is nothing left to do here — except when it came
    * from a recovery link, where the whole point is still ahead. */
   useEffect(() => {
-    if (status === "signed-in" && !recovery) router.replace("/profile");
-  }, [status, recovery, router]);
+    if (status === "signed-in" && !recovery) router.replace(next === "/" ? "/profile" : next);
+  }, [status, recovery, router, next]);
 
   if (!configured) {
     return (
@@ -113,7 +120,7 @@ export default function AccountPage() {
         return;
       }
       toast("Signed in");
-      router.push("/");
+      router.push(next);
     } finally {
       setBusy(false);
     }

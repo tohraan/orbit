@@ -1,0 +1,57 @@
+/* The signed-out stand-in for a listing's detail panels. Quiet: it is a
+   explanation of a trade, not an advertisement. */
+
+.head { display: flex; align-items: flex-start; gap: var(--s-3); }
+.mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.list { display: flex; flex-direction: column; gap: var(--s-2); }
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+}
+.rowIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-chip);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+.rowBody { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.rowLabel { font-size: var(--text-body-sm); font-weight: 600; }
+.rowBlurb { font-size: var(--text-micro); color: var(--color-text-muted); }
+
+.actions { display: flex; gap: var(--s-2); flex-wrap: wrap; padding-top: var(--s-2); }
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-md);
+  padding-inline: var(--s-5);
+  border-radius: var(--radius-control);
+  background: var(--color-action);
+  color: var(--color-action-text);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+}
+.primary:hover { background: var(--color-action-hover); }

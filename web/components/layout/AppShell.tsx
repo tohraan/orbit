@@ -18,6 +18,7 @@ import { CompareTray } from "../comparison/CompareTray";
 import { ToastProvider } from "../feedback/Toast";
 import { CommandPalette, useCommandPalette } from "../command/CommandPalette";
 import { AuthProvider } from "@/lib/auth";
+import { GateProvider } from "@/lib/gate";
 
 export function AppShell({ children }: { children: ReactNode }) {
   /* ⌘K / Ctrl-K lives at the shell, so the shortcut works on every screen and
@@ -26,6 +27,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <AuthProvider>
+    {/* Inside AuthProvider — the gate reads the session — and outside
+        everything else, so one dialog serves every gated action in the app. */}
+    <GateProvider>
     <ToastProvider>
       <div className={s.shell}>
         <Sidebar />
@@ -41,6 +45,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <CommandPalette open={open} onClose={() => setOpen(false)} />
       </div>
     </ToastProvider>
+    </GateProvider>
     </AuthProvider>
   );
 }

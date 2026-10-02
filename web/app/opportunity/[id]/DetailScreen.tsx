@@ -21,6 +21,8 @@ import { ScanFacts, ScanText } from "@/components/opportunities/ScanText";
 import { ErrorState } from "@/components/feedback/States";
 import { BentoSkeleton } from "@/components/feedback/Skeletons";
 import { useApi } from "@/lib/useApi";
+import { useGate } from "@/lib/gate";
+import { DetailGate } from "@/components/opportunities/DetailGate";
 import { countryLabel, deadlineState, relativeTime, titleCase, typeLabel } from "@rof/core";
 import type { OpportunityDetail } from "@rof/core";
 import { api } from "@/lib/api-base";
@@ -60,6 +62,12 @@ export function DetailScreen({ id }: { id: string }) {
 
   const o = data.item;
   const dl = deadlineState(o);
+  const gate = useGate();
+  /* The hero is open to everyone: a shared link has to show WHAT it is, or
+   * the gate is just a wall and nobody signs up for a blank page. What sits
+   * behind the account is the part a student acts on — eligibility, benefits,
+   * the documents required and how to apply. */
+  const locked = !gate.signedIn && !gate.pending;
   /* §50: the external CTA is the dominant action. The apply link is preferred
    * over the listing URL when the scrape found one — it saves a hop. */
   const applyHref = o.applyLink ?? o.url;
@@ -111,6 +119,17 @@ export function DetailScreen({ id }: { id: string }) {
         </div>
 
         {/* ------------------------------------------------------- content */}
+        {locked ? (
+          <div className={s.stack}>
+            <DetailGate
+              hasEligibility={Boolean(o.eligibility)}
+              hasBenefits={Boolean(o.benefits)}
+              hasHowTo={Boolean(o.howToApply)}
+              hasDocuments={Boolean(o.documents)}
+              applyHref={applyHref}
+            />
+          </div>
+        ) : (
         <div className={s.stack}>
           <section className={s.panel}>
             <h2 className={s.panelTitle}>Overview</h2>
@@ -203,6 +222,7 @@ export function DetailScreen({ id }: { id: string }) {
             </section>
           ) : null}
         </div>
+        )}
 
         {/* ------------------------------------------- key information rail */}
         <aside className={s.sticky}>

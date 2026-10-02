@@ -2,13 +2,19 @@
 
 /* §81: one Save implementation and one Compare implementation for the whole
  * app, so the icon, the state and the behaviour cannot drift between Explore,
- * Saved, the detail page and the deadline list. */
+ * Saved, the detail page and the deadline list.
+ *
+ * Being the only implementation is also what makes the account gate a single
+ * interception rather than a check on every button in the product: saving and
+ * comparing produce a record, a record needs an owner, so both go through
+ * gate.require() and nothing else has to know about it. */
 
 import s from "../ui/ui.module.css";
 import { Icon } from "../ui/Icon";
 import { useToast } from "../feedback/Toast";
 import { Select } from "../ui/Field";
 import { MAX_COMPARE, STATUSES, STATUS_LABELS, useCompare, useSaved, useTracker, type Status } from "@/lib/data";
+import { useGate } from "@/lib/gate";
 
 /* §78: the saved state is a FILLED bookmark — a state change, not a second
  * icon style (§59). aria-pressed carries the same information for anyone not
@@ -29,12 +35,14 @@ export function SaveButton({
 }) {
   const { isSaved, toggle, ready } = useSaved();
   const toast = useToast();
+  const gate = useGate();
   const on = isSaved(id);
 
-  const click = () => {
-    const added = toggle(id);
-    toast(added ? "Opportunity saved" : "Removed from saved opportunities");
-  };
+  const click = () =>
+    gate.require("save", () => {
+      const added = toggle(id);
+      toast(added ? "Opportunity saved" : "Removed from saved opportunities");
+    });
 
   if (labelled) {
     return (
@@ -74,6 +82,7 @@ export function SaveButton({
 export function CompareButton({ id, title, size = "sm" }: { id: number; title?: string; size?: "sm" | "md" }) {
   const { isCompared, toggle, ready } = useCompare();
   const toast = useToast();
+  const gate = useGate();
   const on = isCompared(id);
 
   return (
@@ -82,12 +91,14 @@ export function CompareButton({ id, title, size = "sm" }: { id: number; title?: 
       className={[s.btn, on ? s.primary : s.secondary, size === "sm" ? s.sm : null].filter(Boolean).join(" ")}
       aria-pressed={on}
       aria-label={on ? `Remove ${title ?? "this opportunity"} from comparison` : `Compare ${title ?? "this opportunity"}`}
-      onClick={() => {
-        const r = toggle(id);
-        if (!r.added) toast("Removed from comparison");
-        else if (r.displaced) toast(`Added to comparison — only ${MAX_COMPARE} fit, so the first one came out`);
-        else toast("Added to comparison");
-      }}
+      onClick={() =>
+        gate.require("compare", () => {
+          const r = toggle(id);
+          if (!r.added) toast("Removed from comparison");
+          else if (r.displaced) toast(`Added to comparison — only ${MAX_COMPARE} fit, so the first one came out`);
+          else toast("Added to comparison");
+        })
+      }
       disabled={!ready}
     >
       <Icon name={on ? "check" : "compare"} size={16} />
@@ -101,6 +112,7 @@ export function CompareButton({ id, title, size = "sm" }: { id: number; title?: 
 export function TrackControl({ id, size = "sm" }: { id: number; size?: "sm" | "md" }) {
   const { statusOf, set, remove, ready } = useTracker();
   const toast = useToast();
+  const gate = useGate();
   const current = statusOf(id);
 
   return (
@@ -113,15 +125,17 @@ export function TrackControl({ id, size = "sm" }: { id: number; size?: "sm" | "m
           { value: "", label: "Not tracked" },
           ...STATUSES.map((st) => ({ value: st, label: STATUS_LABELS[st] })),
         ]}
-        onChange={(v) => {
-          if (!v) {
-            remove(id);
-            toast("Removed from applications");
-          } else {
-            set(id, v as Status);
-            toast("Application status updated");
-          }
-        }}
+        onChange={(v) =>
+          gate.require("track", () => {
+            if (!v) {
+              remove(id);
+              toast("Removed from applications");
+            } else {
+              set(id, v as Status);
+              toast("Application status updated");
+            }
+          })
+        }
       />
     </span>
   );
