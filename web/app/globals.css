@@ -247,7 +247,13 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --background: #0b0b0d;
+    /* Solid black, not an off-black. Black and white are this product's
+       primaries (the logo's blue, red and yellow are accents), so dark mode
+       takes the primary literally rather than softening it to a grey. The
+       surfaces above it stay grey and now carry more separation from the page
+       than they did against #0b0b0d, so cards read as lifted without needing a
+       heavier border. */
+    --background: #000000;
     --surface: #141417;
     --surface-soft: #1b1b1f;
     --surface-muted: #24242a;
@@ -265,7 +271,7 @@
        dark ground needs. */
     --primary: #7e8cf2;
     --primary-hover: #949ef5;
-    --primary-foreground: #0b0b0d;
+    --primary-foreground: #000000;
 
     --success: #4fbd7e;
     --warning: #d9a84a;
@@ -302,7 +308,7 @@
     --scrim: rgba(0, 0, 0, 0.62);
     /* A white sweep over a dark block is a flash, not a shimmer. */
     --shimmer: rgba(255, 255, 255, 0.07);
-    --on-action-muted: rgba(11, 11, 13, 0.66);
+    --on-action-muted: rgba(0, 0, 0, 0.66);
 
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-raised: 0 2px 10px rgba(0, 0, 0, 0.45);
@@ -314,7 +320,7 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --background: #0b0b0d;
+  --background: #000000;
   --surface: #141417;
   --surface-soft: #1b1b1f;
   --surface-muted: #24242a;
@@ -332,7 +338,7 @@
      dark ground needs. */
   --primary: #7e8cf2;
   --primary-hover: #949ef5;
-  --primary-foreground: #0b0b0d;
+  --primary-foreground: #000000;
 
   --success: #4fbd7e;
   --warning: #d9a84a;
@@ -369,7 +375,7 @@
   --scrim: rgba(0, 0, 0, 0.62);
   /* A white sweep over a dark block is a flash, not a shimmer. */
   --shimmer: rgba(255, 255, 255, 0.07);
-  --on-action-muted: rgba(11, 11, 13, 0.66);
+  --on-action-muted: rgba(0, 0, 0, 0.66);
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-raised: 0 2px 10px rgba(0, 0, 0, 0.45);

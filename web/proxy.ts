@@ -13,8 +13,10 @@
  *   - fonts are self-hosted by next/font, so no font or style host is needed
  *   - every icon is inline SVG and no scraped image is rendered, so img-src
  *     needs only 'self' and data:
- *   - fetches go to this origin's own /api routes, plus the data service's
- *     origin when NEXT_PUBLIC_API_BASE names one
+ *   - fetches go to this origin's own /api routes, the data service's origin
+ *     when NEXT_PUBLIC_API_BASE names one, and Supabase's when accounts are
+ *     configured -- Supabase Auth runs IN THE BROWSER and talks to the project
+ *     host directly, so leaving it out blocks every sign-in and sign-up
  *   - nothing is ever framed, and the app never frames anything
  *
  * 'unsafe-inline' stays in style-src because React sets style attributes for
@@ -27,16 +29,27 @@ import { NextResponse, type NextRequest } from "next/server";
  * the origin is taken from the env var -- a path or a wildcard in there would
  * widen the policy further than intended, and an unparseable value is dropped
  * rather than inserted raw into a security header. */
-function apiOrigin(): string {
-  const raw = (process.env.NEXT_PUBLIC_API_BASE ?? "").trim();
-  if (!raw) return "";
+function originOf(raw: string | undefined): string {
+  const value = (raw ?? "").trim();
+  if (!value) return "";
   try {
-    const u = new URL(raw);
+    const u = new URL(value);
     return u.protocol === "https:" || u.protocol === "http:" ? u.origin : "";
   } catch {
     return "";
   }
 }
+
+const apiOrigin = () => originOf(process.env.NEXT_PUBLIC_API_BASE);
+
+/* Supabase Auth is a browser-side SDK: signUp/signIn/refresh all fetch
+ * <project>.supabase.co straight from the page, so that origin has to be in
+ * connect-src. Without it the request never leaves the browser, the SDK
+ * surfaces it as a generic network failure, and the student sees "Something
+ * went wrong" on a form that is filled in correctly -- which is exactly how
+ * this presented. Derived from the public project URL rather than hardcoded,
+ * so a different project needs no change here. */
+const authOrigin = () => originOf(process.env.NEXT_PUBLIC_SUPABASE_URL);
 
 export function proxy(req: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
@@ -51,7 +64,7 @@ export function proxy(req: NextRequest) {
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob:`,
     `font-src 'self'`,
-    `connect-src 'self' ${apiOrigin()}${dev ? " ws: wss:" : ""}`.replace(/\s+/g, " ").trim(),
+    `connect-src 'self' ${apiOrigin()} ${authOrigin()}${dev ? " ws: wss:" : ""}`.replace(/\s+/g, " ").trim(),
     `form-action 'self'`,
     `frame-ancestors 'none'`,
     `frame-src 'none'`,

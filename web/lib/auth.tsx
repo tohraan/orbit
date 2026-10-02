@@ -90,6 +90,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (m.includes("confirm")) return "Check your inbox and confirm your email first.";
     if (m.includes("password")) return "Passwords need at least 8 characters.";
     if (m.includes("rate") || m.includes("too many")) return "Too many attempts. Wait a minute and try again.";
+    /* A request that never left the browser — offline, or blocked before it
+     * was sent. This used to fall through to the generic message, so a CSP
+     * that omitted the Supabase origin looked exactly like a server problem
+     * and sent us looking in the wrong place. Naming it points at the network,
+     * which is where the cause actually is. */
+    if (m.includes("fetch") || m.includes("network") || m.includes("load failed"))
+      return "Could not reach the sign-in service. Check your connection and try again.";
     return "Something went wrong. Try again in a moment.";
   };
 
