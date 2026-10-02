@@ -17,13 +17,14 @@
  * on one machine do not see each other's answers.
  */
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import s from "./onboarding.module.css";
 import { Button } from "@/components/ui/Button";
 import { CampusEmail, PhoneField, Select, TagPicker } from "@/components/ui/Field";
 import { useToast } from "@/components/feedback/Toast";
 import { EMPTY_PROFILE, useProfile, type Profile } from "@/lib/data";
+import { PHASES, completeness, phaseStates } from "@/lib/completeness";
 
 /* The degrees BITS Pilani Dubai actually awards. */
 const DEGREES = [
@@ -71,10 +72,22 @@ const COUNTRY_SUGGESTIONS = [
   "Sweden", "France", "Italy", "United Arab Emirates",
 ];
 
-const STEPS = ["About you", "Your course", "What you want"] as const;
+/* The step list comes from lib/completeness.ts, so the flow and the profile
+ * hub can never disagree about what counts as done — the usual way a setup
+ * flow ends up claiming complete on a profile with empty fields. */
+const STEPS = PHASES;
 
 export default function WelcomePage() {
+  return (
+    <Suspense fallback={<div className={s.shell}><div className={s.card} /></div>}>
+      <WelcomeFlow />
+    </Suspense>
+  );
+}
+
+function WelcomeFlow() {
   const router = useRouter();
+  const params = useSearchParams();
   const toast = useToast();
   const { profile, ready, save } = useProfile();
   const [step, setStep] = useState(0);
@@ -84,13 +97,24 @@ export default function WelcomePage() {
     if (ready) setDraft(profile);
   }, [ready, profile]);
 
+  /* ?from=<phase> lets the profile hub drop someone straight into the group it
+   * is nagging them about, instead of making them click through the ones they
+   * have already done. Applied once, after the profile loads. */
+  const [jumped, setJumped] = useState(false);
+  useEffect(() => {
+    if (!ready || jumped) return;
+    const from = params.get("from");
+    const i = STEPS.findIndex((p) => p.id === from);
+    if (i >= 0) setStep(i);
+    setJumped(true);
+  }, [ready, jumped, params]);
+
   const set = (k: keyof Profile, v: string) => setDraft((d) => ({ ...d, [k]: v }));
 
   /* Progress counts fields actually filled, not the step number — skipping a
-   * step should not claim progress that was not made. */
-  const TRACKED: (keyof Profile)[] = ["name", "email", "degree", "course", "year", "level", "fields", "countries"];
-  const filled = TRACKED.filter((k) => String(draft[k] ?? "").trim()).length;
-  const pct = Math.round((filled / TRACKED.length) * 100);
+   * step must not claim progress that was not made. */
+  const pct = useMemo(() => completeness(draft), [draft]);
+  const states = useMemo(() => phaseStates(draft), [draft]);
 
   function finish() {
     save(draft);
@@ -118,12 +142,22 @@ export default function WelcomePage() {
 
       <div className={s.card}>
         <div className={s.stepRow}>
-          {STEPS.map((label, i) => (
-            <span key={label} className={[s.stepPip, i === step ? s.stepPipOn : i < step ? s.stepPipDone : null].filter(Boolean).join(" ")}>
-              {label}
-            </span>
+          {STEPS.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              className={[s.stepPip, i === step ? s.stepPipOn : states[i]?.complete ? s.stepPipDone : null].filter(Boolean).join(" ")}
+              onClick={() => setStep(i)}
+            >
+              {states[i]?.complete && i !== step ? "✓ " : ""}
+              {p.title}
+            </button>
           ))}
         </div>
+
+        {/* What this group buys, in the student's terms. A question with a
+            stated payoff gets answered; one without reads as data collection. */}
+        <p className="t-meta c-muted">{STEPS[step].payoff}</p>
 
         {step === 0 ? (
           <>
@@ -172,7 +206,7 @@ export default function WelcomePage() {
               <input className={s.input} value={draft.graduation} onChange={(e) => set("graduation", e.target.value)} maxLength={60} placeholder="June 2028" />
             </Field>
           </>
-        ) : (
+        ) : step === 2 ? (
           <>
             <Field label="Applying at which level" hint="The single biggest factor in how we rank things for you.">
               <div className={s.chips}>
@@ -204,6 +238,9 @@ export default function WelcomePage() {
               />
             </Field>
 
+          </>
+        ) : (
+          <>
             <Field label="Countries you would go to" hint="Only ever used to promote a match — nothing is ruled out for missing one.">
               <TagPicker
                 value={draft.countries}

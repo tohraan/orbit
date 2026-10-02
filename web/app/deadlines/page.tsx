@@ -21,7 +21,7 @@ import { useEffect, useMemo, useState } from "react";
 import r from "../rows.module.css";
 import { PageHead } from "@/components/layout/AppShell";
 import { Timeline, type TimelineRange } from "@/components/timeline/Timeline";
-import { DeadlineIndicator, FundingIndicator } from "@/components/opportunities/Indicators";
+import { FundingIndicator } from "@/components/opportunities/Indicators";
 import { SaveButton } from "@/components/opportunities/Actions";
 import { RowsSkeleton } from "@/components/feedback/Skeletons";
 import { EmptyState, ErrorState } from "@/components/feedback/States";
@@ -29,7 +29,7 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api-base";
-import { daysUntil, typeLabel } from "@rof/core";
+import { countryLabel, daysUntil, typeLabel } from "@rof/core";
 import type { ListResponse, OpportunitySummary } from "@rof/core";
 import { STATUS_LABELS, STATUS_TONE, useSaved, useTracker } from "@/lib/data";
 
@@ -162,35 +162,58 @@ export default function DeadlinesPage() {
       ) : (
         <div style={loading ? { opacity: 0.55, transition: "opacity var(--motion) var(--ease)" } : undefined}>
           {groups.map((g) => (
-            <section className={r.group} key={g.key}>
-              <div className={r.groupHead}>
+            <section key={g.key}>
+              <div className={r.dGroupHead}>
                 <h2 className={r.groupTitle}>{g.label}</h2>
                 <span className={r.groupCount}>
                   {g.items.length} {g.items.length === 1 ? "deadline" : "deadlines"}
                 </span>
               </div>
-              <div className={r.list}>
+              <div>
                 {g.items.map((item) => {
-                  const days = daysUntil(item.deadline);
-                  const status = statusOf(item.id);
+                  const days = daysUntil(item.deadline) ?? 0;
+                  const tone = days <= 7 ? "urgent" : days <= 30 ? "soon" : "later";
+                  const st = statusOf(item.id);
+                  const day = item.deadline!.slice(8);
+                  const mon = MONTHS[Number(item.deadline!.slice(5, 7)) - 1]?.slice(0, 3);
                   return (
-                    <div className={r.row} key={item.id} id={`deadline-${item.id}`}>
-                      <Link href={`/opportunity/${item.id}`} className={r.date}>
-                        {item.deadline?.slice(8)} {MONTHS[Number(item.deadline!.slice(5, 7)) - 1]?.slice(0, 3)}
+                    <div className={r.dRow} key={item.id} id={`deadline-${item.id}`}>
+                      {/* The date block carries the urgency as a solid fill, so
+                          the left edge of the list reads as a column of urgency
+                          before a single title is read. */}
+                      <Link
+                        href={`/opportunity/${item.id}`}
+                        className={[
+                          r.dDate,
+                          tone === "urgent" ? r.dDateUrgent : tone === "soon" ? r.dDateSoon : null,
+                        ].filter(Boolean).join(" ")}
+                        aria-label={`${item.title}, closes ${day} ${mon}`}
+                      >
+                        <span className={r.dDay}>{day}</span>
+                        <span className={r.dMon}>{mon}</span>
                       </Link>
-                      <Link href={`/opportunity/${item.id}`} className={r.body}>
-                        <span className={`${r.title} clamp-1`}>{item.title}</span>
-                        <span className={r.meta}>
-                          {typeLabel(item.type)} &middot; {item.sourceName}
-                          {days != null && days >= 0 ? ` · ${days} day${days === 1 ? "" : "s"} left` : ""}
+
+                      <Link href={`/opportunity/${item.id}`} className={r.dBody}>
+                        <span className={`${r.dTitle} clamp-1`}>{item.title}</span>
+                        <span className={r.dMeta}>
+                          <span>{typeLabel(item.type)}</span>
+                          <span className={r.dDot}>·</span>
+                          <span>{item.sourceName}</span>
+                          {item.country ? (
+                            <>
+                              <span className={r.dDot}>·</span>
+                              <span>{countryLabel(item.country)}</span>
+                            </>
+                          ) : null}
                         </span>
                       </Link>
-                      <span className={r.status}>
+
+                      <span className={r.dTail}>
+                        <span className={[r.dLeft, tone === "urgent" ? r.dLeftUrgent : null].filter(Boolean).join(" ")}>
+                          {days === 0 ? "closes today" : `${days}d left`}
+                        </span>
                         <FundingIndicator funding={item.funding} />
-                        {status ? <Chip tone={STATUS_TONE[status]}>{STATUS_LABELS[status]}</Chip> : null}
-                      </span>
-                      <span className={r.actions}>
-                        <DeadlineIndicator item={item} />
+                        {st ? <Chip tone={STATUS_TONE[st]}>{STATUS_LABELS[st]}</Chip> : null}
                         <SaveButton id={item.id} title={item.title} />
                       </span>
                     </div>

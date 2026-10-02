@@ -70,3 +70,85 @@
 /* The filter row above the list: status tabs on Applications, urgency on
    Deadlines. Same control, same geometry (§81). */
 .tabs { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-2); }
+
+
+/* ------------------------------------------------- deadline row, v2 ------
+   The flat four-column row treated every listing the same: the date, the
+   title and the chips all sat on one baseline, so a thing closing tomorrow
+   looked like a thing closing in two months. These rows lead with a solid
+   date block whose fill IS the urgency, which means the left edge of the list
+   can be read as a column of urgency on its own — before any text is read. */
+
+.dRow {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: var(--s-4);
+  align-items: center;
+  padding: var(--s-3) var(--s-3) var(--s-3) 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  transition: border-color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
+}
+.dRow + .dRow { margin-top: 6px; }
+.dRow:hover { background: var(--color-surface); border-color: var(--color-border); }
+
+@media (max-width: 767px) {
+  .dRow { grid-template-columns: 56px minmax(0, 1fr); grid-template-areas: "date body" "date meta"; row-gap: var(--s-2); }
+  .dDate { grid-area: date; align-self: start; }
+  .dBody { grid-area: body; }
+  .dTail { grid-area: meta; justify-content: flex-start; }
+}
+
+/* The date block. Solid fill = urgency, so the column reads at a glance. */
+.dDate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+.dDateUrgent { background: var(--fill-urgent); border-color: var(--fill-urgent); color: var(--on-fill); }
+.dDateSoon { background: var(--fill-soon); border-color: var(--fill-soon); color: var(--on-fill); }
+
+.dDay { font-family: var(--font-mono); font-size: 19px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.dMon { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
+
+.dBody { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dTitle { font-size: var(--text-body); font-weight: 500; }
+.dRow:hover .dTitle { text-decoration: underline; text-underline-offset: 2px; }
+.dMeta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); font-size: var(--text-micro); color: var(--color-text-muted); }
+.dDot { opacity: 0.5; }
+
+.dTail { display: flex; align-items: center; gap: var(--s-2); flex: none; }
+
+/* Days-left, stated once, in words — §108: the fill is never the only signal. */
+.dLeft {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.dLeftUrgent { color: var(--fill-urgent); font-weight: 600; }
+
+/* A thin band header per month, sticky so you always know where you are in a
+   long scroll. */
+.dGroupHead {
+  position: sticky;
+  top: calc(var(--header-h) + 1px);
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-3) var(--s-3) 0;
+  margin-top: var(--s-6);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border-hover);
+}
+@media (max-width: 1023px) { .dGroupHead { top: calc(var(--mobile-header-h) + 1px); } }

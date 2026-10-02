@@ -49,7 +49,8 @@ export type IconName =
   | "file"
   | "shield"
   | "sparkle"
-  | "bell";
+  | "bell"
+  | "school";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   home: <path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-5H9v5H5a1 1 0 0 1-1-1z" />,
@@ -192,6 +193,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M18 9a6 6 0 0 0-12 0c0 5-2 6-2 6h16s-2-1-2-6z" />
       <path d="M13.7 19a2 2 0 0 1-3.4 0" />
+    </>
+  ),
+  school: (
+    <>
+      <path d="M12 4.5 21 9l-9 4.5L3 9z" />
+      <path d="M6.5 10.8V16c0 1.4 2.5 2.6 5.5 2.6s5.5-1.2 5.5-2.6v-5.2" />
     </>
   ),
   trash: (
