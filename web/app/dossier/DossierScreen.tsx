@@ -34,6 +34,7 @@ import { useProfile } from "@/lib/data";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api-base";
 import { ACCEPT, MAX_BYTES, hashFile, readDocument } from "@/lib/read-document";
+import { UploadProgress, type Progress } from "./UploadProgress";
 import {
   DOC_KINDS,
   DOC_KIND_LABELS,
@@ -54,7 +55,7 @@ const CHECKLIST: DocKind[] = ["cv", "transcript", "certificate", "sop", "referen
 
 export function DossierScreen() {
   const gate = useGate();
-  const { docs, ready, error, upload, saveExtraction, saveApplied, rename, setKind, remove, openUrl, reload } =
+  const { docs, ready, error, schemaReady, upload, saveExtraction, saveApplied, rename, setKind, remove, openUrl, reload } =
     useDossier();
   const { profile, save } = useProfile();
   const toast = useToast();
@@ -64,8 +65,7 @@ export function DossierScreen() {
   const corpus = useApi<{ items: OpportunitySummary[] }>(api("/api/opportunities?pageSize=120&sort=deadline"));
   const reach = useMemo(() => reachIndex(corpus.data?.items ?? []), [corpus.data]);
 
-  const [busy, setBusy] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState<Progress | null>(null);
   const [review, setReview] = useState<{ doc: DossierDoc; found: Extraction } | null>(null);
   const [dragging, setDragging] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -76,32 +76,57 @@ export function DossierScreen() {
         toast("That file is larger than the 10 MB limit.");
         return;
       }
-      setBusy(file.name);
-      setProgress(0);
+
+      /* Each step reports when it has actually happened. Nothing here advances
+       * the bar on a timer, so a stall shows up as a stall. */
+      const step = (patch: Partial<Progress>) =>
+        setProgress((cur) => ({ ...(cur ?? { stage: "hashing", fileName: file.name, pct: 0, found: [] }), ...patch }));
+
+      setProgress({ stage: "hashing", fileName: file.name, pct: 0, found: [] });
       try {
         const hash = await hashFile(file);
-        const kind = guessKind(file.name);
-        const { doc, error: upErr } = await upload(file, { kind, hash });
+        step({ stage: "uploading", pct: 10 });
+
+        const { doc, error: upErr } = await upload(file, { kind: guessKind(file.name), hash });
         if (!doc) {
+          step({ stage: "failed", failedAt: "uploading", note: upErr ?? "The upload did not complete." });
           toast(upErr ?? "The upload did not complete.");
+          window.setTimeout(() => setProgress(null), 4200);
           return;
         }
+        step({ stage: "reading", pct: 0 });
 
-        const read = await readDocument(file, setProgress);
+        const read = await readDocument(file, (pct, page, pages) =>
+          step({ stage: "reading", pct, page, pages }),
+        );
+
+        step({ stage: "matching", pct: 30 });
         const found = read.status === "parsed" ? extract(read.text, reach) : null;
+        /* Reveal the findings one at a time: the point of this panel is that
+         * the student sees reading happen, not a number climbing. */
+        if (found?.terms.length) {
+          for (let i = 0; i < found.terms.length; i++) {
+            step({ found: found.terms.slice(0, i + 1).map((t) => t.term), pct: 30 + ((i + 1) / found.terms.length) * 70 });
+            await new Promise((r) => window.setTimeout(r, 160));
+          }
+        }
+
         await saveExtraction(doc.id, read.status, found, read.pages);
+        step({ stage: "done", pct: 100, note: read.note });
 
         if (found && (found.terms.length || found.level)) {
           setReview({ doc: { ...doc, parseStatus: read.status, extracted: found }, found });
-          toast(`Read ${file.name}`);
-        } else if (read.note) {
-          toast(read.note);
-        } else {
+        } else if (!read.note) {
           toast("Added — nothing in it we could match on.");
         }
-      } finally {
-        setBusy(null);
-        setProgress(0);
+        window.setTimeout(() => setProgress(null), 2600);
+      } catch {
+        /* Keep the stage we had reached, so the panel still shows what did
+         * succeed before the failure. */
+        setProgress((cur) =>
+          cur ? { ...cur, stage: "failed", failedAt: cur.stage, note: "Something went wrong part-way through." } : cur,
+        );
+        window.setTimeout(() => setProgress(null), 4200);
       }
     },
     [upload, saveExtraction, reach, toast],
@@ -144,7 +169,7 @@ export function DossierScreen() {
         description="The documents applications ask for, kept in one place — and read, with your say-so, to find more that fit."
         actions={
           docs.length ? (
-            <Button variant="primary" icon="upload" onClick={pick} busy={Boolean(busy)}>
+            <Button variant="primary" icon="upload" onClick={pick} busy={Boolean(progress)}>
               Add a document
             </Button>
           ) : null
@@ -179,12 +204,14 @@ export function DossierScreen() {
         />
       ) : null}
 
-      {busy ? <Uploading name={busy} pct={progress} /> : null}
+      {schemaReady === false ? <SetupNotice /> : null}
+      {progress ? <UploadProgress progress={progress} /> : null}
 
       {!ready || corpus.initial ? (
         <BentoSkeleton lines={5} />
       ) : error ? (
         <ErrorState
+          title="Couldn't load your documents"
           body={error}
           actions={
             <Button variant="secondary" icon="refresh" onClick={reload}>
@@ -544,16 +571,26 @@ function Dropzone({
   );
 }
 
-function Uploading({ name, pct }: { name: string; pct: number }) {
+/* The one state that no amount of retrying fixes: the code is ahead of the
+ * database. Saying so, with the file to run, is worth more than a spinner. */
+function SetupNotice() {
   return (
-    <div className={s.uploading} role="status" aria-live="polite">
-      <span className={s.uploadingBar}>
-        <span className={s.uploadingFill} style={{ width: `${Math.max(6, pct)}%` }} />
+    <section className={s.setup}>
+      <span className={s.setupMark} aria-hidden="true">
+        <Icon name="alert" size={18} />
       </span>
-      <span className="t-body-sm">
-        {pct > 0 ? `Reading ${name} — ${pct}%` : `Uploading ${name}…`}
-      </span>
-    </div>
+      <div className={s.setupBody}>
+        <h2 className="t-section">The Dossier needs one migration</h2>
+        <p className="t-body-sm c-secondary">
+          Documents are stored against columns this database does not have yet. Run{" "}
+          <code className={s.code}>db/016_dossier.sql</code> in Supabase Studio&rsquo;s SQL editor, then reload — it is
+          additive and safe to run twice.
+        </p>
+        <p className="t-micro c-muted">
+          Until then your existing documents still list, but new uploads cannot be recorded.
+        </p>
+      </div>
+    </section>
   );
 }
 

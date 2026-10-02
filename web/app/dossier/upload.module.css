@@ -1,0 +1,126 @@
+/* The intake panel. Motion here is informative — it reports that work is
+   happening — so it is allowed, and it stops the moment the work does. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5) var(--s-6);
+  margin-bottom: var(--s-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-hover);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  animation: riseIn var(--motion) var(--ease);
+}
+.wrapDone { border-color: var(--surface-funding-border); }
+.wrapFailed { border-color: var(--color-danger); }
+
+.head { display: flex; align-items: center; gap: var(--s-3); }
+
+/* A ring that turns while there is work, and holds an icon when there is not. */
+.spinner {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-action);
+  animation: spin 820ms linear infinite;
+  color: var(--color-text-secondary);
+}
+.spinnerStill { animation: none; border-color: var(--color-border); border-top-color: var(--color-border); }
+.wrapDone .spinnerStill { border-color: var(--surface-funding-border); color: var(--ink-funding); }
+.wrapFailed .spinnerStill { border-color: var(--color-danger); color: var(--color-danger); }
+
+.headText { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.title { font-size: var(--text-body-sm); font-weight: 600; }
+.pageCount { font-family: var(--font-mono); font-weight: 500; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.file {
+  font-size: var(--text-micro);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pct {
+  margin-left: auto;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.track { height: 6px; border-radius: var(--radius-bar); background: var(--color-surface-muted); overflow: hidden; }
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-bar);
+  background: var(--color-action);
+  transition: width 320ms var(--ease);
+}
+.wrapDone .fill { background: var(--ink-funding); }
+.wrapFailed .fill { background: var(--color-danger); }
+
+/* ---- stages ---- */
+
+.steps { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; }
+.step { display: flex; align-items: center; gap: var(--s-2); }
+
+.stepDot {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-hover);
+  background: var(--color-surface);
+  color: var(--color-bg);
+  flex: none;
+}
+.stepLabel { font-size: var(--text-micro); color: var(--color-text-muted); }
+
+.step_done .stepDot { background: var(--color-action); border-color: var(--color-action); color: var(--color-action-text); }
+.step_done .stepLabel { color: var(--color-text-secondary); }
+
+.step_now .stepDot { border-color: var(--color-action); box-shadow: 0 0 0 3px var(--surface-compare); }
+.step_now .stepLabel { color: var(--color-text-primary); font-weight: 600; }
+
+.step_failed .stepDot { border-color: var(--color-danger); background: var(--color-danger); }
+.step_failed .stepLabel { color: var(--color-danger); }
+
+/* ---- findings ---- */
+
+.found { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding-inline: var(--s-2);
+  border-radius: var(--radius-chip);
+  background: var(--surface-funding);
+  border: 1px solid var(--surface-funding-border);
+  color: var(--ink-funding);
+  font-size: var(--text-micro);
+  text-transform: capitalize;
+  animation: popIn 260ms var(--ease) both;
+}
+
+.note { font-size: var(--text-micro); color: var(--color-text-muted); }
+
+@keyframes spin { to { transform: rotate(360deg) } }
+@keyframes riseIn { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+@keyframes popIn { from { opacity: 0; transform: scale(0.9) } to { opacity: 1; transform: none } }
+
+/* §77: motion that carries information still goes away when it is unwanted.
+   The spinner stops, the bar still moves — because the bar IS the information. */
+@media (prefers-reduced-motion: reduce) {
+  .wrap, .chip { animation: none; }
+  .spinner { animation: none; }
+}

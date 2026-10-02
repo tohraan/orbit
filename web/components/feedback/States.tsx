@@ -34,9 +34,16 @@ export function EmptyState({
 /* §71: explain what happened and what to do. Never show a raw API error — the
  * route handlers already replace them with a fixed sentence, and this is the
  * second half of that contract. */
+/* The default deliberately names nothing.
+ *
+ * It used to default to "Couldn't load opportunities", which was right on the
+ * two screens that existed when it was written and silently wrong on the next
+ * one: the Dossier failed to load its DOCUMENTS and announced that it could
+ * not load opportunities. A default that is correct only for its original
+ * caller is a bug waiting for a new screen, so callers now say what failed. */
 export function ErrorState({
-  title = "Couldn't load opportunities",
-  body = "The opportunity list couldn't be loaded right now.",
+  title = "Something went wrong",
+  body = "This couldn't be loaded right now.",
   actions,
   compact,
 }: {

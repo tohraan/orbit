@@ -62,7 +62,12 @@ export async function hashFile(file: File): Promise<string | null> {
  * down with it, and the upload is the part that matters. A failure here means
  * the file is stored and unread, which is a legitimate end state.
  */
-export async function readDocument(file: File, onProgress?: (pct: number) => void): Promise<ReadResult> {
+export async function readDocument(
+  file: File,
+  /* Page-level, not byte-level: a PDF is read a page at a time and that is the
+   * only honest unit of progress available. The caller shows "page 2 of 7". */
+  onProgress?: (pct: number, page: number, pages: number) => void,
+): Promise<ReadResult> {
   const ext = extensionOf(file.name);
 
   if (ext === ".txt" || ext === ".md") {
@@ -105,7 +110,7 @@ export async function readDocument(file: File, onProgress?: (pct: number) => voi
        * headers the extractor relies on, and makes every quoted sentence the
        * wrong one. */
       parts.push(textFromItems(content.items as { str?: string; hasEOL?: boolean }[]));
-      onProgress?.(Math.round((p / doc.numPages) * 100));
+      onProgress?.(Math.round((p / doc.numPages) * 100), p, doc.numPages);
     }
     const pages = doc.numPages;
     await doc.destroy();

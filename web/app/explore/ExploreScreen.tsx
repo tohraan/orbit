@@ -189,6 +189,7 @@ export function ExploreScreen() {
 
         {list.error && !list.items.length ? (
           <ErrorState
+            title="Couldn't load opportunities"
             body={list.error}
             actions={
               <Button variant="secondary" icon="refresh" onClick={list.reload}>

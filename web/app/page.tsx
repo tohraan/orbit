@@ -280,6 +280,7 @@ export default function HomePage() {
       >
         {error && !data ? (
           <ErrorState
+            title="Couldn't load opportunities"
             body={error}
             actions={
               <Button variant="secondary" icon="refresh" onClick={reload}>

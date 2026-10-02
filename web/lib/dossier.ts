@@ -48,29 +48,41 @@ type Row = {
   uploaded_at: string;
 };
 
-const toDoc = (r: Row): DossierDoc => ({
+const toDoc = (r: Partial<Row> & { id: number; file_name: string; file_path: string; uploaded_at: string }): DossierDoc => ({
   id: r.id,
   kind: (r.kind || "other") as DocKind,
-  label: r.label,
+  label: r.label ?? null,
   fileName: r.file_name,
   filePath: r.file_path,
-  byteSize: r.byte_size,
-  mimeType: r.mime_type,
+  byteSize: r.byte_size ?? null,
+  mimeType: r.mime_type ?? null,
   parseStatus: (r.parse_status || "pending") as ParseStatus,
-  pageCount: r.page_count,
-  extracted: r.extracted,
-  applied: r.applied,
+  pageCount: r.page_count ?? null,
+  extracted: r.extracted ?? null,
+  applied: r.applied ?? null,
   uploadedAt: r.uploaded_at,
 });
 
-const SELECT =
-  "id,kind,label,file_name,file_path,byte_size,mime_type,parse_status,page_count,extracted,applied,uploaded_at";
+/* `*`, not a column list, on purpose.
+ *
+ * PostgREST rejects a select naming a column that does not exist with a 400
+ * for the WHOLE request — so before db/016 is applied, naming parse_status
+ * here made the Dossier fail to load entirely and report "your documents could
+ * not be loaded", which reads as a server fault when the truth is that the
+ * table is simply older than the code. With `*` the list always loads, missing
+ * columns arrive as undefined, and the page can say something accurate about
+ * why uploading is not available yet. */
+const SELECT = "*";
 
 export function useDossier() {
   const { user, status } = useAuth();
   const [docs, setDocs] = useState<DossierDoc[]>([]);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /* null = not yet known. The Dossier needs columns db/016 adds; a deployment
+   * running the code but not the migration is a real state this app can be in,
+   * and guessing is worse than checking. */
+  const [schemaReady, setSchemaReady] = useState<boolean | null>(null);
 
   const load = useCallback(async () => {
     const sb = supabase();
@@ -89,6 +101,12 @@ export function useDossier() {
       setError(null);
     }
     setReady(true);
+
+    /* One cheap probe for the columns the feature writes. A 400 here means the
+     * migration has not been applied — which the UI must say plainly, because
+     * no amount of retrying will fix it. */
+    const probe = await sb.from("student_documents").select("parse_status").limit(1);
+    setSchemaReady(!probe.error);
   }, [user]);
 
   useEffect(() => {
@@ -115,6 +133,8 @@ export function useDossier() {
     ): Promise<{ doc: DossierDoc | null; error: string | null }> => {
       const sb = supabase();
       if (!sb || !user) return { doc: null, error: "You need to be signed in." };
+      if (schemaReady === false)
+        return { doc: null, error: "The Dossier's database columns are missing — apply db/016_dossier.sql first." };
 
       /* The storage policy is `(storage.foldername(name))[1] = auth.uid()`, so
        * the owner's id MUST be the first path segment. The timestamp keeps two
@@ -165,7 +185,7 @@ export function useDossier() {
       setDocs((cur) => [doc, ...cur]);
       return { doc, error: null };
     },
-    [user],
+    [user, schemaReady],
   );
 
   /** Record what reading the document found. Claims only — never the profile. */
@@ -238,5 +258,18 @@ export function useDossier() {
     return data?.signedUrl ?? null;
   }, []);
 
-  return { docs, ready, error, upload, saveExtraction, saveApplied, rename, setKind, remove, openUrl, reload: load };
+  return {
+    docs,
+    ready,
+    error,
+    schemaReady,
+    upload,
+    saveExtraction,
+    saveApplied,
+    rename,
+    setKind,
+    remove,
+    openUrl,
+    reload: load,
+  };
 }
