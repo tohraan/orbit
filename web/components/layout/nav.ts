@@ -1,0 +1,44 @@
+import type { IconName } from "../ui/Icon";
+
+/* §112: plain labels. "Explore", not "Opportunity Intelligence". §15 and §82
+ * fix the groups and the routes; this is the single list both the sidebar and
+ * the bottom navigation read, so they can never drift apart. */
+
+export type NavItem = {
+  href: string;
+  label: string;
+  icon: IconName;
+  /** Which stored collection supplies this item's count, if any. */
+  count?: "saved" | "compare" | "tracker";
+  /** §90: the five the mobile bottom bar keeps. */
+  mobile?: boolean;
+};
+
+export const PRIMARY_NAV: NavItem[] = [
+  { href: "/", label: "Home", icon: "home", mobile: true },
+  { href: "/explore", label: "Explore", icon: "explore", mobile: true },
+  { href: "/saved", label: "Saved", icon: "bookmark", count: "saved", mobile: true },
+  { href: "/applications", label: "Applications", icon: "applications", count: "tracker", mobile: true },
+  { href: "/deadlines", label: "Deadlines", icon: "calendar" },
+];
+
+export const SECONDARY_NAV: NavItem[] = [
+  { href: "/compare", label: "Compare", icon: "compare", count: "compare" },
+];
+
+export const FOOTER_NAV: NavItem[] = [
+  { href: "/profile", label: "Profile", icon: "user", mobile: true },
+];
+
+export const MOBILE_NAV: NavItem[] = [...PRIMARY_NAV, ...SECONDARY_NAV, ...FOOTER_NAV].filter((n) => n.mobile);
+
+/** The header breadcrumb and the mobile title both read from here. */
+export const TITLES: Record<string, string> = {
+  "/": "Home",
+  "/explore": "Explore",
+  "/saved": "Saved",
+  "/applications": "Applications",
+  "/deadlines": "Deadlines",
+  "/compare": "Compare",
+  "/profile": "Profile",
+};

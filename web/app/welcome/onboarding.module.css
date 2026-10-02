@@ -1,0 +1,73 @@
+/* Onboarding. Three short steps rather than one long form: §56 asks for
+   progressive disclosure, and a student who meets fourteen fields at once
+   fills in none of them.
+
+   Every step is skippable on purpose. The matcher degrades honestly when a
+   field is missing (packages/core/src/match.ts reports confidence), so a
+   half-finished profile still produces a usable product — which is a better
+   trade than a wall that has to be climbed before the portal does anything. */
+
+.shell { max-width: 640px; margin-inline: auto; }
+
+.progress { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-6); }
+.track { flex: 1 1 auto; height: 4px; border-radius: 2px; background: var(--color-surface-muted); overflow: hidden; }
+.fill { display: block; height: 100%; border-radius: 2px; background: var(--color-action); transition: width var(--motion) var(--ease); }
+.pct { font-family: var(--font-mono); font-size: var(--text-meta); color: var(--color-text-muted); font-variant-numeric: tabular-nums; flex: none; }
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding: var(--s-8) var(--s-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+@media (max-width: 639px) { .card { padding: var(--s-6) var(--s-5); } }
+
+.step { font-size: var(--text-micro); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-muted); }
+
+.row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+@media (max-width: 639px) { .row { grid-template-columns: minmax(0, 1fr); } }
+
+.field { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
+.label { font-size: var(--text-body-sm); font-weight: 500; }
+.hint { font-size: var(--text-meta); color: var(--color-text-muted); }
+
+.input {
+  height: 44px;
+  padding-inline: var(--s-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-primary);
+  width: 100%;
+}
+.input:focus { outline: 2px solid var(--color-action); outline-offset: 2px; border-color: var(--color-border-active); }
+
+.chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.chip {
+  height: 36px;
+  padding-inline: var(--s-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-secondary);
+  transition: background var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+.chip:hover { border-color: var(--color-border-hover); color: var(--color-text-primary); }
+.chipOn { background: var(--color-action); border-color: var(--color-action); color: var(--color-action-text); }
+
+.foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding-top: var(--s-4); border-top: 1px solid var(--color-border); }
+
+.privacy {
+  padding: var(--s-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-meta);
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}

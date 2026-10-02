@@ -1,0 +1,216 @@
+/* ======================================================= opportunity card ===
+   §29 anatomy, §30 hierarchy, §110 rhythm.
+
+   §3.1 is the rule this file exists to enforce: identical width, height,
+   padding, metadata placement, action placement, title area height and footer
+   alignment, for every card in a grid. So the card is a fixed-height flex
+   column with a reserved two-line title area and a footer pinned by
+   `margin-top: auto`. A longer description clamps (§32); it never grows the
+   card and never pushes the actions out of line with its neighbours'.
+*/
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  /* min-height, NOT height. A fixed height looks like the way to satisfy §3.1
+   * until a card's chip row wraps to two lines: the content then overflows and
+   * the footer lands on top of the card below it. A minimum plus the grid's
+   * default `align-items: stretch` gives what §3.1 actually asks for -- every
+   * card identical within its row -- and lets the row grow for the one card
+   * that needs it instead of breaking. overflow is a backstop for the
+   * pathological case. */
+  min-height: var(--card-h);
+  overflow: hidden;
+  padding: var(--s-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease),
+    box-shadow var(--motion-fast) var(--ease);
+}
+
+/* §77: translateY(-1px) is the maximum. §78: hover is a border emphasis. */
+.card:hover { border-color: var(--color-border-hover); transform: translateY(-1px); box-shadow: var(--shadow-raised); }
+
+/* §78 compared: a clearly visible selection ring, dark rather than coloured,
+   so it reads the same on every accent. */
+.cardCompared { border-color: var(--color-border-active); box-shadow: 0 0 0 1px var(--color-border-active); }
+.cardCompared:hover { border-color: var(--color-border-active); }
+
+/* §78 expired: muted but still readable. Not hidden — a student may be looking
+   at last year's round on purpose. */
+.cardExpired { background: var(--color-surface-secondary); }
+.cardExpired .title { color: var(--color-text-secondary); }
+
+@media (max-width: 639px) {
+  /* §28: one column, full width, 300px minimum, 16px padding (§111). */
+  .card { min-height: 300px; padding: var(--s-4); gap: var(--s-3); }
+  .card:hover { transform: none; }
+}
+
+.topRow { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-2); flex: none; }
+
+/* §36: a category is a classification, not a decorative badge. A quiet label. */
+.category {
+  font-size: var(--text-micro);
+  line-height: var(--lh-micro);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.titleBlock { display: flex; flex-direction: column; gap: var(--s-1); flex: none; }
+
+/* §31: two lines maximum, and the area is RESERVED at two lines so a
+   one-line title does not lift the card's whole body relative to its row. */
+.title {
+  font-size: var(--text-card-title);
+  line-height: var(--lh-card-title);
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  min-height: calc(var(--lh-card-title) * 2);
+}
+.title:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+/* §30 level 2: the provider. §106: one line. */
+.org { font-size: var(--text-meta); line-height: var(--lh-meta); color: var(--color-text-muted); font-weight: 500; }
+
+/* §32: two to three lines, deterministic. */
+.summary {
+  font-size: var(--text-body-sm);
+  line-height: var(--lh-body-sm);
+  color: var(--color-text-secondary);
+  flex: none;
+}
+
+/* §62: two to four metadata fields, no more. §3.2 forbids stacking badges, and
+ * a wrapped third row of chips is exactly the stacking it means -- so the row
+ * is allowed to wrap once and no further. */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  flex: none;
+  max-height: 52px;
+  overflow: hidden;
+}
+
+/* Everything below is pinned to the bottom so the deadline and the actions sit
+   on the same line across the whole row (§3.1, §79). */
+.foot { margin-top: auto; display: flex; flex-direction: column; gap: var(--s-3); flex: none; }
+
+.deadlineRow { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+
+.deadlineLabel {
+  font-size: var(--text-micro);
+  line-height: var(--lh-micro);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--color-border);
+}
+
+/* §73: the provenance line. The host domain is on every card deliberately —
+   half this index comes from one tier-3 aggregator and a student is entitled
+   to know which site a claim came from before they trust its deadline. */
+.provenance {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--text-micro);
+  line-height: var(--lh-micro);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  min-width: 0;
+}
+.provenanceHost { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The whole card is a link target, but the actions inside it are not: this
+   overlay sits under them, so a click on the body navigates and a click on
+   Save does not. */
+.cardLink { position: absolute; inset: 0; border-radius: inherit; z-index: 0; }
+.card > *:not(.cardLink) { position: relative; z-index: 1; }
+
+/* -------------------------------------------------------- deadline chip ---
+   §33: urgency bands, and danger styling ONLY for genuinely urgent or
+   expired. §108: the state is in the words as well as the colour. */
+
+.deadlineValue { display: inline-flex; align-items: baseline; gap: var(--s-2); }
+
+.deadlineDate {
+  font-family: var(--font-mono);
+  font-size: var(--text-body-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.deadlineUnknown { font-size: var(--text-body-sm); color: var(--color-text-muted); }
+
+/* ---------------------------------------------------------------- grid ---
+   §26: three columns at desktop, §27 two at tablet, §28 one at mobile.
+   `auto-fill` is deliberately NOT used: it would give four narrow columns on a
+   wide screen, and §26 only permits a fourth column when the card stays
+   readable. A fixed column count keeps the card's measure under control. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-6);
+}
+
+@media (max-width: 1023px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); } }
+@media (max-width: 639px)  { .grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); } }
+
+/* The toolbar above the grid: result count on the left, sort on the right. */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin-bottom: var(--s-5);
+  flex-wrap: wrap;
+}
+
+.count { font-size: var(--text-body-sm); color: var(--color-text-secondary); }
+.countNumber { font-weight: 600; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+
+/* -------------------------------------------------------- money display --- */
+
+.money { display: inline-flex; align-items: baseline; gap: var(--s-2); flex-wrap: wrap; }
+.moneyMain {
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.moneyAlt { font-family: var(--font-mono); font-size: var(--text-meta); color: var(--color-text-muted); }
+
+/* ------------------------------------------------------------ pagination ---
+   §102: compact, and it preserves position rather than jumping. */
+
+.pager { display: flex; align-items: center; justify-content: center; gap: var(--s-2); margin-top: var(--s-10); }
+.pagerInfo { font-size: var(--text-meta); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+
+/* §43: on mobile the only sorting control is the one in the [Filter] [Sort]
+   bar, which opens a sheet. The inline select beside the result count is the
+   desktop affordance and would otherwise be a second, differently-shaped way
+   to do the same thing on a 390px screen (§81, §114). */
+@media (max-width: 767px) {
+  .toolbarSort { display: none; }
+}
+
+/* Progress through a long list, kept quieter than the total beside it. */
+.countSeen { color: var(--color-text-muted); }

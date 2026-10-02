@@ -1,0 +1,30 @@
+.group {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  flex: none;
+}
+
+.opt {
+  height: 30px;
+  padding-inline: var(--s-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+.opt:hover { color: var(--color-text-primary); }
+
+.optActive {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-card);
+}
+
+@media (pointer: coarse) {
+  .opt { min-height: 36px; }
+}

@@ -1,0 +1,114 @@
+/* §48–51: the conversion point from discovery to application.
+
+   §49 sets the test — "the user should understand the opportunity within
+   5–10 seconds" — so the hero carries category, title, organisation, a concise
+   description, the deadline, the funding and the two actions, and nothing else
+   competes with the external CTA (§50). §51 fixes the section order below it
+   and it does not vary by opportunity. */
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--s-6); align-items: start; }
+@media (max-width: 1023px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  grid-column: 1 / -1;
+  margin-bottom: var(--s-2);
+}
+@media (max-width: 639px) { .hero { padding: var(--s-5); } }
+
+.heroTop { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-4); }
+.heroTitle { font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.018em; max-width: 34ch; }
+@media (max-width: 639px) { .heroTitle { font-size: 22px; line-height: 28px; } }
+
+.heroOrg { font-size: var(--text-body-sm); color: var(--color-text-muted); font-weight: 500; }
+.heroSummary { font-size: var(--text-body); line-height: 22px; color: var(--color-text-secondary); max-width: 68ch; }
+.heroMeta { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+
+/* §50: one dominant primary action and no competing second one. */
+.heroActions { display: flex; flex-wrap: wrap; gap: var(--s-2); padding-top: var(--s-2); border-top: 1px solid var(--color-border); }
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+@media (max-width: 639px) { .panel { padding: var(--s-5); } }
+
+.stack { display: flex; flex-direction: column; gap: var(--s-6); min-width: 0; }
+
+.panelTitle { font-size: var(--text-section); line-height: var(--lh-section); font-weight: 600; letter-spacing: -0.01em; }
+
+/* The prose blocks (eligibility, benefits, how to apply) come from scraped
+   page text, so they are a single run of sentences rather than markup. 65ch
+   and a comfortable line height is what makes them readable anyway. */
+.prose { font-size: var(--text-body); line-height: 23px; color: var(--color-text-secondary); max-width: 65ch; }
+
+/* §48: Key information as a definition list beside the overview. */
+.facts { display: flex; flex-direction: column; }
+
+.fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding-block: var(--s-3);
+  border-bottom: 1px solid var(--color-border);
+}
+.fact:last-child { border-bottom: 0; }
+
+.factKey { flex: none; font-size: var(--text-meta); font-weight: 500; color: var(--color-text-muted); }
+.factValue { text-align: right; font-size: var(--text-body-sm); min-width: 0; }
+.factUnknown { color: var(--color-text-muted); }
+
+.sticky { position: sticky; top: calc(var(--header-h) + var(--s-5)); display: flex; flex-direction: column; gap: var(--s-4); }
+@media (max-width: 1023px) { .sticky { position: static; } }
+
+/* §73: the source block. It states where this came from and when, because
+   half the index is one aggregator and that is a decision input. */
+.source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.amounts { display: flex; flex-direction: column; gap: var(--s-2); }
+.amountRow { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
+
+.related { display: flex; flex-direction: column; }
+.relatedRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-block: var(--s-3);
+  border-bottom: 1px solid var(--color-border);
+  min-height: 48px;
+}
+.relatedRow:last-child { border-bottom: 0; }
+.relatedRow:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+/* §105: unknown values are explicit but visually quiet. This is the shape
+   they take when a whole section has no data. */
+.absent {
+  padding: var(--s-4);
+  border: 1px dashed var(--color-border-hover);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+}

@@ -1,0 +1,115 @@
+/* §24 bento. §94 is the rule that matters: bento is for information
+   hierarchy, not decoration — "every box must answer a useful question" — and
+   §24 forbids equal-sized boxes made to fill space. So the sizes follow
+   importance: the greeting and what-to-do-next card is twice the width of the
+   deadline summary beside it, and the two collection cards below it are equal
+   only because they answer two halves of the same question.
+
+   Layout:
+   ┌───────────────────────────┬──────────────────────┐
+   │ Greeting + quick action   │ Deadline summary     │
+   ├───────────────────┬───────┴──────────────────────┤
+   │ Saved             │ Applications                 │
+   ├───────────────────┴──────────────────────────────┤
+   │ Closing soon  (full width, cards)                │
+   └──────────────────────────────────────────────────┘
+*/
+
+.bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s-6); }
+
+.wide { grid-column: span 7; }
+.narrow { grid-column: span 5; }
+.half { grid-column: span 6; }
+.full { grid-column: span 12; }
+
+/* §66: reflow the bento, do not shrink it until the text breaks. */
+@media (max-width: 1023px) {
+  .bento { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--s-5); }
+  .wide, .narrow, .half, .full { grid-column: span 6; }
+}
+@media (max-width: 639px) { .bento { gap: var(--s-4); } }
+
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+@media (max-width: 639px) { .box { padding: var(--s-5); } }
+
+.boxHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
+.boxTitle { font-size: var(--text-section); line-height: var(--lh-section); font-weight: 600; letter-spacing: -0.01em; }
+
+/* §23: metrics only when they lead to an action, and never a wall of them.
+   Three, and each one is a link into a filtered view. */
+.metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-3); }
+@media (max-width: 479px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  transition: border-color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
+}
+.metric:hover { border-color: var(--color-border-hover); background: var(--color-surface-muted); }
+
+/* The one place the lime accent appears on the dashboard: the figure that
+   means money is on the table (§7 yellow = funding). */
+.metricFunding { background: var(--surface-funding); border-color: var(--surface-funding-border); }
+.metricUrgent { background: var(--surface-urgent); border-color: var(--surface-urgent-border); }
+
+.metricValue {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.metricLabel { font-size: var(--text-meta); color: var(--color-text-secondary); font-weight: 500; }
+
+/* A compact row list, used by the deadline summary and the two collection
+   boxes. §101: light separators, generous row height. */
+.rows { display: flex; flex-direction: column; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding-block: var(--s-3);
+  border-bottom: 1px solid var(--color-border);
+  min-height: 52px;
+}
+.row:last-child { border-bottom: 0; }
+.row:hover .rowTitle { text-decoration: underline; text-underline-offset: 2px; }
+
+.rowBody { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rowTitle { font-size: var(--text-body-sm); font-weight: 500; }
+.rowMeta { font-size: var(--text-micro); color: var(--color-text-muted); font-weight: 500; }
+.rowTail { flex: none; }
+
+.boxFoot { margin-top: auto; padding-top: var(--s-2); }
+
+.band {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding-block: var(--s-2);
+}
+.bandLabel { flex: none; width: 118px; font-size: var(--text-body-sm); }
+.bandTrack { flex: 1 1 auto; min-width: 0; height: 6px; border-radius: 3px; background: var(--color-surface-muted); overflow: hidden; }
+/* display:block is load-bearing. The fill is a <span> and the track is not a
+ * flex container, so without it the element stays inline, width and height do
+ * not apply, and every bar renders empty — four identical grey tracks that
+ * look deliberate and say nothing. */
+.bandFill { display: block; height: 100%; border-radius: 3px; background: var(--color-action); }
+.bandCount { flex: none; width: 34px; text-align: right; font-family: var(--font-mono); font-size: var(--text-meta); font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }

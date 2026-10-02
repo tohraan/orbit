@@ -1,0 +1,15 @@
+{
+  "name": "@rof/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./handlers/*": "./src/handlers/*.ts"
+  },
+  "dependencies": {
+    "@rof/core": "0.1.0",
+    "server-only": "^0.0.1"
+  },
+  "comment": "Server-only: the Supabase reader, response plumbing, the rate limiter, and the five route handlers. Both deployable apps mount the SAME handlers, so the frontend's same-origin /api and the standalone data service can never drift apart."
+}

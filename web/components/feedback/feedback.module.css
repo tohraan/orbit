@@ -1,0 +1,84 @@
+/* §45, §46, §71: empty and error states are a bordered container, a short
+   bold line, one or two sentences of real guidance, and an action. §45 and
+   §113 both forbid the giant illustration. */
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  text-align: center;
+  padding: var(--s-12) var(--s-6);
+  border: 1px dashed var(--color-border-hover);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.stateCompact { padding: var(--s-8) var(--s-5); }
+
+.stateIcon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.stateIconDanger { background: var(--surface-urgent); border-color: var(--surface-urgent-border); color: var(--color-danger); }
+
+.stateTitle { font-size: var(--text-card-title); line-height: var(--lh-card-title); font-weight: 600; }
+
+.stateBody {
+  max-width: 44ch;
+  font-size: var(--text-body-sm);
+  line-height: var(--lh-body);
+  color: var(--color-text-secondary);
+}
+
+.stateActions { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: center; margin-top: var(--s-1); }
+
+/* ------------------------------------------------------------ skeletons ---
+   §103: the card skeleton matches the real card's geometry exactly — same
+   height, same 20px padding, same row rhythm — so the grid does not move when
+   the data lands. */
+
+.skCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  height: var(--card-h);
+  min-height: 300px;
+  padding: var(--s-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.skRow { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.skStack { display: flex; flex-direction: column; gap: var(--s-2); }
+.skChips { display: flex; gap: var(--s-2); }
+.skFoot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+
+.skBento {
+  padding: var(--s-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.skRowItem {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.skRowItem:last-child { border-bottom: 0; }

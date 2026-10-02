@@ -1,0 +1,88 @@
+/* The match panel. §7: the score is information, not decoration — it gets one
+   accent surface and the reasons underneath are plain text, because a number
+   nobody can interrogate is worse than no number. */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+@media (max-width: 639px) { .panel { padding: var(--s-5); } }
+
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-4);
+  padding-block: var(--s-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.row:last-of-type { border-bottom: 0; }
+
+.score {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-md);
+  background: var(--surface-compare);
+  border: 1px solid var(--surface-compare-border);
+  color: var(--ink-compare);
+}
+/* Below the confidence floor the score is deliberately drained of colour: it
+   is a number we are not confident in, and it should not look like one we are. */
+.scoreLow { background: var(--color-surface-secondary); border-color: var(--color-border); color: var(--color-text-muted); }
+.scoreNum { font-family: var(--font-mono); font-size: 17px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.scoreOf { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+
+.body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+.title { font-size: var(--text-body); font-weight: 500; }
+.row:hover .title { text-decoration: underline; text-underline-offset: 2px; }
+
+.reasons { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.reason {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding-inline: var(--s-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
+  font-size: var(--text-micro);
+  color: var(--color-text-secondary);
+}
+.reasonGood { background: var(--surface-funding); border-color: var(--surface-funding-border); color: var(--ink-funding); }
+.reasonUnknown { color: var(--color-text-muted); font-style: italic; }
+
+/* The "we need this from you" prompt. Not a modal and not dismissible-forever:
+   it simply disappears as the fields are filled. */
+.gaps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  border-radius: var(--radius-lg);
+  background: var(--surface-info);
+  border: 1px solid var(--surface-info-border);
+}
+.gapList { display: flex; flex-direction: column; gap: var(--s-2); }
+.gapItem { display: flex; align-items: flex-start; gap: var(--s-2); font-size: var(--text-body-sm); color: var(--color-text-secondary); }
+.gapWorth {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  color: var(--ink-info);
+  min-width: 34px;
+}
+.confidence { font-size: var(--text-meta); color: var(--color-text-muted); }

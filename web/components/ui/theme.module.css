@@ -1,0 +1,37 @@
+/* Matches the currency switch's geometry exactly — §81: two controls doing the
+   same kind of job in the same bar must not look like two different systems. */
+
+.group {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  flex: none;
+}
+
+.opt {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+.opt:hover { color: var(--color-text-primary); }
+
+.optActive {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-card);
+}
+
+@media (pointer: coarse) {
+  .opt { width: 36px; height: 36px; }
+}
+
+/* The mobile header is tight, so there it collapses to the two real choices
+   and drops "system" — which is the default anyway and reachable from Profile. */
+.compact .opt:last-child { display: none; }

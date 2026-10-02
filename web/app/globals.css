@@ -1,0 +1,554 @@
+/* ===========================================================================
+   Design tokens — the single source of truth for the UI layer.
+
+   Transcribed from design-ieee.md: colour (§5–7), typography (§8), spacing
+   (§10), radius (§11), borders (§12), shadow (§13), motion (§77), focus (§75).
+   Components consume the semantic tokens below, never a raw hex; §4 forbids
+   one-off values inside a component.
+
+   TWO DELIBERATE DEPARTURES from that document, both requested:
+
+   1. BRAND COLOUR. §5.1 specifies a near-black primary (#171C24) and pastel
+      accents. The product is for one campus, so the accents are taken from the
+      BITS Pilani logo instead: Cosmic Cobalt #2B2B88, Sky Blue #5CCAE8, UC
+      Gold #B78A2D, Shandy #FFE275, Fire Engine Red #CF2027. §7's rule is kept
+      exactly — every accent carries ONE meaning and never decorates.
+
+   2. DARK THEME. The document is single-theme and builds depth from a warm
+      ground behind white cards (§96). Dark mode cannot use that mechanism, so
+      it rebuilds the same hierarchy with surface lightness instead: the page
+      is the darkest layer and cards sit above it, which is the same
+      relationship inverted rather than a different design.
+
+   Three theme states, because that is what a viewer can be in: an explicit
+   choice sets data-theme on <html>, and the default "system" sets nothing, so
+   for most people only prefers-color-scheme distinguishes the two. Every token
+   gets its first definition on bare :root; the dark blocks only redefine.
+   =========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* --- BITS Pilani brand (§7: each carries one meaning, never decoration) --- */
+  --bits-cobalt: #2b2b88;
+  --bits-cobalt-deep: #1e1e63;
+  --bits-sky: #5ccae8;
+  --bits-gold: #b78a2d;
+  --bits-shandy: #ffe275;
+  --bits-red: #cf2027;
+
+  /* --- base palette (§5.1) --- */
+  --background: #f7f7f4;
+  --surface: #ffffff;
+  --surface-soft: #f2f2ee;
+  --surface-muted: #ecece7;
+
+  --foreground: #17191c;
+  --foreground-secondary: #4f5358;
+  --foreground-muted: #7c8085;
+  --foreground-disabled: #a7aaad;
+
+  --border: #e3e3de;
+  --border-strong: #d3d3cc;
+
+  /* The primary action is the brand cobalt rather than §5.1's near-black.
+     White on #2b2b88 is ~12:1, comfortably past AA. */
+  --primary: var(--bits-cobalt);
+  --primary-hover: var(--bits-cobalt-deep);
+  --primary-foreground: #ffffff;
+
+  --accent-yellow: var(--bits-shandy);
+  --accent-gold: var(--bits-gold);
+  --accent-sky: var(--bits-sky);
+  --accent-lilac: #c8b9e8;
+  --accent-blue: #afcfe4;
+
+  --success: #2f7d53;
+  --warning: var(--bits-gold);
+  --danger: var(--bits-red);
+  --info: var(--bits-cobalt);
+
+  /* --- semantic tokens (§6) --- */
+  --color-bg: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-soft);
+  --color-surface-muted: var(--surface-muted);
+
+  --color-text-primary: var(--foreground);
+  --color-text-secondary: var(--foreground-secondary);
+  --color-text-muted: var(--foreground-muted);
+  --color-text-disabled: var(--foreground-disabled);
+
+  --color-border: var(--border);
+  --color-border-hover: var(--border-strong);
+  --color-border-active: var(--primary);
+
+  --color-action: var(--primary);
+  --color-action-hover: var(--primary-hover);
+  --color-action-text: var(--primary-foreground);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  /* Accent SURFACES, not accent text (§5.1 "pastel accents are supporting
+     surfaces"). Each is its accent at low alpha over the page, so text on top
+     still clears AA. */
+  --surface-funding: #fbf6de;
+  --surface-funding-border: #efe0ad;
+  --surface-saved: #fbeef7;
+  --surface-saved-border: #f1d4e8;
+  --surface-compare: #ececf6;
+  --surface-compare-border: #d2d2e8;
+  --surface-info: #eaf7fc;
+  --surface-info-border: #c5e8f3;
+  --surface-urgent: #fcedee;
+  --surface-urgent-border: #f3d2d4;
+  --surface-soon: #faf2e2;
+  --surface-soon-border: #ecdcb9;
+  /* Reserved for listings the college added by hand (see db/014). */
+  --surface-college: #e9e9f5;
+  --surface-college-border: #c9c9e4;
+
+  /* Ink for text sitting ON an accent surface. These were literals inside the
+     chip rules, which is exactly the bug §4 warns about: a colour defined in
+     one place for one theme reads as unstyled in the other. */
+  --ink-funding: #5c5312;
+  --ink-saved: #8a3c70;
+  --ink-compare: #343483;
+  --ink-info: #175a72;
+  --ink-urgent: #9b1f25;
+  --ink-soon: #7d5713;
+  --ink-college: #343483;
+
+  /* Surfaces that are not a flat colour: the nav hover, the modal scrim, and
+     the shimmer that travels across a skeleton. All three were white- or
+     black-biased literals that invert wrongly. */
+  --hover-wash: rgba(23, 25, 28, 0.05);
+  --scrim: rgba(20, 22, 25, 0.38);
+  --shimmer: rgba(255, 255, 255, 0.72);
+  --on-action-muted: rgba(255, 255, 255, 0.72);
+
+  /* --- typography (§8.2) --- */
+  --font-sans: var(--font-geist-sans), Geist, Inter, ui-sans-serif, system-ui,
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-display: 48px;
+  --lh-display: 52px;
+  --text-page-title: 32px;
+  --lh-page-title: 38px;
+  --text-section: 20px;
+  --lh-section: 26px;
+  --text-card-title: 16px;
+  --lh-card-title: 21px;
+  --text-body: 14px;
+  --lh-body: 21px;
+  --text-body-sm: 13px;
+  --lh-body-sm: 19px;
+  --text-meta: 12px;
+  --lh-meta: 17px;
+  --text-micro: 11px;
+  --lh-micro: 15px;
+
+  /* --- spacing, 4px base (§10) --- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 28px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-14: 56px;
+  --s-16: 64px;
+  --s-20: 80px;
+  --s-24: 96px;
+
+  /* --- radius (§11) --- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-pill: 999px;
+  --radius-control: 10px;
+
+  /* --- shadow (§13): borders carry the weight, not elevation --- */
+  --shadow-card: 0 1px 2px rgba(20, 22, 25, 0.04);
+  --shadow-raised: 0 2px 8px rgba(20, 22, 25, 0.06);
+  --shadow-modal: 0 20px 50px rgba(20, 22, 25, 0.12);
+
+  /* --- motion (§77) --- */
+  --motion-fast: 150ms;
+  --motion: 180ms;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* --- layout (§14, §22) --- */
+  --sidebar-w: 232px;
+  --sidebar-collapsed-w: 72px;
+  --header-h: 64px;
+  --mobile-header-h: 56px;
+  --mobile-nav-h: 68px;
+  --container-max: 1280px;
+  --page-pad-x: 40px;
+  --card-h: 344px;
+}
+
+/* --- dark theme ---------------------------------------------------------
+   Only tokens are redefined; no component rule below this point knows which
+   theme it is in. The accents are lifted, not reused: #2b2b88 on a near-black
+   page is unreadable, so the cobalt becomes a brighter sky-leaning blue that
+   is recognisably the same hue family at the contrast dark backgrounds need. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --background: #101114;
+    --surface: #191b1f;
+    --surface-soft: #202329;
+    --surface-muted: #282c33;
+
+    --foreground: #eceef1;
+    --foreground-secondary: #b1b7bf;
+    --foreground-muted: #848b95;
+    --foreground-disabled: #5d646d;
+
+    --border: #2c3038;
+    --border-strong: #3c424c;
+
+    --primary: #7f8cf0;
+    --primary-hover: #939df3;
+    --primary-foreground: #0d0f14;
+
+    --success: #5fc08a;
+    --warning: #d7a64a;
+    --danger: #f06a6f;
+    --info: #7f8cf0;
+
+    --surface-funding: #2a2715;
+    --surface-funding-border: #4a4423;
+    --surface-saved: #2b1c28;
+    --surface-saved-border: #4b3144;
+    --surface-compare: #1f2033;
+    --surface-compare-border: #363a5c;
+    --surface-info: #16262e;
+    --surface-info-border: #27454f;
+    --surface-urgent: #2e191b;
+    --surface-urgent-border: #512a2d;
+    --surface-soon: #2b2316;
+    --surface-soon-border: #4b3d23;
+    --surface-college: #1f2033;
+    --surface-college-border: #383c60;
+
+    --ink-funding: #e3cf85;
+    --ink-saved: #efb3d8;
+    --ink-compare: #b6bdf7;
+    --ink-info: #8fd6ee;
+    --ink-urgent: #f4a6a9;
+    --ink-soon: #e5c384;
+    --ink-college: #b6bdf7;
+
+    --hover-wash: rgba(255, 255, 255, 0.06);
+    --scrim: rgba(0, 0, 0, 0.6);
+    /* A white sweep over a dark block is a flash, not a shimmer. */
+    --shimmer: rgba(255, 255, 255, 0.07);
+    --on-action-muted: rgba(13, 15, 20, 0.66);
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-raised: 0 2px 10px rgba(0, 0, 0, 0.45);
+    --shadow-modal: 0 20px 50px rgba(0, 0, 0, 0.55);
+  }
+}
+
+/* The explicit choice, so the toggle wins over the OS setting in both
+   directions. Same values as the media block above. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: #101114;
+  --surface: #191b1f;
+  --surface-soft: #202329;
+  --surface-muted: #282c33;
+
+  --foreground: #eceef1;
+  --foreground-secondary: #b1b7bf;
+  --foreground-muted: #848b95;
+  --foreground-disabled: #5d646d;
+
+  --border: #2c3038;
+  --border-strong: #3c424c;
+
+  --primary: #7f8cf0;
+  --primary-hover: #939df3;
+  --primary-foreground: #0d0f14;
+
+  --success: #5fc08a;
+  --warning: #d7a64a;
+  --danger: #f06a6f;
+  --info: #7f8cf0;
+
+  --surface-funding: #2a2715;
+  --surface-funding-border: #4a4423;
+  --surface-saved: #2b1c28;
+  --surface-saved-border: #4b3144;
+  --surface-compare: #1f2033;
+  --surface-compare-border: #363a5c;
+  --surface-info: #16262e;
+  --surface-info-border: #27454f;
+  --surface-urgent: #2e191b;
+  --surface-urgent-border: #512a2d;
+  --surface-soon: #2b2316;
+  --surface-soon-border: #4b3d23;
+  --surface-college: #1f2033;
+  --surface-college-border: #383c60;
+
+  --ink-funding: #e3cf85;
+  --ink-saved: #efb3d8;
+  --ink-compare: #b6bdf7;
+  --ink-info: #8fd6ee;
+  --ink-urgent: #f4a6a9;
+  --ink-soon: #e5c384;
+  --ink-college: #b6bdf7;
+
+  --hover-wash: rgba(255, 255, 255, 0.06);
+  --scrim: rgba(0, 0, 0, 0.6);
+  --shimmer: rgba(255, 255, 255, 0.07);
+  --on-action-muted: rgba(13, 15, 20, 0.66);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-raised: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --shadow-modal: 0 20px 50px rgba(0, 0, 0, 0.55);
+}
+
+@media (max-width: 1279px) {
+  :root { --page-pad-x: 32px; }
+}
+@media (max-width: 1023px) {
+  :root { --sidebar-w: var(--sidebar-collapsed-w); --page-pad-x: 24px; }
+}
+@media (max-width: 639px) {
+  :root { --page-pad-x: 16px; --card-h: auto; }
+}
+
+/* =============================================================== reset === */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Nothing in this app relies on scroll-snapping or restoration tricks, and
+     anchored section links read better with a little headroom. */
+  scroll-padding-top: calc(var(--header-h) + var(--s-4));
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* §64: never horizontally scroll. Enforced here rather than hoped for. */
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 600; text-wrap: balance; }
+p { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: none; }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+input, select, textarea { font: inherit; color: inherit; }
+
+img, svg { max-width: 100%; display: block; }
+
+/* §75: a visible focus state, always, and never removed. The ring is drawn
+   only for keyboard users so a mouse click does not leave one behind. */
+:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection { background: var(--accent-lilac); color: var(--foreground); }
+
+/* §107: digits in a column must line up, in every locale. */
+.tnum { font-variant-numeric: tabular-nums; }
+
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Visible to a screen reader, not to the eye. For the icon-only controls
+   §74 requires accessible labels on. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ====================================================== type utilities === */
+
+.t-display    { font-size: var(--text-display);    line-height: var(--lh-display);    font-weight: 600; letter-spacing: -0.02em; }
+.t-page-title { font-size: var(--text-page-title); line-height: var(--lh-page-title); font-weight: 600; letter-spacing: -0.018em; }
+.t-section    { font-size: var(--text-section);    line-height: var(--lh-section);    font-weight: 600; letter-spacing: -0.01em; }
+.t-card-title { font-size: var(--text-card-title); line-height: var(--lh-card-title); font-weight: 600; letter-spacing: -0.006em; }
+.t-body       { font-size: var(--text-body);       line-height: var(--lh-body);       font-weight: 400; }
+.t-body-sm    { font-size: var(--text-body-sm);    line-height: var(--lh-body-sm);    font-weight: 400; }
+.t-meta       { font-size: var(--text-meta);       line-height: var(--lh-meta);       font-weight: 500; }
+.t-micro      { font-size: var(--text-micro);      line-height: var(--lh-micro);      font-weight: 600; }
+
+.c-secondary { color: var(--color-text-secondary); }
+.c-muted     { color: var(--color-text-muted); }
+
+/* §93: the eyebrow above a page title. The one place small caps are allowed;
+   §9 forbids all-caps section headings, which these are not. */
+.eyebrow {
+  font-size: var(--text-micro);
+  line-height: var(--lh-micro);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* §31/§32/§106: deterministic clamps, so one long title cannot break the grid. */
+.clamp-1, .clamp-2, .clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.clamp-1 { -webkit-line-clamp: 1; }
+.clamp-2 { -webkit-line-clamp: 2; }
+.clamp-3 { -webkit-line-clamp: 3; }
+
+/* ========================================================== skeletons === */
+/*
+   §47 and §103: skeletons preserve the final geometry so nothing shifts when
+   the data lands, and there is no full-page spinner when the structure can be
+   shown immediately.
+
+   The sweep is deliberately restrained. §3.3 forbids glowing and neon, so this
+   is a neutral highlight travelling across a neutral block — a change in
+   surface, not a light source. It is one shared animation on a background
+   gradient; no element moves, which keeps it off the compositor's critical
+   path and makes it free to disable for reduced motion.
+*/
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    var(--shimmer) 50%,
+    transparent 80%
+  );
+  transform: translateX(-100%);
+  animation: sweep 1.45s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  to { transform: translateX(100%); }
+}
+
+.skeleton-line { height: 12px; border-radius: 6px; }
+.skeleton-line.tall { height: 16px; }
+
+/* A deliberately staggered start, so a grid of skeletons reads as a surface
+   being filled rather than six identical metronomes. */
+.skeleton-stagger-1::after { animation-delay: 0ms; }
+.skeleton-stagger-2::after { animation-delay: 110ms; }
+.skeleton-stagger-3::after { animation-delay: 220ms; }
+
+/* The determinate bar used while a route transition is in flight. Indeterminate
+   on purpose: the duration is a network round trip, and a fake percentage is a
+   lie about progress. */
+.route-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  z-index: 90;
+  background: transparent;
+  overflow: hidden;
+}
+.route-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 42%;
+  background: var(--color-action);
+  animation: slide 1.1s var(--ease) infinite;
+}
+@keyframes slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(240%); }
+}
+
+/* The small inline spinner, for a button that is working. A ring, not a
+   pulsing glow (§3.3). */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  animation: spin 620ms linear infinite;
+  flex: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* §76: when reduced motion is set, remove the movement but keep every
+   functional state change — the skeleton must still read as "loading". */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton::after { display: none; }
+  .skeleton { background: var(--color-surface-muted); }
+  .route-progress::after { width: 100%; animation: none; opacity: 0.4; }
+  .spinner { animation: none; border-top-color: currentColor; opacity: 0.5; }
+}
+
+/* The skip link is off-screen until focused (§74 logical tab order). */
+.skip-link:focus-visible {
+  left: var(--s-4) !important;
+  top: var(--s-4) !important;
+}
+
+/* The 90-day and 6-month timeline ranges are hidden on a phone: a six-month
+   axis at 390px is about 2px per day. app/deadlines also forces the VALUE back
+   to 30 there, because hiding a control does not change the state behind it. */
+@media (max-width: 767px) {
+  .rangeWide { display: none !important; }
+}

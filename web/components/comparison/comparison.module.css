@@ -1,0 +1,126 @@
+/* ----------------------------------------------------------- compare tray ---
+   §38: sticky bottom centre on desktop, max-width ~600px; fixed above the
+   bottom navigation on mobile, full width less 16px margins. */
+
+.tray {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--s-6) + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  width: min(600px, calc(100vw - 32px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-hover);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
+  animation: trayIn var(--motion) var(--ease);
+}
+
+@keyframes trayIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+@media (max-width: 1023px) {
+  .tray { bottom: calc(var(--mobile-nav-h) + var(--s-3) + env(safe-area-inset-bottom, 0px)); }
+}
+
+.trayCount { font-size: var(--text-body-sm); font-weight: 500; }
+.trayHint { font-size: var(--text-micro); color: var(--color-text-muted); font-weight: 500; }
+.trayActions { display: flex; align-items: center; gap: var(--s-2); flex: none; }
+
+/* ------------------------------------------------------ comparison table ---
+   §39: attribute rows, common information only. §87 and §39: no winner
+   indicators and no ranking language — the two columns are presented
+   identically, and the student decides. */
+
+.table { width: 100%; border-collapse: collapse; }
+
+.table th, .table td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--s-4) var(--s-4);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-body-sm);
+  line-height: var(--lh-body);
+}
+
+/* §101: light horizontal separators, no vertical border between every column. */
+.table tbody tr:last-child td, .table tbody tr:last-child th { border-bottom: 0; }
+
+.attr {
+  width: 180px;
+  font-size: var(--text-meta);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-surface-secondary);
+}
+
+.colHead { padding: var(--s-5) var(--s-4); background: var(--color-surface-secondary); }
+.colTitle { font-size: var(--text-card-title); line-height: var(--lh-card-title); font-weight: 600; }
+.colOrg { font-size: var(--text-micro); color: var(--color-text-muted); font-weight: 500; margin-top: 2px; }
+.colActions { display: flex; gap: var(--s-2); margin-top: var(--s-3); flex-wrap: wrap; }
+
+.unknown { color: var(--color-text-muted); }
+
+/* §40: on mobile the table becomes stacked attribute groups, with both
+   opportunities identifiable throughout. The table itself is hidden rather
+   than scrolled, because an eight-row comparison read sideways is not a
+   comparison. */
+.desktopOnly { display: block; }
+.mobileOnly { display: none; }
+
+@media (max-width: 767px) {
+  .desktopOnly { display: none; }
+  .mobileOnly { display: flex; flex-direction: column; gap: var(--s-6); }
+}
+
+.group { display: flex; flex-direction: column; gap: var(--s-2); }
+.groupLabel {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.groupPair { display: flex; flex-direction: column; gap: var(--s-1); padding: var(--s-3) var(--s-4); border-radius: var(--radius-md); background: var(--color-surface-secondary); }
+.groupWho { font-size: var(--text-micro); font-weight: 600; color: var(--color-text-secondary); }
+.groupValue { font-size: var(--text-body-sm); }
+
+.slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+@media (max-width: 767px) { .slots { grid-template-columns: minmax(0, 1fr); } }
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.slotEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  text-align: center;
+  min-height: 132px;
+  padding: var(--s-5);
+  border: 1px dashed var(--color-border-hover);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+
+.note {
+  margin-top: var(--s-5);
+  font-size: var(--text-meta);
+  color: var(--color-text-muted);
+  max-width: 68ch;
+}

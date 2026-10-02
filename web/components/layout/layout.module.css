@@ -1,0 +1,282 @@
+/* The application shell. §14 desktop, §19–20 mobile, §67 never both a full
+   sidebar and a bottom navigation at once. */
+
+.shell { min-height: 100vh; min-height: 100dvh; }
+
+/* ------------------------------------------------------------- sidebar ---
+   §14: 232px, collapsing to a 72px rail. §15 names the groups. §16 gives the
+   states, including the dark active row taken from the visual reference. */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-5) var(--s-3) var(--s-4);
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+  z-index: 40;
+}
+
+@media (max-width: 1023px) {
+  .sidebar { display: none; }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3) var(--s-5);
+  min-width: 0;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-action);
+  color: var(--color-action-text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.brandText { display: flex; flex-direction: column; min-width: 0; }
+.brandName { font-size: var(--text-body-sm); font-weight: 600; letter-spacing: -0.01em; }
+.brandSub { font-size: var(--text-micro); color: var(--color-text-muted); font-weight: 500; }
+
+.navGroup { display: flex; flex-direction: column; gap: 2px; }
+
+.navRule { height: 1px; background: var(--color-border); margin: var(--s-3) var(--s-3); }
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  height: 38px;
+  padding-inline: var(--s-3);
+  border-radius: var(--radius-control);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+.navItem:hover { background: var(--hover-wash); color: var(--color-text-primary); }
+
+.navItemActive { background: var(--color-action); color: var(--color-action-text); }
+.navItemActive:hover { background: var(--color-action); color: var(--color-action-text); }
+
+.navLabel { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.navCount {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+.navItemActive .navCount { color: var(--on-action-muted); }
+
+.sidebarFoot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; }
+
+/* §15 bottom: a quiet line stating where the data came from. §72 — freshness
+   where it affects a decision, and nowhere else. */
+.sourceNote {
+  padding: var(--s-3);
+  margin-top: var(--s-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-micro);
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+/* -------------------------------------------------------------- header ---
+   §17: 64px, lightweight, breadcrumb + search + profile. No second nav bar. */
+
+.main { margin-left: var(--sidebar-w); min-width: 0; }
+@media (max-width: 1023px) { .main { margin-left: 0; } }
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  height: var(--header-h);
+  padding-inline: var(--page-pad-x);
+  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  backdrop-filter: saturate(150%) blur(10px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+@media (max-width: 1023px) {
+  .header { display: none; }
+}
+
+.crumbs { display: flex; align-items: center; gap: var(--s-2); min-width: 0; flex: 0 1 auto; }
+.crumb { font-size: var(--text-body-sm); color: var(--color-text-muted); white-space: nowrap; }
+.crumbHere { color: var(--color-text-primary); font-weight: 500; }
+
+.headerSpacer { flex: 1 1 auto; }
+.headerRight { display: flex; align-items: center; gap: var(--s-2); flex: none; }
+
+/* --------------------------------------------------- mobile header + nav ---
+   §20: do not reproduce the desktop header. §19: the sidebar becomes a bottom
+   navigation with safe-area padding. */
+
+.mobileHeader {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  height: var(--mobile-header-h);
+  padding-inline: var(--page-pad-x);
+  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  backdrop-filter: saturate(150%) blur(10px);
+  border-bottom: 1px solid var(--color-border);
+}
+@media (max-width: 1023px) { .mobileHeader { display: flex; } }
+
+.mobileTitle { font-size: var(--text-body); font-weight: 600; letter-spacing: -0.01em; }
+
+.bottomNav {
+  display: none;
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 40;
+  height: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+}
+@media (max-width: 1023px) { .bottomNav { display: flex; } }
+
+.bottomItem {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  /* §64: a 44px minimum touch target, met by the row height. */
+  min-height: 44px;
+  color: var(--color-text-muted);
+  font-size: var(--text-micro);
+  font-weight: 500;
+  position: relative;
+}
+.bottomItemActive { color: var(--color-text-primary); }
+.bottomItemActive::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 26px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--color-action);
+}
+
+.bottomBadge {
+  position: absolute;
+  top: 8px;
+  margin-left: 15px;
+  min-width: 15px;
+  height: 15px;
+  padding-inline: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-action);
+  color: var(--color-action-text);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 15px;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------- page ---
+   §22: 1280px recommended, centred, never stretched. §10: 32–48px side
+   padding on desktop, 16px on mobile. */
+
+.page {
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding: var(--s-8) var(--page-pad-x) var(--s-20);
+  min-width: 0;
+}
+
+@media (max-width: 1023px) {
+  /* Clearance for the bottom navigation, so §119 "bottom navigation does not
+     cover content" holds even on the last card. */
+  .page { padding-block: var(--s-6) calc(var(--mobile-nav-h) + var(--s-10)); }
+}
+
+/* §93: eyebrow, title, explanation, primary action. */
+.pageHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-6);
+  margin-bottom: var(--s-8);
+}
+@media (max-width: 767px) {
+  .pageHead { flex-direction: column; align-items: stretch; gap: var(--s-4); margin-bottom: var(--s-6); }
+}
+
+.pageHeadText { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; max-width: 62ch; }
+.pageHeadActions { display: flex; align-items: center; gap: var(--s-2); flex: none; }
+
+/* §109: sections are separated, not stacked against one another. */
+.section { margin-top: var(--s-10); }
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin-bottom: var(--s-5);
+}
+
+/* ----------------------------------------------------- global search --- */
+
+.search { position: relative; width: clamp(240px, 32vw, 400px); }
+
+.searchPanel {
+  position: absolute;
+  top: calc(100% + var(--s-2));
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
+  padding: var(--s-2);
+}
+
+.searchHit {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius-sm);
+  min-height: 40px;
+  justify-content: center;
+}
+.searchHit:hover, .searchHitActive { background: var(--color-surface-secondary); }
+
+.searchHitTitle { font-size: var(--text-body-sm); font-weight: 500; }
+.searchHitMeta { font-size: var(--text-micro); color: var(--color-text-muted); font-weight: 500; }
+
+.searchEmpty { padding: var(--s-4) var(--s-3); font-size: var(--text-body-sm); color: var(--color-text-muted); }

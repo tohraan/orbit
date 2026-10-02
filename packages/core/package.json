@@ -1,0 +1,8 @@
+{
+  "name": "@rof/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "comment": "Isomorphic: types, formatting, currency, query validation, the seeded ordering and the row projection. Nothing here touches the filesystem, the network or process.env, so the browser and the data service can both use it. Consumed as TypeScript source and compiled by each app's own build (transpilePackages)."
+}
