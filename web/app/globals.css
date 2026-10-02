@@ -1,72 +1,75 @@
 /* ===========================================================================
    Design tokens — the single source of truth for the UI layer.
 
-   Transcribed from design-ieee.md: colour (§5–7), typography (§8), spacing
-   (§10), radius (§11), borders (§12), shadow (§13), motion (§77), focus (§75).
-   Components consume the semantic tokens below, never a raw hex; §4 forbids
-   one-off values inside a component.
+   Structure from design-ieee.md: colour (§5–7), typography (§8), spacing (§10),
+   radius (§11), borders (§12), shadow (§13), motion (§77), focus (§75).
+   Components consume the semantic tokens below, never a raw hex (§4).
 
-   TWO DELIBERATE DEPARTURES from that document, both requested:
+   COLOUR POLICY. Black and white carry the product; the BITS Pilani emblem
+   carries meaning. Values sampled from the logo file itself rather than
+   guessed: navy #282888, red #C82020, yellow #F8E070, sky #58C8E8, gold
+   #B08828.
 
-   1. BRAND COLOUR. §5.1 specifies a near-black primary (#171C24) and pastel
-      accents. The product is for one campus, so the accents are taken from the
-      BITS Pilani logo instead: Cosmic Cobalt #2B2B88, Sky Blue #5CCAE8, UC
-      Gold #B78A2D, Shandy #FFE275, Fire Engine Red #CF2027. §7's rule is kept
-      exactly — every accent carries ONE meaning and never decorates.
+     navy   actions, links, anything the student can press or follow
+     red    urgency and danger, and nothing else (§33 — do not shout at every
+            approaching date)
+     yellow funding: money is on the table
+     sky    informational surfaces
+     gold   ink on yellow, where the pale yellow cannot carry text
 
-   2. DARK THEME. The document is single-theme and builds depth from a warm
-      ground behind white cards (§96). Dark mode cannot use that mechanism, so
-      it rebuilds the same hierarchy with surface lightness instead: the page
-      is the darkest layer and cards sit above it, which is the same
-      relationship inverted rather than a different design.
+   The sky blue is a SURFACE only. At 1.8:1 on white it cannot hold text or be
+   a button, which is why actions use the navy from the outer ring instead.
+
+   The neutral ramp is true grey, not the warm ground of §96 — "black and white
+   as primary" was the instruction, and a warm beige under a navy/red/yellow
+   accent set reads as a third hue competing with them.
 
    Three theme states, because that is what a viewer can be in: an explicit
    choice sets data-theme on <html>, and the default "system" sets nothing, so
    for most people only prefers-color-scheme distinguishes the two. Every token
-   gets its first definition on bare :root; the dark blocks only redefine.
+   is first defined on bare :root; the dark blocks only redefine.
    =========================================================================== */
 
 :root {
   color-scheme: light;
 
-  /* --- BITS Pilani brand (§7: each carries one meaning, never decoration) --- */
-  --bits-cobalt: #2b2b88;
-  --bits-cobalt-deep: #1e1e63;
-  --bits-sky: #5ccae8;
-  --bits-gold: #b78a2d;
-  --bits-shandy: #ffe275;
-  --bits-red: #cf2027;
+  /* --- sampled from public/bits-logo.png --- */
+  --bits-navy: #282888;
+  --bits-navy-deep: #1b1b63;
+  --bits-sky: #58c8e8;
+  --bits-red: #c82020;
+  --bits-yellow: #f8e070;
+  --bits-gold: #b08828;
 
-  /* --- base palette (§5.1) --- */
-  --background: #f7f7f4;
+  /* --- neutral ramp (black and white, no hue) --- */
+  --background: #fafafa;
   --surface: #ffffff;
-  --surface-soft: #f2f2ee;
-  --surface-muted: #ecece7;
+  --surface-soft: #f4f4f5;
+  --surface-muted: #e9e9ec;
 
-  --foreground: #17191c;
-  --foreground-secondary: #4f5358;
-  --foreground-muted: #7c8085;
-  --foreground-disabled: #a7aaad;
+  --foreground: #0d0d10;
+  --foreground-secondary: #4b4b52;
+  --foreground-muted: #78787f;
+  --foreground-disabled: #a6a6ad;
 
-  --border: #e3e3de;
-  --border-strong: #d3d3cc;
+  --border: #e3e3e7;
+  --border-strong: #cfcfd5;
 
-  /* The primary action is the brand cobalt rather than §5.1's near-black.
-     White on #2b2b88 is ~12:1, comfortably past AA. */
-  --primary: var(--bits-cobalt);
-  --primary-hover: var(--bits-cobalt-deep);
+  /* The press-able colour. Navy, not black: §7 wants an accent to carry one
+     meaning, and "this is an action" is the meaning that earns the emblem's
+     strongest hue. White on #282888 is ~11.8:1. */
+  --primary: var(--bits-navy);
+  --primary-hover: var(--bits-navy-deep);
   --primary-foreground: #ffffff;
 
-  --accent-yellow: var(--bits-shandy);
+  --accent-yellow: var(--bits-yellow);
   --accent-gold: var(--bits-gold);
   --accent-sky: var(--bits-sky);
-  --accent-lilac: #c8b9e8;
-  --accent-blue: #afcfe4;
 
-  --success: #2f7d53;
+  --success: #1f7a46;
   --warning: var(--bits-gold);
   --danger: var(--bits-red);
-  --info: var(--bits-cobalt);
+  --info: var(--bits-navy);
 
   /* --- semantic tokens (§6) --- */
   --color-bg: var(--background);
@@ -87,46 +90,48 @@
   --color-action-hover: var(--primary-hover);
   --color-action-text: var(--primary-foreground);
 
+  /* Hyperlinks and backlinks, per the colour policy above. */
+  --color-link: var(--bits-navy);
+  --color-link-hover: var(--bits-navy-deep);
+
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-info: var(--info);
 
-  /* Accent SURFACES, not accent text (§5.1 "pastel accents are supporting
-     surfaces"). Each is its accent at low alpha over the page, so text on top
-     still clears AA. */
-  --surface-funding: #fbf6de;
-  --surface-funding-border: #efe0ad;
+  /* Accent SURFACES. Each is its accent at low alpha over white, so text on
+     top still clears AA (§5.1: pastels support, they do not shout). */
+  --surface-funding: #fdf6dd;
+  --surface-funding-border: #f0e1a6;
   --surface-saved: #fbeef7;
   --surface-saved-border: #f1d4e8;
-  --surface-compare: #ececf6;
-  --surface-compare-border: #d2d2e8;
-  --surface-info: #eaf7fc;
-  --surface-info-border: #c5e8f3;
-  --surface-urgent: #fcedee;
-  --surface-urgent-border: #f3d2d4;
-  --surface-soon: #faf2e2;
-  --surface-soon-border: #ecdcb9;
-  /* Reserved for listings the college added by hand (see db/014). */
-  --surface-college: #e9e9f5;
-  --surface-college-border: #c9c9e4;
+  --surface-compare: #eaeaf7;
+  --surface-compare-border: #c9c9e8;
+  --surface-info: #e8f7fc;
+  --surface-info-border: #bfe6f4;
+  --surface-urgent: #fcebeb;
+  --surface-urgent-border: #f3cdcd;
+  --surface-soon: #fbf3e0;
+  --surface-soon-border: #ecdcb0;
+  --surface-college: #eaeaf7;
+  --surface-college-border: #c9c9e8;
 
-  /* Ink for text sitting ON an accent surface. These were literals inside the
-     chip rules, which is exactly the bug §4 warns about: a colour defined in
-     one place for one theme reads as unstyled in the other. */
-  --ink-funding: #5c5312;
+  /* Ink for text sitting ON an accent surface. Literals inside component rules
+     are exactly the bug §4 warns about: a colour defined once for one theme
+     reads as unstyled in the other. */
+  --ink-funding: #6b5312;
   --ink-saved: #8a3c70;
-  --ink-compare: #343483;
-  --ink-info: #175a72;
-  --ink-urgent: #9b1f25;
+  --ink-compare: var(--bits-navy);
+  --ink-info: #15607a;
+  --ink-urgent: #9c1a1a;
   --ink-soon: #7d5713;
-  --ink-college: #343483;
+  --ink-college: var(--bits-navy);
 
-  /* Surfaces that are not a flat colour: the nav hover, the modal scrim, and
-     the shimmer that travels across a skeleton. All three were white- or
-     black-biased literals that invert wrongly. */
-  --hover-wash: rgba(23, 25, 28, 0.05);
-  --scrim: rgba(20, 22, 25, 0.38);
+  /* Surfaces that are not a flat colour: nav hover, modal scrim, and the
+     shimmer that travels across a skeleton — all three invert wrongly if
+     written as white- or black-biased literals. */
+  --hover-wash: rgba(13, 13, 16, 0.05);
+  --scrim: rgba(13, 13, 16, 0.4);
   --shimmer: rgba(255, 255, 255, 0.72);
   --on-action-muted: rgba(255, 255, 255, 0.72);
 
@@ -207,56 +212,62 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --background: #101114;
-    --surface: #191b1f;
-    --surface-soft: #202329;
-    --surface-muted: #282c33;
+    --background: #0b0b0d;
+    --surface: #141417;
+    --surface-soft: #1b1b1f;
+    --surface-muted: #24242a;
 
-    --foreground: #eceef1;
-    --foreground-secondary: #b1b7bf;
-    --foreground-muted: #848b95;
-    --foreground-disabled: #5d646d;
+    --foreground: #f2f2f4;
+    --foreground-secondary: #b4b4bc;
+    --foreground-muted: #85858e;
+    --foreground-disabled: #5c5c65;
 
-    --border: #2c3038;
-    --border-strong: #3c424c;
+    --border: #292930;
+    --border-strong: #3a3a44;
 
-    --primary: #7f8cf0;
-    --primary-hover: #939df3;
-    --primary-foreground: #0d0f14;
+    /* The navy is unreadable on near-black, so the action colour is lifted
+       toward the emblem's sky blue — the same hue family at the contrast a
+       dark ground needs. */
+    --primary: #7e8cf2;
+    --primary-hover: #949ef5;
+    --primary-foreground: #0b0b0d;
 
-    --success: #5fc08a;
-    --warning: #d7a64a;
-    --danger: #f06a6f;
-    --info: #7f8cf0;
+    --success: #4fbd7e;
+    --warning: #d9a84a;
+    --danger: #f2706f;
+    --info: #7e8cf2;
 
-    --surface-funding: #2a2715;
-    --surface-funding-border: #4a4423;
+    --color-link: #8fb8f5;
+    --color-link-hover: #a9c9f8;
+
+    --surface-funding: #2b2614;
+    --surface-funding-border: #4c4322;
     --surface-saved: #2b1c28;
     --surface-saved-border: #4b3144;
-    --surface-compare: #1f2033;
-    --surface-compare-border: #363a5c;
-    --surface-info: #16262e;
-    --surface-info-border: #27454f;
-    --surface-urgent: #2e191b;
-    --surface-urgent-border: #512a2d;
-    --surface-soon: #2b2316;
-    --surface-soon-border: #4b3d23;
-    --surface-college: #1f2033;
-    --surface-college-border: #383c60;
+    --surface-compare: #1d1d33;
+    --surface-compare-border: #34345e;
+    --surface-info: #14262e;
+    --surface-info-border: #25454f;
+    --surface-urgent: #2f1818;
+    --surface-urgent-border: #53292a;
+    --surface-soon: #2c2416;
+    --surface-soon-border: #4c3e23;
+    --surface-college: #1d1d33;
+    --surface-college-border: #34345e;
 
-    --ink-funding: #e3cf85;
+    --ink-funding: #e6d08a;
     --ink-saved: #efb3d8;
     --ink-compare: #b6bdf7;
     --ink-info: #8fd6ee;
-    --ink-urgent: #f4a6a9;
+    --ink-urgent: #f4a5a4;
     --ink-soon: #e5c384;
     --ink-college: #b6bdf7;
 
     --hover-wash: rgba(255, 255, 255, 0.06);
-    --scrim: rgba(0, 0, 0, 0.6);
+    --scrim: rgba(0, 0, 0, 0.62);
     /* A white sweep over a dark block is a flash, not a shimmer. */
     --shimmer: rgba(255, 255, 255, 0.07);
-    --on-action-muted: rgba(13, 15, 20, 0.66);
+    --on-action-muted: rgba(11, 11, 13, 0.66);
 
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-raised: 0 2px 10px rgba(0, 0, 0, 0.45);
@@ -264,60 +275,66 @@
   }
 }
 
-/* The explicit choice, so the toggle wins over the OS setting in both
-   directions. Same values as the media block above. */
+/* The explicit choice, so the toggle wins over the OS in both directions. */
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --background: #101114;
-  --surface: #191b1f;
-  --surface-soft: #202329;
-  --surface-muted: #282c33;
+  --background: #0b0b0d;
+  --surface: #141417;
+  --surface-soft: #1b1b1f;
+  --surface-muted: #24242a;
 
-  --foreground: #eceef1;
-  --foreground-secondary: #b1b7bf;
-  --foreground-muted: #848b95;
-  --foreground-disabled: #5d646d;
+  --foreground: #f2f2f4;
+  --foreground-secondary: #b4b4bc;
+  --foreground-muted: #85858e;
+  --foreground-disabled: #5c5c65;
 
-  --border: #2c3038;
-  --border-strong: #3c424c;
+  --border: #292930;
+  --border-strong: #3a3a44;
 
-  --primary: #7f8cf0;
-  --primary-hover: #939df3;
-  --primary-foreground: #0d0f14;
+  /* The navy is unreadable on near-black, so the action colour is lifted
+     toward the emblem's sky blue — the same hue family at the contrast a
+     dark ground needs. */
+  --primary: #7e8cf2;
+  --primary-hover: #949ef5;
+  --primary-foreground: #0b0b0d;
 
-  --success: #5fc08a;
-  --warning: #d7a64a;
-  --danger: #f06a6f;
-  --info: #7f8cf0;
+  --success: #4fbd7e;
+  --warning: #d9a84a;
+  --danger: #f2706f;
+  --info: #7e8cf2;
 
-  --surface-funding: #2a2715;
-  --surface-funding-border: #4a4423;
+  --color-link: #8fb8f5;
+  --color-link-hover: #a9c9f8;
+
+  --surface-funding: #2b2614;
+  --surface-funding-border: #4c4322;
   --surface-saved: #2b1c28;
   --surface-saved-border: #4b3144;
-  --surface-compare: #1f2033;
-  --surface-compare-border: #363a5c;
-  --surface-info: #16262e;
-  --surface-info-border: #27454f;
-  --surface-urgent: #2e191b;
-  --surface-urgent-border: #512a2d;
-  --surface-soon: #2b2316;
-  --surface-soon-border: #4b3d23;
-  --surface-college: #1f2033;
-  --surface-college-border: #383c60;
+  --surface-compare: #1d1d33;
+  --surface-compare-border: #34345e;
+  --surface-info: #14262e;
+  --surface-info-border: #25454f;
+  --surface-urgent: #2f1818;
+  --surface-urgent-border: #53292a;
+  --surface-soon: #2c2416;
+  --surface-soon-border: #4c3e23;
+  --surface-college: #1d1d33;
+  --surface-college-border: #34345e;
 
-  --ink-funding: #e3cf85;
+  --ink-funding: #e6d08a;
   --ink-saved: #efb3d8;
   --ink-compare: #b6bdf7;
   --ink-info: #8fd6ee;
-  --ink-urgent: #f4a6a9;
+  --ink-urgent: #f4a5a4;
   --ink-soon: #e5c384;
   --ink-college: #b6bdf7;
 
   --hover-wash: rgba(255, 255, 255, 0.06);
-  --scrim: rgba(0, 0, 0, 0.6);
+  --scrim: rgba(0, 0, 0, 0.62);
+  /* A white sweep over a dark block is a flash, not a shimmer. */
   --shimmer: rgba(255, 255, 255, 0.07);
-  --on-action-muted: rgba(13, 15, 20, 0.66);
+  --on-action-muted: rgba(11, 11, 13, 0.66);
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-raised: 0 2px 10px rgba(0, 0, 0, 0.45);

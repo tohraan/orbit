@@ -1,14 +1,20 @@
 "use client";
 
+/* §14: the rail stays quiet and does not compete with the opportunity content.
+ * One dark active row (§16) is the only strong colour in it.
+ *
+ * The account slab is pinned to the bottom, below the navigation, by
+ * `margin-top: auto` on the footer — before this it was sized by the nav
+ * groups above it and floated wherever they happened to end. */
+
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import s from "./layout.module.css";
 import { Icon } from "../ui/Icon";
-import { FOOTER_NAV, PRIMARY_NAV, SECONDARY_NAV, type NavItem } from "./nav";
-import { useCompare, useSaved, useTracker } from "@/lib/store";
-
-/* §14: the sidebar stays visually quiet and does not compete with the
- * opportunity content. One dark active row (§16) is the only strong colour. */
+import { PRIMARY_NAV, SECONDARY_NAV, type NavItem } from "./nav";
+import { APP_NAME, APP_TAGLINE } from "./brand";
+import { useCompare, useProfile, useSaved, useTracker } from "@/lib/store";
 
 function Row({ item, counts }: { item: NavItem; counts: Record<string, number> }) {
   const pathname = usePathname();
@@ -31,21 +37,28 @@ function Row({ item, counts }: { item: NavItem; counts: Record<string, number> }
   );
 }
 
-export function Sidebar({ freshness }: { freshness?: string | null }) {
+export function Sidebar() {
   const { saved } = useSaved();
   const { compare } = useCompare();
   const { entries } = useTracker();
+  const { profile, started } = useProfile();
   const counts = { saved: saved.length, compare: compare.length, tracker: entries.length };
+
+  const name = profile.name.trim();
+  const initials =
+    name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "·";
 
   return (
     <aside className={s.sidebar}>
       <Link href="/" className={s.brand}>
-        <span className={s.mark} aria-hidden="true">
-          RO
-        </span>
+        <Image className={s.mark} src="/bits-logo-128.png" alt="" width={34} height={34} priority />
         <span className={s.brandText}>
-          <span className={s.brandName}>Opportunities</span>
-          <span className={s.brandSub}>BITS Pilani Dubai</span>
+          <span className={s.brandName}>{APP_NAME}</span>
+          <span className={s.brandSub}>{APP_TAGLINE}</span>
         </span>
       </Link>
 
@@ -64,17 +77,24 @@ export function Sidebar({ freshness }: { freshness?: string | null }) {
       </nav>
 
       <div className={s.sidebarFoot}>
-        <nav className={s.navGroup} aria-label="Account">
-          {FOOTER_NAV.map((item) => (
-            <Row key={item.href} item={item} counts={counts} />
-          ))}
-        </nav>
-        {/* §72: freshness, stated once, where it affects whether a student
-            trusts a deadline. */}
-        <p className={s.sourceNote}>
-          Aggregated from six public sources.
-          {freshness ? ` Index updated ${freshness}.` : null}
-        </p>
+        {/* The account slab: who is signed in on this device, and the way into
+            their details. Last element in the rail, by design. */}
+        <Link href={started ? "/profile" : "/welcome"} className={s.account}>
+          <span className={s.avatar} aria-hidden="true">
+            {initials}
+          </span>
+          <span className={s.accountBody}>
+            <span className={s.accountName}>{name || "Set up your profile"}</span>
+            <span className={s.accountSub}>
+              {started ? profile.email || profile.course || "View your details" : "Takes about a minute"}
+            </span>
+          </span>
+          <Icon name="chevron-right" size={15} />
+        </Link>
+
+        {/* §72: freshness and provenance, stated once, where it affects whether
+            a student trusts a deadline. */}
+        <p className={s.sourceNote}>Aggregated from seven sources, including the college desk.</p>
       </div>
     </aside>
   );

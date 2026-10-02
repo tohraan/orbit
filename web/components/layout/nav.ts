@@ -41,4 +41,6 @@ export const TITLES: Record<string, string> = {
   "/deadlines": "Deadlines",
   "/compare": "Compare",
   "/profile": "Profile",
+  "/welcome": "Set up your profile",
+  "/admin": "College desk",
 };

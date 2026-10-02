@@ -16,21 +16,27 @@ import { MobileNav } from "./MobileNav";
 import { Header, MobileHeader } from "./Header";
 import { CompareTray } from "../comparison/CompareTray";
 import { ToastProvider } from "../feedback/Toast";
+import { CommandPalette, useCommandPalette } from "../command/CommandPalette";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  /* ⌘K / Ctrl-K lives at the shell, so the shortcut works on every screen and
+   * there is exactly one palette instance regardless of which page is open. */
+  const { open, setOpen } = useCommandPalette();
+
   return (
     <ToastProvider>
       <div className={s.shell}>
         <Sidebar />
         <div className={s.main}>
-          <Header />
-          <MobileHeader />
+          <Header onOpenCommand={() => setOpen(true)} />
+          <MobileHeader onOpenCommand={() => setOpen(true)} />
           <main className={s.page} id="main">
             {children}
           </main>
         </div>
         <CompareTray />
         <MobileNav />
+        <CommandPalette open={open} onClose={() => setOpen(false)} />
       </div>
     </ToastProvider>
   );

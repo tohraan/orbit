@@ -7,11 +7,16 @@
    half-finished profile still produces a usable product — which is a better
    trade than a wall that has to be climbed before the portal does anything. */
 
-.shell { max-width: 640px; margin-inline: auto; }
+.shell { max-width: 680px; margin-inline: auto; }
+
+.intro { display: flex; flex-direction: column; gap: var(--s-2); margin-bottom: var(--s-7); }
 
 .progress { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-6); }
 .track { flex: 1 1 auto; height: 4px; border-radius: 2px; background: var(--color-surface-muted); overflow: hidden; }
-.fill { display: block; height: 100%; border-radius: 2px; background: var(--color-action); transition: width var(--motion) var(--ease); }
+/* No transition: the flow is deliberately unanimated (see page.tsx). A bar
+   that eases to its new width is the one moving thing in a form, and it draws
+   the eye away from the question being asked. */
+.fill { display: block; height: 100%; border-radius: 2px; background: var(--color-action); }
 .pct { font-family: var(--font-mono); font-size: var(--text-meta); color: var(--color-text-muted); font-variant-numeric: tabular-nums; flex: none; }
 
 .card {
@@ -26,7 +31,22 @@
 }
 @media (max-width: 639px) { .card { padding: var(--s-6) var(--s-5); } }
 
-.step { font-size: var(--text-micro); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-muted); }
+/* Named steps rather than "Step 2 of 3": a label tells you what is being
+   asked, a number only tells you how much is left. */
+.stepRow { display: flex; flex-wrap: wrap; gap: var(--s-2); padding-bottom: var(--s-4); border-bottom: 1px solid var(--color-border); }
+
+.stepPip {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: 5px var(--s-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+}
+.stepPipOn { color: var(--color-action-text); background: var(--color-action); }
+.stepPipDone { color: var(--color-link); border-color: var(--color-border); }
 
 .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
 @media (max-width: 639px) { .row { grid-template-columns: minmax(0, 1fr); } }
@@ -57,10 +77,11 @@
   color: var(--color-text-secondary);
   transition: background var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
 }
-.chip:hover { border-color: var(--color-border-hover); color: var(--color-text-primary); }
+.chip:hover { border-color: var(--color-border-active); color: var(--color-link); }
 .chipOn { background: var(--color-action); border-color: var(--color-action); color: var(--color-action-text); }
 
-.foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding-top: var(--s-4); border-top: 1px solid var(--color-border); }
+.foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding-top: var(--s-5); border-top: 1px solid var(--color-border); flex-wrap: wrap; }
+.footRight { display: flex; gap: var(--s-2); }
 
 .privacy {
   padding: var(--s-4);

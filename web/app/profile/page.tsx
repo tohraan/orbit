@@ -18,6 +18,7 @@ import { PageHead, Section } from "@/components/layout/AppShell";
 import h from "../home.module.css";
 import u from "@/components/ui/ui.module.css";
 import { Button, ButtonLink } from "@/components/ui/Button";
+import { CampusEmail, PhoneField, Select, TagPicker } from "@/components/ui/Field";
 import { useToast } from "@/components/feedback/Toast";
 import { EMPTY_PROFILE, useProfile, useSaved, useTracker, type Profile } from "@/lib/store";
 import { RATES_AS_OF } from "@rof/core";
@@ -80,49 +81,31 @@ export default function ProfilePage() {
           </div>
 
           <Field label="Current degree level" hint="Used to filter listings by who may apply.">
-            <select className={u.select} value={draft.level} onChange={set("level")} disabled={!ready}>
-              {LEVELS.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
+            <Select value={draft.level} options={LEVELS} onChange={(v) => { setDraft((d) => ({ ...d, level: v })); setDirty(true); }} placeholder="Not set" ariaLabel="Current degree level" />
           </Field>
 
           <Field label="Funding you need" hint="Fully funded listings cover tuition and living costs.">
-            <select className={u.select} value={draft.funding} onChange={set("funding")} disabled={!ready}>
-              {FUNDING.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
+            <Select value={draft.funding} options={FUNDING} onChange={(v) => { setDraft((d) => ({ ...d, funding: v })); setDirty(true); }} placeholder="Not set" ariaLabel="Funding you need" />
           </Field>
 
           <Field label="Fields you work in" hint="Stored for your own reference. No source in this index publishes a field of study, so it cannot filter yet.">
-            <div className={u.field}>
-              <input
-                className={u.fieldInput}
-                value={draft.fields}
-                onChange={set("fields")}
-                placeholder="computer science, robotics, materials"
-                maxLength={200}
-                disabled={!ready}
-              />
-            </div>
+            <TagPicker
+              value={draft.fields}
+              onChange={(v) => { setDraft((d) => ({ ...d, fields: v })); setDirty(true); }}
+              suggestions={["Computer Science", "Artificial Intelligence", "Robotics", "Materials", "Renewable Energy", "Biotechnology", "Electronics", "Data Science"]}
+              placeholder="e.g. robotics"
+              ariaLabel="Fields you work in"
+            />
           </Field>
 
           <Field label="Countries you would go to" hint="Stored for your own reference; use the Country filter in Explore to act on it.">
-            <div className={u.field}>
-              <input
-                className={u.fieldInput}
-                value={draft.countries}
-                onChange={set("countries")}
-                placeholder="Germany, Canada, United Kingdom"
-                maxLength={200}
-                disabled={!ready}
-              />
-            </div>
+            <TagPicker
+              value={draft.countries}
+              onChange={(v) => { setDraft((d) => ({ ...d, countries: v })); setDirty(true); }}
+              suggestions={["Germany", "United States", "United Kingdom", "Canada", "Australia", "Singapore", "Japan", "Switzerland"]}
+              placeholder="e.g. Germany"
+              ariaLabel="Countries you would go to"
+            />
           </Field>
 
           <Field label="Expected graduation" hint="So you can tell at a glance whether a programme's start date works.">

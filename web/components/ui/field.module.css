@@ -1,0 +1,160 @@
+/* Form controls that look like the rest of the product.
+
+   A native <select> renders with the operating system's own chrome — grey
+   gradients on Windows, a blue highlight on macOS, a full-screen wheel on iOS.
+   None of that follows the token layer, which is why the selects across this
+   app looked borrowed. These replace it with a button plus a listbox, keeping
+   the keyboard contract a native select has: arrows move, Enter and Space
+   choose, Escape closes, Home and End jump, typing jumps to a match. */
+
+.wrap { position: relative; width: 100%; min-width: 0; }
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  width: 100%;
+  height: 44px;
+  padding-inline: var(--s-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-primary);
+  text-align: left;
+  transition: border-color var(--motion-fast) var(--ease);
+}
+.trigger:hover { border-color: var(--color-border-hover); }
+.triggerOpen { border-color: var(--color-border-active); }
+.sm { height: 36px; font-size: var(--text-meta); }
+.placeholder { color: var(--color-text-muted); }
+.value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chev { flex: none; color: var(--color-text-muted); transition: transform var(--motion-fast) var(--ease); }
+.chevOpen { transform: rotate(180deg); }
+
+.list {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 268px;
+  overflow-y: auto;
+  padding: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-hover);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
+}
+/* Opens upward when there is no room below. */
+.listUp { top: auto; bottom: calc(100% + 6px); }
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 40px;
+  padding-inline: var(--s-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-primary);
+  text-align: left;
+}
+.option:hover, .optionActive { background: var(--color-surface-secondary); }
+.optionOn { color: var(--color-link); font-weight: 500; }
+.optionHint { font-size: var(--text-micro); color: var(--color-text-muted); flex: none; }
+
+/* ----------------------------------------------------------- tag picker ---
+   One control, two ways in: tap a suggestion, or type your own. Both land in
+   the same list of tags, so a student is never stuck because their subject is
+   not on our list. */
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  padding: 6px var(--s-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+.tags:focus-within { border-color: var(--color-border-active); outline: 2px solid var(--color-action); outline-offset: 2px; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding-inline: var(--s-2) 5px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-compare);
+  border: 1px solid var(--surface-compare-border);
+  color: var(--ink-compare);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  max-width: 100%;
+}
+.tagText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tagX { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; color: inherit; opacity: 0.65; }
+.tagX:hover { opacity: 1; background: var(--hover-wash); }
+
+.tagInput {
+  flex: 1 1 90px;
+  min-width: 90px;
+  height: 30px;
+  border: 0;
+  background: none;
+  outline: none;
+  font-size: var(--text-body-sm);
+  color: var(--color-text-primary);
+}
+.tagInput::placeholder { color: var(--color-text-muted); }
+
+.suggest { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-2); }
+.suggestChip {
+  height: 30px;
+  padding-inline: var(--s-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+  transition: border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+.suggestChip:hover { border-color: var(--color-border-active); color: var(--color-link); }
+.suggestChip:disabled { opacity: 0.4; cursor: default; }
+
+/* --------------------------------------------------------- email suffix ---
+   The campus domain is fixed, so it is part of the control rather than
+   something a student has to type correctly. */
+
+.affix {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+.affix:focus-within { border-color: var(--color-border-active); outline: 2px solid var(--color-action); outline-offset: 2px; }
+.affixInput { flex: 1 1 auto; min-width: 0; height: 42px; padding-inline: var(--s-3); border: 0; background: none; outline: none; font-size: var(--text-body-sm); color: var(--color-text-primary); }
+.affixTail {
+  display: flex;
+  align-items: center;
+  padding-inline: var(--s-3);
+  background: var(--color-surface-secondary);
+  border-left: 1px solid var(--color-border);
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- phone ---- */
+.phone { display: flex; gap: var(--s-2); }
+.phoneCode { flex: 0 0 132px; }
+.phoneNum { flex: 1 1 auto; min-width: 0; }

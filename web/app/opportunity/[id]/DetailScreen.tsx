@@ -17,6 +17,7 @@ import { Money } from "@/components/opportunities/Money";
 import { CompareButton, SaveButton, TrackControl } from "@/components/opportunities/Actions";
 import { Button, ButtonLink, ExternalButton } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+import { ScanFacts, ScanText } from "@/components/opportunities/ScanText";
 import { ErrorState } from "@/components/feedback/States";
 import { BentoSkeleton } from "@/components/feedback/Skeletons";
 import { useApi } from "@/lib/useApi";
@@ -111,7 +112,7 @@ export function DetailScreen({ id }: { id: string }) {
           <section className={s.panel}>
             <h2 className={s.panelTitle}>Overview</h2>
             {o.summary ? (
-              <p className={s.prose}>{o.summary}</p>
+              <ScanText text={o.summary} label="the overview" />
             ) : (
               <p className={s.absent}>
                 The source page did not publish a summary. Open the official listing for the full description.
@@ -122,7 +123,18 @@ export function DetailScreen({ id }: { id: string }) {
           <section className={s.panel}>
             <h2 className={s.panelTitle}>Eligibility</h2>
             {o.eligibility ? (
-              <p className={s.prose}>{o.eligibility}</p>
+              <>
+                {/* The numbers a student checks first, lifted out of the prose
+                    below rather than restated — §105, nothing invented. */}
+                <ScanFacts
+                  items={[
+                    { label: "Level", value: o.levels.length ? o.levels.map((l) => titleCase(l)).join(", ") : null },
+                    { label: "Country", value: o.country ? countryLabel(o.country) : null },
+                    { label: "Duration", value: o.duration },
+                  ]}
+                />
+                <ScanText text={o.eligibility} label="the eligibility criteria" />
+              </>
             ) : (
               <p className={s.absent}>
                 Eligibility criteria were not captured for this listing. They are on the source page, and they
@@ -134,7 +146,7 @@ export function DetailScreen({ id }: { id: string }) {
           <section className={s.panel}>
             <h2 className={s.panelTitle}>What it covers</h2>
             {o.benefits ? (
-              <p className={s.prose}>{o.benefits}</p>
+              <ScanText text={o.benefits} label="what it covers" />
             ) : (
               <p className={s.absent}>No breakdown of what this covers was published.</p>
             )}
@@ -153,7 +165,7 @@ export function DetailScreen({ id }: { id: string }) {
           <section className={s.panel}>
             <h2 className={s.panelTitle}>How to apply</h2>
             {o.howToApply ? (
-              <p className={s.prose}>{o.howToApply}</p>
+              <ScanText text={o.howToApply} label="the application steps" />
             ) : (
               <p className={s.absent}>
                 The application process was not captured. It is described on the official page.
@@ -164,7 +176,7 @@ export function DetailScreen({ id }: { id: string }) {
                 <h3 className="t-card-title" style={{ marginTop: "var(--s-2)" }}>
                   Documents needed
                 </h3>
-                <p className={s.prose}>{o.documents}</p>
+                <ScanText text={o.documents} label="the documents" />
               </>
             ) : null}
             <div style={{ paddingTop: "var(--s-2)" }}>

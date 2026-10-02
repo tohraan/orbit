@@ -46,6 +46,9 @@ export default function HomePage() {
   const { saved, ready: savedReady } = useSaved();
   const { entries } = useTracker();
   const { profile, started } = useProfile();
+  /* First name only. A dashboard that says "Good afternoon, Aarav Sharma"
+   * reads like a bank; one that says "Aarav" reads like a tool you use. */
+  const firstName = profile.name.trim().split(/\s+/)[0] ?? "";
 
   /* Held until the stored state has been read: firing without the saved ids
    * would return a feed that then has to be refetched a frame later. */
@@ -70,7 +73,7 @@ export default function HomePage() {
     <>
       <PageHead
         eyebrow="Home"
-        title="Your opportunity desk"
+        title={firstName ? `Welcome back, ${firstName}` : "Your opportunity desk"}
         description="Everything open to a BITS Pilani Dubai student, with the deadlines that need attention first."
         actions={
           <ButtonLink href="/explore" variant="primary" iconAfter="arrow-right">

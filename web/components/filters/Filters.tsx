@@ -21,6 +21,7 @@ import s from "./filters.module.css";
 import u from "../ui/ui.module.css";
 import { Option, Popover } from "./Popover";
 import { Button } from "../ui/Button";
+import { Select } from "../ui/Field";
 import { Icon } from "../ui/Icon";
 import { titleCase } from "@rof/core";
 import type { Facets } from "@rof/core";
@@ -342,13 +343,15 @@ export function SortControl({ fallback = "deadline" }: { fallback?: string }) {
   return (
     <label style={{ display: "inline-flex", alignItems: "center", gap: "var(--s-2)" }}>
       <span className="t-meta c-muted">Sort</span>
-      <select className={u.select} value={value} onChange={(e) => f.setOne("sort", e.target.value)}>
-        {SORT_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      <span style={{ minWidth: 180 }}>
+        <Select
+          size="sm"
+          value={value}
+          options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+          onChange={(v) => f.setOne("sort", v)}
+          ariaLabel="Sort opportunities"
+        />
+      </span>
     </label>
   );
 }

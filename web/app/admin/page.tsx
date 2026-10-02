@@ -23,6 +23,7 @@ import s from "./admin.module.css";
 import { PageHead } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+import { Select } from "@/components/ui/Field";
 import { EmptyState, ErrorState } from "@/components/feedback/States";
 import { RowsSkeleton } from "@/components/feedback/Skeletons";
 import { useToast } from "@/components/feedback/Toast";
@@ -45,7 +46,9 @@ const LEVELS = [
 ];
 const FUNDING = ["fully_funded", "partially_funded", "tuition_waiver", "stipend", "paid"];
 
-type Form = Record<string, string> & { levels?: never };
+/* Every form field is a string; `levels` is held separately because it is the
+ * one multi-select and does not belong in a flat string record. */
+type Form = Record<string, string>;
 
 const BLANK: Form = {
   title: "", url: "", summary: "", deadline: "", type: "", country: "", funding: "",
@@ -244,12 +247,12 @@ export default function AdminPage() {
               <input className={[s.input, fieldErrors.deadline ? s.invalid : ""].join(" ")} type="date" value={form.deadline} onChange={set("deadline")} />
             </Field>
             <Field label="Type" error={fieldErrors.type}>
-              <select className={s.input} value={form.type} onChange={set("type")}>
-                <option value="">Not specified</option>
-                {TYPES.map((t) => (
-                  <option key={t} value={t}>{typeLabel(t)}</option>
-                ))}
-              </select>
+              <Select
+                value={form.type}
+                options={[{ value: "", label: "Not specified" }, ...TYPES.map((t) => ({ value: t, label: typeLabel(t) as string }))]}
+                onChange={(v) => setForm((f) => ({ ...f, type: v }))}
+                ariaLabel="Opportunity type"
+              />
             </Field>
           </div>
 
@@ -274,12 +277,12 @@ export default function AdminPage() {
               <input className={s.input} value={form.country} onChange={set("country")} placeholder="Germany" maxLength={60} />
             </Field>
             <Field label="Funding">
-              <select className={s.input} value={form.funding} onChange={set("funding")}>
-                <option value="">Not specified</option>
-                {FUNDING.map((f) => (
-                  <option key={f} value={f}>{typeLabel(f)}</option>
-                ))}
-              </select>
+              <Select
+                value={form.funding}
+                options={[{ value: "", label: "Not specified" }, ...FUNDING.map((f) => ({ value: f, label: typeLabel(f) as string }))]}
+                onChange={(v) => setForm((f) => ({ ...f, funding: v }))}
+                ariaLabel="Funding"
+              />
             </Field>
           </div>
 

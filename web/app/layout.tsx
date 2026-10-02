@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE } from "@/components/layout/brand";
 
 /* §8.1: Geist, with the fallback stack declared in globals.css. next/font
  * self-hosts both faces at build time, which is what lets the CSP forbid every
@@ -11,9 +12,9 @@ const sans = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display:
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Opportunities — BITS Pilani Dubai",
-  description:
-    "Funded research opportunities, scholarships, fellowships and internships a BITS Pilani Dubai student can apply to, aggregated from six public sources.",
+  title: `${APP_NAME} — ${APP_TAGLINE}`,
+  description: APP_DESCRIPTION,
+  icons: { icon: "/bits-logo-64.png", apple: "/bits-logo-256.png" },
   /* Nothing here should be indexed: the content is other people's listings,
    * republished for one campus, and the canonical page for every one of them
    * is the source site. */

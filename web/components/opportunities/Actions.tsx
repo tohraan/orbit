@@ -7,7 +7,8 @@
 import s from "../ui/ui.module.css";
 import { Icon } from "../ui/Icon";
 import { useToast } from "../feedback/Toast";
-import { MAX_COMPARE, useCompare, useSaved, useTracker, type Status } from "@/lib/store";
+import { Select } from "../ui/Field";
+import { MAX_COMPARE, STATUSES, STATUS_LABELS, useCompare, useSaved, useTracker, type Status } from "@/lib/store";
 
 /* §78: the saved state is a FILLED bookmark — a state change, not a second
  * icon style (§59). aria-pressed carries the same information for anyone not
@@ -98,15 +99,16 @@ export function TrackControl({ id }: { id: number }) {
   const current = statusOf(id);
 
   return (
-    <label className={s.chip} style={{ height: 32, paddingInline: 0, border: 0, background: "none" }}>
-      <span className="sr-only">Application status</span>
-      <select
-        className={s.select}
-        style={{ height: 32, fontSize: "var(--text-meta)" }}
+    <span style={{ minWidth: 150, display: "inline-block" }}>
+      <Select
+        size="sm"
         value={current ?? ""}
-        disabled={!ready}
-        onChange={(e) => {
-          const v = e.target.value;
+        ariaLabel="Application status"
+        options={[
+          { value: "", label: "Not tracked" },
+          ...STATUSES.map((st) => ({ value: st, label: STATUS_LABELS[st] })),
+        ]}
+        onChange={(v) => {
           if (!v) {
             remove(id);
             toast("Removed from applications");
@@ -115,15 +117,7 @@ export function TrackControl({ id }: { id: number }) {
             toast("Application status updated");
           }
         }}
-      >
-        <option value="">Not tracked</option>
-        <option value="interested">Interested</option>
-        <option value="planning">Planning</option>
-        <option value="applied">Applied</option>
-        <option value="next_step">Next step</option>
-        <option value="accepted">Accepted</option>
-        <option value="rejected">Rejected</option>
-      </select>
-    </label>
+      />
+    </span>
   );
 }

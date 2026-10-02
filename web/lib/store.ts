@@ -17,7 +17,91 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const PREFIX = "rof.v1.";
+/* ---------------------------------------------------------------- identity ---
+ * Every student's data is stored against a user id, so two people sharing a
+ * machine do not see each other's saved list, tracker or profile.
+ *
+ * The id is generated locally, because this app has no accounts yet. It is a
+ * real identity in the only sense available here — it is stable, it scopes
+ * every key, and nothing is stored outside its namespace — but it is per
+ * BROWSER, not per person: it does not follow a student to another device, and
+ * clearing site data mints a new one. That is said plainly on /profile rather
+ * than implied away.
+ *
+ * It is also the migration seam. When Supabase Auth arrives, `currentUserId()`
+ * returns the authenticated id instead and every key moves with it; the
+ * captured campus email is already recorded against the local id so the two
+ * can be reconciled.
+ */
+
+const ROOT = "rof.v1.";
+const UID_KEY = `${ROOT}uid`;
+const UID_EMAIL_KEY = `${ROOT}uidEmail`;
+
+/* Keys that belong to the device rather than to a person. The theme and the
+ * ordering seed are not worth partitioning: both are preferences of whoever is
+ * sitting there, not records about a student. */
+const DEVICE_KEYS = new Set(["uid", "uidEmail", "theme", "seed", "adminToken"]);
+
+function newId(): string {
+  try {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID().replace(/-/g, "");
+  } catch {
+    /* fall through */
+  }
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export function currentUserId(): string {
+  if (typeof window === "undefined") return "anon";
+  try {
+    let id = window.localStorage.getItem(UID_KEY);
+    if (!id) {
+      id = newId();
+      window.localStorage.setItem(UID_KEY, id);
+      /* First run on this browser: adopt anything written before namespacing
+       * existed, so an early tester does not lose their saved list. */
+      migrateLegacy(id);
+    }
+    return id;
+  } catch {
+    /* Storage blocked. Everything still works for this page view under a
+     * throwaway id; nothing is persisted, which is the correct outcome. */
+    return "anon";
+  }
+}
+
+/** Record which campus account this local id belongs to, for a later migration. */
+export function linkUserEmail(email: string): void {
+  if (typeof window === "undefined" || !email.trim()) return;
+  try {
+    const map = JSON.parse(window.localStorage.getItem(UID_EMAIL_KEY) ?? "{}") as Record<string, string>;
+    map[currentUserId()] = email.trim().toLowerCase();
+    window.localStorage.setItem(UID_EMAIL_KEY, JSON.stringify(map));
+  } catch {
+    /* Not load-bearing: the profile still holds the address. */
+  }
+}
+
+function migrateLegacy(id: string): void {
+  try {
+    for (const key of ["saved", "compare", "tracker", "profile", "currency"]) {
+      const legacy = window.localStorage.getItem(ROOT + key);
+      if (legacy == null) continue;
+      window.localStorage.setItem(`${ROOT}u.${id}.${key}`, legacy);
+      window.localStorage.removeItem(ROOT + key);
+    }
+  } catch {
+    /* Nothing to recover from; the app starts empty. */
+  }
+}
+
+/** Full storage key for a logical key, scoped to the current student. */
+function storageKey(key: string): string {
+  return DEVICE_KEYS.has(key) ? ROOT + key : `${ROOT}u.${currentUserId()}.${key}`;
+}
+
+const PREFIX = ROOT;
 
 /* §53: the status model, in order. The tracker's columns are these, and the
  * order is the order an application actually moves through. */
@@ -88,7 +172,7 @@ export const MAX_COMPARE = 2; // §37: the comparison view is built for two.
 function read<T>(key: string, parse: (raw: unknown) => T | null, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
-    const raw = window.localStorage.getItem(PREFIX + key);
+    const raw = window.localStorage.getItem(storageKey(key));
     if (!raw) return fallback;
     const value = parse(JSON.parse(raw));
     return value ?? fallback;
@@ -102,7 +186,7 @@ function read<T>(key: string, parse: (raw: unknown) => T | null, fallback: T): T
 function write(key: string, value: unknown): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(PREFIX + key, JSON.stringify(value));
+    window.localStorage.setItem(storageKey(key), JSON.stringify(value));
     /* Same-tab listeners: the storage event only fires in OTHER tabs, so the
      * sidebar counts in this one would never update without this. */
     window.dispatchEvent(new CustomEvent("rof:store", { detail: key }));
@@ -252,6 +336,13 @@ export function useTracker() {
   };
 }
 
+/** The current student's id, available to render. */
+export function useUserId(): string {
+  const [id, setId] = useState("");
+  useEffect(() => setId(currentUserId()), []);
+  return id;
+}
+
 export function useProfile() {
   const { value, ready, commit } = usePersisted<Profile>("profile", profile, EMPTY_PROFILE);
 
@@ -268,7 +359,12 @@ export function useProfile() {
     /** Stale enough to ask them to look it over again. */
     needsReview: ready && started && (reviewedDays == null || reviewedDays > PROFILE_REVIEW_DAYS),
     reviewedDays,
-    save: (next: Profile) => commit({ ...next, reviewedAt: new Date().toISOString() }),
+    save: (next: Profile) => {
+      /* Tie this browser's id to the campus account, so a future sign-in can
+       * reconcile locally-held data with a server profile. */
+      if (next.email) linkUserEmail(next.email);
+      commit({ ...next, reviewedAt: new Date().toISOString() });
+    },
   };
 }
 
@@ -297,13 +393,13 @@ export function useSessionSeed(): string {
   useEffect(() => {
     let value = "";
     try {
-      value = window.sessionStorage.getItem(PREFIX + "seed") ?? "";
+      value = window.sessionStorage.getItem(storageKey("seed")) ?? "";
       if (!value) {
         value =
           typeof crypto !== "undefined" && crypto.randomUUID
             ? crypto.randomUUID().replace(/-/g, "")
             : Math.random().toString(36).slice(2) + Date.now().toString(36);
-        window.sessionStorage.setItem(PREFIX + "seed", value);
+        window.sessionStorage.setItem(storageKey("seed"), value);
       }
     } catch {
       /* Private window or blocked storage: fall back to a per-mount seed. The

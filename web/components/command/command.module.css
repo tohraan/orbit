@@ -1,0 +1,138 @@
+/* ⌘K. Pages and actions first, listings second.
+
+   The matcher is deliberately forgiving — a student who types "deadlins" or
+   "compair" gets the page, and a query that matches nothing exactly still
+   offers the closest thing rather than an empty box. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--scrim);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10vh var(--s-4) var(--s-4);
+}
+@media (max-width: 639px) { .scrim { padding-top: var(--s-6); } }
+
+.panel {
+  width: min(620px, 100%);
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-hover);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+}
+
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--color-border);
+  flex: none;
+}
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font-size: var(--text-section);
+  color: var(--color-text-primary);
+}
+.input::placeholder { color: var(--color-text-muted); }
+
+.esc {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 3px 6px;
+}
+
+.results { overflow-y: auto; padding: var(--s-2); flex: 1 1 auto; }
+
+.group { padding: var(--s-2) var(--s-3) 4px; }
+.groupLabel {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 46px;
+  padding-inline: var(--s-3);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  color: var(--color-text-primary);
+}
+.itemActive { background: var(--color-surface-secondary); }
+.itemIcon { flex: none; color: var(--color-text-muted); }
+.itemActive .itemIcon { color: var(--color-link); }
+.itemBody { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.itemTitle { font-size: var(--text-body-sm); font-weight: 500; }
+.itemSub { font-size: var(--text-micro); color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.itemKey { flex: none; font-family: var(--font-mono); font-size: var(--text-micro); color: var(--color-text-muted); }
+
+.empty { padding: var(--s-6) var(--s-5); text-align: center; }
+.emptyTitle { font-size: var(--text-body-sm); font-weight: 500; }
+.emptyBody { font-size: var(--text-meta); color: var(--color-text-muted); margin-top: 4px; }
+
+.didYouMean {
+  margin-top: var(--s-3);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-secondary);
+}
+.didYouMeanBtn { color: var(--color-link); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-5);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-micro);
+  color: var(--color-text-muted);
+  flex: none;
+  flex-wrap: wrap;
+}
+.kbd {
+  font-family: var(--font-mono);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-right: 4px;
+}
+
+/* The trigger in the top bar. */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 36px;
+  padding-inline: var(--s-3);
+  min-width: 220px;
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  transition: border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+.trigger:hover { border-color: var(--color-border-hover); color: var(--color-text-secondary); }
+.triggerLabel { flex: 1 1 auto; text-align: left; }
+.triggerKey { font-family: var(--font-mono); font-size: var(--text-micro); }
+@media (max-width: 1023px) { .trigger { min-width: 0; } .triggerLabel, .triggerKey { display: none; } }

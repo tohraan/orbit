@@ -35,22 +35,13 @@
   min-width: 0;
 }
 
-.mark {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  flex: none;
-  border-radius: var(--radius-sm);
-  background: var(--color-action);
-  color: var(--color-action-text);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
+/* The emblem itself, not a letterform standing in for it. It carries the
+   product's whole colour story, so it is the one place all five logo colours
+   appear at once. */
+.mark { width: 34px; height: 34px; flex: none; object-fit: contain; }
 
 .brandText { display: flex; flex-direction: column; min-width: 0; }
-.brandName { font-size: var(--text-body-sm); font-weight: 600; letter-spacing: -0.01em; }
+.brandName { font-size: var(--text-card-title); font-weight: 600; letter-spacing: -0.02em; }
 .brandSub { font-size: var(--text-micro); color: var(--color-text-muted); font-weight: 500; }
 
 .navGroup { display: flex; flex-direction: column; gap: 2px; }
@@ -85,14 +76,47 @@
 }
 .navItemActive .navCount { color: var(--on-action-muted); }
 
-.sidebarFoot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; }
+/* Pinned to the bottom of the rail, below the navigation, with the account
+   slab last. `margin-top: auto` inside the sidebar's flex column is what
+   actually holds it there — before, the nav groups were sized by content and
+   the footer floated wherever they ended. */
+.sidebarFoot { margin-top: auto; display: flex; flex-direction: column; gap: var(--s-2); padding-top: var(--s-4); }
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  text-align: left;
+  min-width: 0;
+  transition: border-color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
+}
+.account:hover { border-color: var(--color-border-hover); background: var(--color-surface-secondary); }
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-action);
+  color: var(--color-action-text);
+  font-size: var(--text-meta);
+  font-weight: 600;
+}
+.accountBody { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.accountName { font-size: var(--text-body-sm); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.accountSub { font-size: var(--text-micro); color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* §15 bottom: a quiet line stating where the data came from. §72 — freshness
    where it affects a decision, and nowhere else. */
 .sourceNote {
-  padding: var(--s-3);
-  margin-top: var(--s-3);
-  border-top: 1px solid var(--color-border);
+  padding: var(--s-2) var(--s-3) 0;
   font-size: var(--text-micro);
   line-height: 1.45;
   color: var(--color-text-muted);
@@ -208,9 +232,13 @@
    §22: 1280px recommended, centred, never stretched. §10: 32–48px side
    padding on desktop, 16px on mobile. */
 
+/* Full width. §22 caps content at 1280px, which suits a reading column; this
+   product is a dense working surface and the campus runs wide monitors, so the
+   grid is allowed to use them. Side padding still holds the gutter, and the
+   components that genuinely need a measure — running prose on the detail page
+   — cap themselves rather than capping the whole app. */
 .page {
-  max-width: var(--container-max);
-  margin-inline: auto;
+  width: 100%;
   padding: var(--s-8) var(--page-pad-x) var(--s-20);
   min-width: 0;
 }
@@ -280,3 +308,105 @@
 .searchHitMeta { font-size: var(--text-micro); color: var(--color-text-muted); font-weight: 500; }
 
 .searchEmpty { padding: var(--s-4) var(--s-3); font-size: var(--text-body-sm); color: var(--color-text-muted); }
+
+
+/* ------------------------------------------------------- top bar menus ---
+   §17 keeps the header light: the palette trigger, notifications, and the
+   account menu. Search moved into ⌘K, so the header no longer carries a second
+   search field competing with the one on Explore. */
+
+.menuWrap { position: relative; }
+
+.iconBtn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  transition: border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+.iconBtn:hover { border-color: var(--color-border-hover); color: var(--color-text-primary); }
+
+/* §108: the count is the signal, the dot is only its shape. */
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 17px;
+  height: 17px;
+  padding-inline: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-danger);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 17px;
+  text-align: center;
+  border: 2px solid var(--color-bg);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 70;
+  width: min(360px, calc(100vw - 32px));
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: var(--s-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-hover);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
+}
+.menuNarrow { width: min(240px, calc(100vw - 32px)); }
+
+.menuHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3) var(--s-3);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--s-2);
+}
+.menuTitle { font-size: var(--text-body-sm); font-weight: 600; }
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 40px;
+  padding-inline: var(--s-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body-sm);
+  color: var(--color-text-primary);
+  text-align: left;
+}
+.menuItem:hover { background: var(--color-surface-secondary); }
+.menuItemDanger { color: var(--color-danger); }
+
+.menuRule { height: 1px; background: var(--color-border); margin: var(--s-2) 0; }
+
+.note {
+  display: flex;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border-radius: var(--radius-sm);
+  align-items: flex-start;
+}
+.note:hover { background: var(--color-surface-secondary); }
+.noteDot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-top: 6px; }
+.noteUrgent { background: var(--color-danger); }
+.noteSoon { background: var(--color-warning); }
+.noteInfo { background: var(--color-link); }
+.noteBody { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.noteTitle { font-size: var(--text-body-sm); font-weight: 500; }
+.noteSub { font-size: var(--text-micro); color: var(--color-text-muted); }
+
+.menuEmpty { padding: var(--s-6) var(--s-4); text-align: center; font-size: var(--text-body-sm); color: var(--color-text-muted); }
