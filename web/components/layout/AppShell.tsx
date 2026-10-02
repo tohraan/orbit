@@ -47,23 +47,31 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 /* §93: eyebrow / title / explanation / primary action, in that order, on
  * every major page. */
+/* `compact` is for screens whose content IS the point — Explore above all.
+ * There, a 32px title over a two-line description pushed the first row of
+ * cards most of a screen down, so the student scrolled past the header every
+ * single visit to reach what they came for. Compact keeps the same elements
+ * at section weight on one row, and lets the actions slot (the search field)
+ * share that row instead of claiming another. */
 export function PageHead({
   eyebrow,
   title,
   description,
   actions,
+  compact,
 }: {
   eyebrow: string;
   title: string;
   description?: ReactNode;
   actions?: ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <div className={s.pageHead}>
+    <div className={[s.pageHead, compact ? s.pageHeadCompact : null].filter(Boolean).join(" ")}>
       <div className={s.pageHeadText}>
         <span className="eyebrow">{eyebrow}</span>
-        <h1 className="t-page-title">{title}</h1>
-        {description ? <p className="t-body c-secondary">{description}</p> : null}
+        <h1 className={compact ? "t-section" : "t-page-title"}>{title}</h1>
+        {description ? <p className={compact ? "t-body-sm c-secondary" : "t-body c-secondary"}>{description}</p> : null}
       </div>
       {actions ? <div className={s.pageHeadActions}>{actions}</div> : null}
     </div>

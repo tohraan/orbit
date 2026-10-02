@@ -37,10 +37,7 @@ export function MatchPanel({
   limit?: number;
 }) {
   const missing = useMemo(() => gaps(profile), [profile]);
-  const ranked = useMemo(
-    () => (started ? rank(items, profile).slice(0, limit) : []),
-    [items, profile, started, limit],
-  );
+  const ranked = useMemo(() => (started ? rank(items, profile).slice(0, limit) : []), [items, profile, started, limit]);
 
   /* Loading is its own state. Rendering the weights footnote under nothing at
    * all made the panel look like a disclaimer with no content attached. */
@@ -106,44 +103,49 @@ export function MatchPanel({
         </div>
       ) : null}
 
-      {ranked.map(({ item, score, reasons, confidence }) => {
-        const low = confidence < CONFIDENCE_FLOOR;
-        return (
-          <Link href={`/opportunity/${item.id}`} className={s.row} key={item.id}>
-            <span className={[s.score, low ? s.scoreLow : null].filter(Boolean).join(" ")}>
-              <span className={s.scoreNum}>{score}</span>
-              <span className={s.scoreOf}>{low ? "unsure" : "fit"}</span>
-            </span>
-            <span className={s.body}>
-              <span className={`${s.title} clamp-2`}>{item.title}</span>
-              <span className="t-micro c-muted">
-                {typeLabel(item.type)} · {item.sourceName}
-              </span>
-              <span className={s.reasons}>
-                {reasons.slice(0, 3).map((r) => (
-                  <span
-                    key={r.factor}
-                    className={[
-                      s.reason,
-                      r.points === r.of ? s.reasonGood : null,
-                      r.unknown ? s.reasonUnknown : null,
-                    ].filter(Boolean).join(" ")}
-                  >
-                    {r.label}
+      {ranked.length ? (
+        <div className={s.group}>
+          {ranked.map(({ item, score, reasons, confidence }) => {
+            const low = confidence < CONFIDENCE_FLOOR;
+            return (
+              <Link href={`/opportunity/${item.id}`} className={s.row} key={item.id}>
+                <span className={[s.score, low ? s.scoreLow : null].filter(Boolean).join(" ")}>
+                  <span className={s.scoreNum}>{score}</span>
+                  <span className={s.scoreOf}>{low ? "unsure" : "fit"}</span>
+                </span>
+                <span className={s.body}>
+                  <span className={`${s.title} clamp-2`}>{item.title}</span>
+                  <span className="t-micro c-muted">
+                    {typeLabel(item.type)} · {item.sourceName}
                   </span>
-                ))}
-              </span>
-            </span>
-          </Link>
-        );
-      })}
+                  <span className={s.reasons}>
+                    {reasons.slice(0, 3).map((r) => (
+                      <span
+                        key={r.factor}
+                        className={[
+                          s.reason,
+                          r.points === r.of ? s.reasonGood : null,
+                          r.unknown ? s.reasonUnknown : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        {r.label}
+                      </span>
+                    ))}
+                  </span>
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
 
       {ranked.length ? (
         <p className={s.confidence}>
-        Scores come from a published set of weights — degree level {34}%, field {26}%, funding {18}%,
-        country {12}%, time to prepare {10}% — not from a trained model. Every point above is
-          attributable to one of the reasons shown, and the ranking is a starting point, not a judgement
-          about whether you will be accepted.
+          Scores come from a published set of weights — degree level {34}%, field {26}%, funding {18}%, country {12}%,
+          time to prepare {10}% — not from a trained model. Every point above is attributable to one of the reasons
+          shown, and the ranking is a starting point, not a judgement about whether you will be accepted.
         </p>
       ) : null}
     </div>

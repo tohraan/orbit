@@ -85,13 +85,19 @@
 /* ------------------------------------------------------------ pagination ---
    §102: compact, and it preserves position rather than jumping. */
 
-.pager { display: flex; align-items: center; justify-content: center; gap: var(--s-2); margin-top: var(--s-10); }
+.pager { display: flex; align-items: center; justify-content: center; gap: var(--s-2); margin-top: var(--s-8); }
 .pagerInfo { font-size: var(--text-meta); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+/* The button and the line that says what it will do, stacked and centred —
+   .pager is a row, so the pair needs its own column to sit in. */
+.pagerStack { display: flex; flex-direction: column; align-items: center; gap: var(--s-3); }
 
 /* §43: on mobile the only sorting control is the one in the [Filter] [Sort]
    bar, which opens a sheet. The inline select beside the result count is the
    desktop affordance and would otherwise be a second, differently-shaped way
    to do the same thing on a 390px screen (§81, §114). */
+/* Two things live here now: the freshness stamp, which moved out of the page
+   header when that went compact, and the sort control. */
+.toolbarSort { display: flex; align-items: center; gap: var(--s-4); }
 @media (max-width: 767px) {
   .toolbarSort { display: none; }
 }

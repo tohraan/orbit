@@ -16,14 +16,32 @@
 
 .head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
 
+/* The matches used to be rows divided by hairlines inside the panel, which
+   made four distinct opportunities read as one undifferentiated list. Each is
+   now its own card — its own surface, border and hover — and the cards sit
+   together inside one tinted group, so the panel reads as "these four, as a
+   set" rather than "a list that happens to stop at four". */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+}
+
 .row {
   display: flex;
   align-items: flex-start;
   gap: var(--s-4);
-  padding-block: var(--s-4);
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--s-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
 }
-.row:last-of-type { border-bottom: 0; }
+.row:hover { border-color: var(--color-border-hover); box-shadow: var(--shadow-card); }
 
 .score {
   flex: none;

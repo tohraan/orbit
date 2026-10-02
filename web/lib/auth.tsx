@@ -26,6 +26,12 @@ type AuthValue = {
   signUp: (email: string, password: string, fullName: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<string | null>;
+  /* True between following a reset link and choosing a new password. The
+   * recovery link signs you in, so without this flag a password reset looks
+   * exactly like a normal sign-in and the student never gets asked for the
+   * new password — the reset silently does nothing. */
+  recovery: boolean;
+  updatePassword: (password: string) => Promise<string | null>;
 };
 
 const Ctx = createContext<AuthValue>({
@@ -37,6 +43,8 @@ const Ctx = createContext<AuthValue>({
   signUp: async () => "Accounts are not configured.",
   signOut: async () => {},
   resetPassword: async () => "Accounts are not configured.",
+  recovery: false,
+  updatePassword: async () => "Accounts are not configured.",
 });
 
 export const useAuth = () => useContext(Ctx);
@@ -44,6 +52,7 @@ export const useAuth = () => useContext(Ctx);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [status, setStatus] = useState<Status>(AUTH_CONFIGURED ? "loading" : "signed-out");
+  const [recovery, setRecovery] = useState(false);
 
   useEffect(() => {
     const sb = supabase();
@@ -58,9 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     /* Covers sign-in, sign-out, token refresh and another tab doing any of
      * them — the listener is what keeps two open tabs in agreement. */
-    const { data: sub } = sb.auth.onAuthStateChange((_event, next) => {
+    const { data: sub } = sb.auth.onAuthStateChange((event, next) => {
       setSession(next);
       setStatus(next ? "signed-in" : "signed-out");
+      if (event === "PASSWORD_RECOVERY") setRecovery(true);
+      if (event === "SIGNED_OUT") setRecovery(false);
     });
 
     return () => {
@@ -109,6 +120,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase()?.auth.signOut();
   }, []);
 
+  const updatePassword = useCallback(async (password: string) => {
+    const sb = supabase();
+    if (!sb) return "Accounts are not configured.";
+    if (password.length < 8) return "Passwords need at least 8 characters.";
+    const { error } = await sb.auth.updateUser({ password });
+    if (error) return friendly(error.message);
+    setRecovery(false);
+    return null;
+  }, []);
+
   const resetPassword = useCallback(async (email: string) => {
     const sb = supabase();
     if (!sb) return "Accounts are not configured.";
@@ -128,8 +149,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signOut,
       resetPassword,
+      recovery,
+      updatePassword,
     }),
-    [status, session, signIn, signUp, signOut, resetPassword],
+    [status, session, signIn, signUp, signOut, resetPassword, recovery, updatePassword],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

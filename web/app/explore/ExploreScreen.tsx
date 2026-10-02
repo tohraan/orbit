@@ -87,23 +87,33 @@ export function ExploreScreen() {
 
   const freshness = useApi<{ freshestAt: string | null }>(api("/api/stats"));
 
-  /* Auto-load the next chunk when the sentinel comes into view, with a wide
-   * root margin so the chunk is usually already on screen by the time the
-   * student reaches the bottom. The button stays: an observer does not fire
-   * for anyone navigating by keyboard, and §74 wants a real control. */
-  const sentinel = useRef<HTMLDivElement>(null);
-  /* Whether scroll-triggered loading is actually working. The manual control
-   * below is a fallback for when it is not -- an old browser, or an observer
-   * that never fires -- rather than a permanent part of the UI. */
-  const [autoLoads, setAutoLoads] = useState(true);
+  const remaining = Math.max(0, (list.total ?? 0) - list.items.length);
 
+  /* Loading is deliberately in two stages.
+   *
+   * Infinite scroll from the first screen means the page never ends: the
+   * student cannot reach the bottom, cannot tell how much is left, and the
+   * browser accumulates cards they scrolled straight past. So the first
+   * continuation is a button — one press, the next few rows — and only once
+   * they have ASKED for more does the observer take over and keep the list
+   * running as they reach the end.
+   *
+   * It is also the honest default. The button states the size of what is
+   * coming; an observer that fires silently does not. */
+  const sentinel = useRef<HTMLDivElement>(null);
+  const [autoLoads, setAutoLoads] = useState(false);
+
+  /* A new query is a new list: back to the button, so a search does not
+   * immediately start pouring results in under someone still reading. */
   useEffect(() => {
-    if (typeof IntersectionObserver === "undefined") setAutoLoads(false);
-  }, []);
+    setAutoLoads(false);
+  }, [key]);
+
+  const supported = typeof IntersectionObserver !== "undefined";
 
   useEffect(() => {
     const node = sentinel.current;
-    if (!node || !list.hasMore || typeof IntersectionObserver === "undefined") return;
+    if (!node || !list.hasMore || !autoLoads || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) list.loadMore();
@@ -113,29 +123,35 @@ export function ExploreScreen() {
     io.observe(node);
     return () => io.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [list.hasMore, list.loading, list.page, key]);
+  }, [list.hasMore, list.loading, list.page, key, autoLoads]);
+
+  /* The button's job: fetch the next few rows, then hand over to the
+   * observer — but only if the browser actually has one. */
+  function loadMoreThenAuto() {
+    list.loadMore();
+    if (supported) setAutoLoads(true);
+  }
 
   return (
     <>
+      {/* Compact, with the search field sharing the row: the cards start near
+          the top of the screen instead of below a title block the student has
+          already read. The long description this used to carry is now in the
+          search placeholder, where it is read at the moment it is useful. */}
       <PageHead
+        compact
         eyebrow="Discover"
-        title="Find opportunities that match your goals"
-        description="Scholarships, fellowships, grants, internships and other programmes a BITS Pilani Dubai student can actually apply to, in one place."
-        actions={
-          freshness.data?.freshestAt ? (
-            <span className="t-meta c-muted">Updated {relativeTime(freshness.data.freshestAt)}</span>
-          ) : null
-        }
+        title="Explore"
+        actions={<SearchField total={list.total} />}
       />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-4)" }}>
-        <SearchField />
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
         <FilterBar facets={facets} />
         <MobileFilterBar facets={facets} sortFallback={sort} />
         <ActiveFilters facets={facets} />
       </div>
 
-      <section style={{ marginTop: "var(--s-10)" }} id="results">
+      <section style={{ marginTop: "var(--s-6)" }} id="results">
         <div className={o.toolbar}>
           {/* The total is the headline; how far through you are is secondary and
               phrased as progress, not as a batch size. Naming the batch made a
@@ -155,6 +171,9 @@ export function ExploreScreen() {
             )}
           </p>
           <span className={o.toolbarSort}>
+            {freshness.data?.freshestAt ? (
+              <span className="t-meta c-muted">Updated {relativeTime(freshness.data.freshestAt)}</span>
+            ) : null}
             <SortControl fallback={sort} />
           </span>
         </div>
@@ -227,18 +246,27 @@ export function ExploreScreen() {
                   {filters.activeCount || search ? " for these filters" : " in the index"}.
                 </span>
               ) : autoLoads && !list.error ? (
-                /* Scrolling is doing the work. A spinner rather than a button,
-                   so there is no seam in the middle of a continuous list. */
+                /* Handed over. A spinner rather than a button, so there is no
+                   seam in the middle of a list that now runs on its own. */
                 <span className={o.pagerInfo} aria-live="polite">
                   <span className="spinner" style={{ display: "inline-block", verticalAlign: "-2px" }} />
                   <span className="sr-only">Loading more opportunities</span>
                 </span>
               ) : (
-                /* The fallback: shown only when the observer is unavailable or
-                   a batch failed, so there is always a way forward. */
-                <Button variant="secondary" onClick={list.loadMore} busy={list.loading} iconAfter="chevron-down">
-                  {list.loading ? "Loading" : "Show more opportunities"}
-                </Button>
+                /* The first continuation, and the permanent fallback when the
+                   observer is unavailable or a batch failed. It names how many
+                   are coming, because "Show more" that could mean 3 or 300 is
+                   not a thing anyone can decide about. */
+                <span className={o.pagerStack}>
+                  <Button variant="secondary" onClick={loadMoreThenAuto} busy={list.loading} iconAfter="chevron-down">
+                    {list.loading ? "Loading" : `Load ${remaining > CHUNK ? CHUNK : remaining} more`}
+                  </Button>
+                  {!list.loading && supported ? (
+                    <span className={o.pagerInfo}>
+                      {remaining} left — after this they load as you reach the end.
+                    </span>
+                  ) : null}
+                </span>
               )}
             </div>
 
@@ -265,33 +293,78 @@ export function ExploreScreen() {
 
 /* §18's placeholder. The term lives in the URL like every filter, so a search
  * is shareable and the back button undoes it. Debounced: one request per
- * keystroke is one request too many. */
-function SearchField() {
+ * keystroke is one request too many.
+ *
+ * It sits in the page header's actions slot now rather than on a row of its
+ * own, and carries the clear control the old one lacked — typing a term was
+ * easy, getting back to everything meant selecting the text and deleting it. */
+function SearchField({ total }: { total: number | null }) {
   const params = useSearchParams();
   const router = useRouter();
   const timer = useRef<number | undefined>(undefined);
+  const input = useRef<HTMLInputElement>(null);
+  const current = params.get("q") ?? "";
+  const [draft, setDraft] = useState(current);
+
+  /* The URL is the source of truth: a cleared filter, the back button or a
+   * ⌘K search all change it from outside, and the field has to follow. */
+  useEffect(() => {
+    setDraft(current);
+  }, [current]);
+
+  function push(value: string) {
+    const sp = new URLSearchParams(params.toString());
+    if (value.trim()) sp.set("q", value.trim());
+    else sp.delete("q");
+    sp.delete("page");
+    router.replace(`/explore?${sp.toString()}`, { scroll: false });
+  }
 
   return (
-    <div className={u.field} style={{ maxWidth: 520 }}>
+    <div className={u.field} style={{ width: "100%" }}>
       <Icon name="search" size={16} />
       <input
+        ref={input}
         className={u.fieldInput}
-        defaultValue={params.get("q") ?? ""}
-        placeholder="Search opportunities..."
+        value={draft}
+        placeholder={total ? `Search ${total} scholarships, grants, fellowships…` : "Search opportunities…"}
         aria-label="Search opportunities"
         maxLength={120}
         onChange={(e) => {
           const value = e.target.value;
+          setDraft(value);
           window.clearTimeout(timer.current);
-          timer.current = window.setTimeout(() => {
-            const sp = new URLSearchParams(params.toString());
-            if (value.trim()) sp.set("q", value.trim());
-            else sp.delete("q");
-            sp.delete("page");
-            router.replace(`/explore?${sp.toString()}`, { scroll: false });
-          }, 260);
+          timer.current = window.setTimeout(() => push(value), 260);
+        }}
+        onKeyDown={(e) => {
+          /* Enter commits immediately rather than waiting out the debounce —
+           * the one case where the student has clearly finished typing. */
+          if (e.key === "Enter") {
+            window.clearTimeout(timer.current);
+            push(draft);
+          }
+          if (e.key === "Escape" && draft) {
+            window.clearTimeout(timer.current);
+            setDraft("");
+            push("");
+          }
         }}
       />
+      {draft ? (
+        <button
+          type="button"
+          aria-label="Clear search"
+          className={u.fieldClear}
+          onClick={() => {
+            window.clearTimeout(timer.current);
+            setDraft("");
+            push("");
+            input.current?.focus();
+          }}
+        >
+          <Icon name="close" size={14} />
+        </button>
+      ) : null}
     </div>
   );
 }

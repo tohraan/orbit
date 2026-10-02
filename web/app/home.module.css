@@ -7,12 +7,21 @@
 
    Layout:
    ┌───────────────────────────┬──────────────────────┐
-   │ Greeting + quick action   │ Deadline summary     │
+   │ Matched for you           │ What is open         │
+   │ (the one real CTA)        ├──────────────────────┤
+   │                           │ Applications         │
    ├───────────────────┬───────┴──────────────────────┤
-   │ Saved             │ Applications                 │
+   │ Deadline spread   │ Saved                        │
    ├───────────────────┴──────────────────────────────┤
-   │ Closing soon  (full width, cards)                │
+   │ Worth a look  (full width, cards)                │
    └──────────────────────────────────────────────────┘
+
+   The right column used to hold one short stats box against a tall match
+   panel, which left a column of empty page beside it — §24's "equal-sized
+   boxes to fill space" problem in its other form, a box that fills nothing.
+   Applications moved up into that column: it is a short list, it belongs next
+   to the figures rather than alone on a row of its own, and it closes the gap
+   with content rather than padding.
 */
 
 /* align-items: start, so a cell is as tall as its content rather than as tall
@@ -32,6 +41,15 @@
    are reference, so they sit narrower beside it. */
 .hero { grid-column: span 8; }
 .rail { grid-column: span 4; }
+/* The rail column holds two boxes stacked, not one stretched. Each is as tall
+   as its own content; the gap between them matches the bento's. */
+.railStack {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  min-width: 0;
+}
 .wide { grid-column: span 7; }
 .narrow { grid-column: span 5; }
 .half { grid-column: span 6; }
@@ -42,14 +60,14 @@
 @media (max-width: 1279px) {
   /* A 4-wide rail stops being readable before the grid does, so the pair
      breaks to full width one step earlier than everything else. */
-  .hero, .rail { grid-column: span 12; }
+  .hero, .rail, .railStack { grid-column: span 12; }
   .third { grid-column: span 6; }
 }
 @media (max-width: 1023px) {
   .bento { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--s-5); }
-  .hero, .rail, .wide, .narrow, .half, .third, .full { grid-column: span 6; }
+  .hero, .rail, .railStack, .wide, .narrow, .half, .third, .full { grid-column: span 6; }
 }
-@media (max-width: 639px) { .bento { gap: var(--s-4); } }
+@media (max-width: 639px) { .bento { gap: var(--s-4); } .railStack { gap: var(--s-4); } }
 
 .box {
   display: flex;
@@ -137,13 +155,11 @@
 .bandCount { flex: none; width: 34px; text-align: right; font-family: var(--font-mono); font-size: var(--text-meta); font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
 
 
-/* The high-CTA cell. Tinted one step off the page so it reads as the thing to
-   act on without a border treatment that would make it look like an alert. */
-.boxAccent {
-  background: linear-gradient(0deg, var(--surface-compare), var(--surface-compare)),
-              var(--color-surface);
-  border-color: var(--surface-compare-border);
-}
+/* .boxAccent is gone. The hero cell wrapped MatchPanel, which already renders
+   its own bordered, shadowed .panel — so the tint and its border framed a card
+   that was itself a card, and the result read as a stray lavender outline
+   around a white box. The match panel carries its own emphasis now; the cell
+   is just a grid position. */
 
 /* A compact stat strip for the rail: four numbers, no chrome. */
 .statRows { display: flex; flex-direction: column; }

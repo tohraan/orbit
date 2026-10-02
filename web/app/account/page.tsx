@@ -1,8 +1,12 @@
 "use client";
 
-/* Sign in, sign up, and the signed-in account summary — one route, because
- * the three are the same conversation and splitting them across /login,
- * /signup and /account means three screens to keep consistent.
+/* One job: getting you a session. Sign in, sign up, ask for a reset link, and
+ * choose a new password after following one.
+ *
+ * It used to ALSO be the signed-in account summary, which duplicated /profile's
+ * rail (email, degree, saved count, tracked count) and gave the product two
+ * pages that both answered "my account". A signed-in student is sent to
+ * /profile now, and there is exactly one place to look.
  *
  * Sign-up is restricted to the campus domain. That is a product rule, enforced
  * here for a clear message and again by Supabase's confirmation email, which a
@@ -12,25 +16,22 @@
  */
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import s from "./account.module.css";
 import { PageHead } from "@/components/layout/AppShell";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { Chip } from "@/components/ui/Chip";
 import { BentoSkeleton } from "@/components/feedback/Skeletons";
 import { useToast } from "@/components/feedback/Toast";
 import { useAuth } from "@/lib/auth";
 import { CAMPUS_DOMAIN } from "@/lib/supabase";
-import { useProfile, useSaved, useTracker } from "@/lib/data";
 import { APP_NAME } from "@/components/layout/brand";
 
 type Mode = "in" | "up" | "reset";
 
 export default function AccountPage() {
-  const { status, user, configured, signIn, signUp, signOut, resetPassword } = useAuth();
+  const { status, configured, signIn, signUp, resetPassword, recovery, updatePassword } = useAuth();
   const router = useRouter();
   const toast = useToast();
 
@@ -46,6 +47,12 @@ export default function AccountPage() {
     setError(null);
     setSent(null);
   }, [mode]);
+
+  /* A session means there is nothing left to do here — except when it came
+   * from a recovery link, where the whole point is still ahead. */
+  useEffect(() => {
+    if (status === "signed-in" && !recovery) router.replace("/profile");
+  }, [status, recovery, router]);
 
   if (!configured) {
     return (
@@ -72,7 +79,15 @@ export default function AccountPage() {
     );
   }
 
-  if (status === "signed-in" && user) return <SignedIn email={user.email ?? ""} onSignOut={signOut} />;
+  if (recovery) return <ChoosePassword onSave={updatePassword} />;
+
+  if (status === "signed-in") {
+    return (
+      <div className={s.shell}>
+        <BentoSkeleton lines={5} />
+      </div>
+    );
+  }
 
   const email = local.includes("@") ? local.trim() : `${local.trim()}@${CAMPUS_DOMAIN}`;
 
@@ -216,84 +231,67 @@ export default function AccountPage() {
   );
 }
 
-function SignedIn({ email, onSignOut }: { email: string; onSignOut: () => Promise<void> }) {
-  const { profile, isStaff, ready } = useProfile();
-  const { saved } = useSaved();
-  const { entries } = useTracker();
+/* The other half of "Forgot password". Supabase's recovery link signs the
+ * student in and hands control back here; if we never ask for a new password,
+ * the link did nothing and they are locked out again next session. */
+function ChoosePassword({ onSave }: { onSave: (password: string) => Promise<string | null> }) {
   const router = useRouter();
   const toast = useToast();
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit() {
+    setBusy(true);
+    setError(null);
+    const err = await onSave(password);
+    setBusy(false);
+    if (err) {
+      setError(err);
+      return;
+    }
+    toast("Password updated");
+    router.push("/");
+  }
 
   return (
-    <>
-      <PageHead
-        eyebrow="Account"
-        title={profile.name.trim() || "Your account"}
-        description="Signed in. Your saved opportunities and applications are stored against this account and follow you to any device."
-        actions={
-          <Button
-            variant="secondary"
-            icon="close"
-            onClick={async () => {
-              await onSignOut();
-              toast("Signed out");
-              router.push("/");
-            }}
-          >
-            Sign out
-          </Button>
-        }
-      />
+    <div className={s.shell}>
+      <div className={s.panel}>
+        <Image className={s.mark} src="/bits-logo-128.png" alt="" width={44} height={44} priority />
+        <div className={s.head}>
+          <h1 className="t-section">Choose a new password</h1>
+          <p className="t-body-sm c-secondary">You are signed in from the link. Pick a password and you are done.</p>
+        </div>
 
-      <div className={s.shell} style={{ maxWidth: 560 }}>
-        <div className={s.panel}>
-          <div className={s.head}>
-            <h2 className="t-section">Account</h2>
-            {isStaff ? (
-              <span>
-                <Chip tone="college" icon="shield">
-                  Staff
-                </Chip>
-              </span>
-            ) : null}
-          </div>
-
-          {!ready ? (
-            <BentoSkeleton lines={4} />
-          ) : (
-            <div className={s.rows}>
-              <div className={s.row}>
-                <span className={s.rowKey}>Email</span>
-                <span className={s.rowVal}>{email}</span>
-              </div>
-              <div className={s.row}>
-                <span className={s.rowKey}>Degree</span>
-                <span className={s.rowVal}>{profile.degree || profile.course || "Not set"}</span>
-              </div>
-              <div className={s.row}>
-                <span className={s.rowKey}>Saved</span>
-                <span className={s.rowVal}>{saved.length}</span>
-              </div>
-              <div className={s.row}>
-                <span className={s.rowKey}>Applications tracked</span>
-                <span className={s.rowVal}>{entries.length}</span>
-              </div>
-            </div>
-          )}
-
-          <div className={s.foot}>
-            <ButtonLink href="/profile" variant="primary" block>
-              Edit your profile
-            </ButtonLink>
-            <p className={s.note}>
-              Deleting your account removes your profile, saved list and tracked applications.{" "}
-              <Link href="/profile" style={{ textDecoration: "underline", textUnderlineOffset: 2 }}>
-                Manage your data
-              </Link>
-              .
+        <div className={s.fields}>
+          <label className={s.field}>
+            <span className={s.label}>New password</span>
+            <input
+              className={s.input}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && password.length >= 8 && !busy) void submit();
+              }}
+            />
+            <span className={s.hint}>At least 8 characters.</span>
+          </label>
+          {error ? (
+            <p className={s.error} role="alert">
+              <Icon name="alert" size={16} />
+              {error}
             </p>
-          </div>
+          ) : null}
+        </div>
+
+        <div className={s.foot}>
+          <Button variant="primary" block busy={busy} disabled={password.length < 8 || busy} onClick={submit}>
+            Save password
+          </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -140,6 +140,20 @@
 }
 .fieldInput::placeholder { color: var(--color-text-muted); }
 
+/* Clearing a search used to mean selecting the text and deleting it. Sized to
+   the field's own height so it is a real target, not a 14px glyph. */
+.fieldClear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: -4px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+}
+.fieldClear:hover { background: var(--color-surface-secondary); color: var(--color-text-primary); }
+
 .select {
   height: var(--control-md);
   padding-inline: var(--s-3) var(--s-8);

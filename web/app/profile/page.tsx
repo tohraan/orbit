@@ -11,6 +11,11 @@
  * The fields are still here for anyone who wants to change one thing without
  * walking the flow. They are just folded away, because offering them first is
  * what made this feel like paperwork.
+ *
+ * This is also the ONLY account page now. /account used to show a second
+ * summary — email, degree, saved, tracked — which meant two pages answered
+ * "my account" and neither was obviously the real one. /account is the sign-in
+ * screen and nothing else; the session lives here, next to the data it owns.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -54,7 +59,7 @@ export default function ProfilePage() {
   const { profile, ready, save } = useProfile();
   const { saved, clear: clearSaved } = useSaved();
   const { entries, clear: clearTracker } = useTracker();
-  const { status } = useAuth();
+  const { status, user, signOut, configured } = useAuth();
   const toast = useToast();
 
   const [draft, setDraft] = useState<Profile>(EMPTY_PROFILE);
@@ -65,6 +70,15 @@ export default function ProfilePage() {
   useEffect(() => {
     if (ready) setDraft(profile);
   }, [ready, profile]);
+
+  const signedIn = status === "signed-in";
+  const initials =
+    (profile.name || user?.email || "")
+      .trim()
+      .split(/[\s@.]+/)
+      .slice(0, 2)
+      .map((part: string) => part[0]?.toUpperCase())
+      .join("") || "·";
 
   const pct = useMemo(() => completeness(profile), [profile]);
   const phases = useMemo(() => phaseStates(profile), [profile]);
@@ -240,6 +254,48 @@ export default function ProfilePage() {
 
         {/* ---- rail ---- */}
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-5)" }}>
+          {/* The account, stated plainly: who, where the data lives, and the
+            * single button that changes it. */}
+          <div className={s.card}>
+            <h2 className="t-section">Account</h2>
+            <div className={s.acct}>
+              <span className={s.acctAvatar} aria-hidden="true">
+                {initials}
+              </span>
+              <span className={s.acctText}>
+                <span className={s.acctName}>{profile.name.trim() || user?.email || "Not signed in"}</span>
+                <span className={s.acctWhere}>
+                  <span className={[s.acctDot, signedIn ? s.acctSynced : s.acctLocal].join(" ")} />
+                  {signedIn ? "Synced to your account" : "Saved on this device only"}
+                </span>
+              </span>
+            </div>
+
+            <p className={s.note}>
+              {signedIn
+                ? `Signed in as ${user?.email ?? ""}. Your profile, saved list and tracked applications follow you to any device.`
+                : "Without an account this is kept in this browser — it does not follow you to another device, and clearing site data clears it."}
+            </p>
+
+            {signedIn ? (
+              <Button
+                variant="secondary"
+                icon="close"
+                block
+                onClick={async () => {
+                  await signOut();
+                  toast("Signed out");
+                }}
+              >
+                Sign out
+              </Button>
+            ) : configured ? (
+              <ButtonLink href="/account" variant="primary" block>
+                Sign in to sync
+              </ButtonLink>
+            ) : null}
+          </div>
+
           <div className={s.card}>
             <h2 className="t-section">Your activity</h2>
             <div>
@@ -267,17 +323,7 @@ export default function ProfilePage() {
           </div>
 
           <div className={s.card}>
-            <h2 className="t-section">Where this lives</h2>
-            <p className={s.note}>
-              {status === "signed-in"
-                ? "You are signed in, so your profile, saved list and tracked applications are stored against your account and follow you to any device."
-                : "You are not signed in, so this is kept in this browser only — it does not follow you to another device, and clearing site data clears it."}
-            </p>
-            {status !== "signed-in" ? (
-              <ButtonLink href="/account" variant="secondary" block>
-                Sign in to sync
-              </ButtonLink>
-            ) : null}
+            <h2 className="t-section">About the figures</h2>
             <p className={s.note}>
               Dirham conversions use the US dollar peg of 3.6725, which is exact, and indicative rates from{" "}
               {RATES_AS_OF} for everything else.

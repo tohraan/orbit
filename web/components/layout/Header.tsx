@@ -130,26 +130,38 @@ function Notifications() {
   );
 }
 
+/* The account menu is two states and never more than four rows.
+ *
+ * It used to be five rows that each sounded like the same thing — "Sign in or
+ * create an account", "Profile and preferences", "Re-run setup", "College
+ * desk", "Clear my data" — under a heading showing the student's name. A name
+ * above a sign-in prompt is a contradiction, and "profile" vs "preferences" vs
+ * "setup" were one destination described three ways.
+ *
+ * Now the top of the menu answers the only question the student actually has
+ * — is my work safe anywhere but this browser — and one button changes it.
+ * Setup is no longer a menu row: it is the primary CTA on /profile, which is
+ * where the progress that gives it meaning lives. */
 function AccountMenu() {
   const [open, setOpen] = useState(false);
   const ref = useAway(() => setOpen(false));
   const router = useRouter();
-  const { profile, started, isStaff } = useProfile();
+  const { profile, isStaff } = useProfile();
   const { status, user, signOut, configured } = useAuth();
   const signedIn = status === "signed-in";
 
+  const name = profile.name.trim();
+  const email = user?.email ?? "";
   const initials =
-    (profile.name || user?.email || "")
+    (name || email)
       .trim()
       .split(/[\s@.]+/)
       .slice(0, 2)
       .map((part: string) => part[0]?.toUpperCase())
       .join("") || "·";
 
-  /* Two different destructive actions, named for what they actually do.
-   * Signed in, the data lives in Supabase and signing out simply ends the
-   * session. Signed out, there is no session — only this browser's copy — so
-   * the honest action is to clear it, and it asks first. */
+  /* Signed out, there is no session to end — only this browser's copy of the
+   * data — so the honest destructive action is to clear it, and it asks. */
   function clearDevice() {
     const ok = window.confirm(
       "This clears your profile, saved list and tracked applications from this browser. It cannot be undone. Continue?",
@@ -177,29 +189,34 @@ function AccountMenu() {
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        {signedIn || started ? <span style={{ fontSize: 12, fontWeight: 600 }}>{initials}</span> : <Icon name="user" size={16} />}
+        {signedIn || name ? <span style={{ fontSize: 12, fontWeight: 600 }}>{initials}</span> : <Icon name="user" size={16} />}
       </button>
 
       {open ? (
         <div className={[s.menu, s.menuNarrow].join(" ")} role="menu">
-          <div className={s.menuHead}>
-            <span className={s.menuTitle}>{profile.name.trim() || user?.email || "Your account"}</span>
+          {/* Who, and — the part that was missing — where the data lives. */}
+          <div className={s.ident}>
+            <span className={s.identAvatar} aria-hidden="true">
+              {initials}
+            </span>
+            <span className={s.identText}>
+              <span className={s.identName}>{name || email || "Not signed in"}</span>
+              <span className={s.identWhere}>
+                <span className={[s.identDot, signedIn ? s.identSynced : s.identLocal].join(" ")} />
+                {signedIn ? "Synced to your account" : "Saved on this device"}
+              </span>
+            </span>
           </div>
 
           {configured && !signedIn ? (
-            <Link href="/account" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
-              <Icon name="user" size={16} />
-              Sign in or create an account
+            <Link href="/account" className={s.identCta} role="menuitem" onClick={() => setOpen(false)}>
+              Sign in
             </Link>
           ) : null}
 
           <Link href="/profile" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
             <Icon name="user" size={16} />
-            Profile and preferences
-          </Link>
-          <Link href="/welcome" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
-            <Icon name="sparkle" size={16} />
-            Re-run setup
+            Your profile
           </Link>
           {isStaff || !configured ? (
             <Link href="/admin" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
@@ -227,7 +244,7 @@ function AccountMenu() {
           ) : (
             <button type="button" className={[s.menuItem, s.menuItemDanger].join(" ")} role="menuitem" onClick={clearDevice}>
               <Icon name="trash" size={16} />
-              Clear my data
+              Clear this device
             </button>
           )}
         </div>

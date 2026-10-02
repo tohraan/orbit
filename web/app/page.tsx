@@ -85,38 +85,90 @@ export default function HomePage() {
 
       <div className={s.bento}>
         {/* The screen's one real call to action, so it gets the largest cell
-            and the only tinted surface (§24: bento sizing follows importance). */}
-        <div className={`${s.box} ${s.boxAccent} ${s.hero}`}>
+            (§24: bento sizing follows importance). No wrapper box — MatchPanel
+            renders its own surface, and wrapping a card in a card is what put a
+            stray tinted outline around it. */}
+        <div className={s.hero}>
           <MatchPanel items={data?.items ?? []} profile={profile} started={started} loading={initial} />
         </div>
 
-        {/* Reference figures, narrower beside it. */}
-        <div className={`${s.box} ${s.rail}`}>
-          <div className={s.boxHead}>
-            <h2 className={s.boxTitle}>What is open</h2>
-            {data?.freshestAt ? <span className="t-meta c-muted">Updated {relativeTime(data.freshestAt)}</span> : null}
-          </div>
-          {initial || !stats ? (
-            <BentoSkeleton lines={4} />
-          ) : (
-            <div className={s.statRows}>
-              {(
-                [
-                  ["Open calls", stats.total, "/explore", false],
-                  ["Closing within 7 days", stats.closingIn7, "/explore?deadline=d7&sort=deadline", true],
-                  ["Closing within 30 days", stats.closingIn30, "/explore?deadline=d30&sort=deadline", false],
-                  ["State an amount", stats.withAmount, "/explore?requires=amount", false],
-                ] as const
-              ).map(([label, value, href, urgent]) => (
-                <Link href={href} key={label} className={s.statRow}>
-                  <span className={s.statLabel}>{label}</span>
-                  <span className={[s.statValue, urgent ? s.statValueUrgent : null].filter(Boolean).join(" ")}>
-                    {value}
-                  </span>
-                </Link>
-              ))}
+        {/* The right column: the figures, and the short applications list that
+            used to sit alone on a row below, leaving this column half empty. */}
+        <div className={s.railStack}>
+          <div className={s.box}>
+            <div className={s.boxHead}>
+              <h2 className={s.boxTitle}>What is open</h2>
+              {data?.freshestAt ? (
+                <span className="t-meta c-muted">Updated {relativeTime(data.freshestAt)}</span>
+              ) : null}
             </div>
-          )}
+            {initial || !stats ? (
+              <BentoSkeleton lines={4} />
+            ) : (
+              <div className={s.statRows}>
+                {(
+                  [
+                    ["Open calls", stats.total, "/explore", false],
+                    ["Closing within 7 days", stats.closingIn7, "/explore?deadline=d7&sort=deadline", true],
+                    ["Closing within 30 days", stats.closingIn30, "/explore?deadline=d30&sort=deadline", false],
+                    ["State an amount", stats.withAmount, "/explore?requires=amount", false],
+                  ] as const
+                ).map(([label, value, href, urgent]) => (
+                  <Link href={href} key={label} className={s.statRow}>
+                    <span className={s.statLabel}>{label}</span>
+                    <span className={[s.statValue, urgent ? s.statValueUrgent : null].filter(Boolean).join(" ")}>
+                      {value}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ---- applications ---- */}
+          {/* No span class: inside .railStack this is a flex child, and a
+            grid-column on it would be inert. */}
+          <div className={s.box}>
+            <div className={s.boxHead}>
+              <h2 className={s.boxTitle}>Applications</h2>
+              {entries.length ? (
+                <Link href="/applications" className="t-meta c-muted">
+                  All {entries.length}
+                </Link>
+              ) : null}
+            </div>
+
+            {entries.length === 0 ? (
+              <EmptyState
+                compact
+                icon="applications"
+                title="No applications tracked yet"
+                body="Set a status on any opportunity and it will appear here with its deadline."
+                actions={
+                  <ButtonLink href="/explore" variant="secondary">
+                    Explore opportunities
+                  </ButtonLink>
+                }
+              />
+            ) : (
+              <div className={s.rows}>
+                {entries.slice(0, 4).map((e) => {
+                  const item = byId.get(e.id);
+                  return (
+                    <Link href={`/opportunity/${e.id}`} key={e.id} className={s.row}>
+                      <span className={s.rowBody}>
+                        <span className={`${s.rowTitle} clamp-1`}>{item?.title ?? `Opportunity #${e.id}`}</span>
+                        <span className={s.rowMeta}>Status changed {relativeTime(e.updatedAt)}</span>
+                      </span>
+                      <span className={s.rowTail}>
+                        <Chip tone={STATUS_TONE[e.status]}>{STATUS_LABELS[e.status]}</Chip>
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ---- deadline spread ---- */}
@@ -145,16 +197,18 @@ export default function HomePage() {
                   <span className={s.bandTrack}>
                     <span
                       className={s.bandFill}
-                      style={{ width: `${Math.max(2, Math.round((count / Math.max(1, stats.total)) * 100))}%` }}
+                      style={{
+                        width: `${Math.max(2, Math.round((count / Math.max(1, stats.total)) * 100))}%`,
+                      }}
                     />
                   </span>
                   <span className={s.bandCount}>{count}</span>
                 </Link>
               ))}
               <p className="t-micro c-muted">
-                {stats.withDeadline} of {stats.total} listings published a date; the rest are rolling or did
-                not state one. Every listing links back to the site that published it — check eligibility
-                there before spending an evening on an application.
+                {stats.withDeadline} of {stats.total} listings published a date; the rest are rolling or did not state
+                one. Every listing links back to the site that published it — check eligibility there before spending an
+                evening on an application.
               </p>
             </>
           )}
@@ -210,49 +264,6 @@ export default function HomePage() {
                 </p>
               ) : null}
             </>
-          )}
-        </div>
-
-        {/* ---- applications ---- */}
-        <div className={`${s.box} ${s.half}`}>
-          <div className={s.boxHead}>
-            <h2 className={s.boxTitle}>Applications</h2>
-            {entries.length ? (
-              <Link href="/applications" className="t-meta c-muted">
-                All {entries.length}
-              </Link>
-            ) : null}
-          </div>
-
-          {entries.length === 0 ? (
-            <EmptyState
-              compact
-              icon="applications"
-              title="No applications tracked yet"
-              body="Set a status on any opportunity and it will appear here with its deadline."
-              actions={
-                <ButtonLink href="/explore" variant="secondary">
-                  Explore opportunities
-                </ButtonLink>
-              }
-            />
-          ) : (
-            <div className={s.rows}>
-              {entries.slice(0, 4).map((e) => {
-                const item = byId.get(e.id);
-                return (
-                  <Link href={`/opportunity/${e.id}`} key={e.id} className={s.row}>
-                    <span className={s.rowBody}>
-                      <span className={`${s.rowTitle} clamp-1`}>{item?.title ?? `Opportunity #${e.id}`}</span>
-                      <span className={s.rowMeta}>Status changed {relativeTime(e.updatedAt)}</span>
-                    </span>
-                    <span className={s.rowTail}>
-                      <Chip tone={STATUS_TONE[e.status]}>{STATUS_LABELS[e.status]}</Chip>
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
           )}
         </div>
       </div>
