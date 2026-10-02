@@ -12,178 +12,152 @@
    §14: 232px, collapsing to a 72px rail. §15 names the groups. §16 gives the
    states, including the dark active row taken from the visual reference. */
 
+/* ------------------------------------------------------------ the rail ----
+   A floating vertical pill, centred against the viewport, rather than a
+   full-height panel. It gives the content the whole width back, and because
+   it is icon-only the name arrives on hover instead of occupying 232px
+   permanently.
+
+   This is the one pill shape in the product. Everything else uses the square
+   radius scale; a rail of circular icon targets is the case where the shape
+   is the component rather than decoration. */
+
 .sidebar {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: var(--sidebar-w);
-  height: 100vh;
-  height: 100dvh;
+  left: var(--s-4);
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--s-1);
-  /* One horizontal padding value for the whole rail, so every child — brand,
-     nav row, rule, account slab — begins on the same x-axis (§4). */
-  padding: var(--s-5) var(--s-3) var(--s-4);
-  /* A surface of its own rather than the page colour: §5 asks for clear
-     separation from the content, and a border alone was doing all the work. */
-  background: var(--color-surface-secondary);
-  border-right: 1px solid var(--color-border);
+  padding: var(--s-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-raised);
   z-index: 40;
-  transition: width 180ms var(--ease);
-  overflow: hidden;
-}
-
-/* The rail is one of two things, never halfway: it animates width, and the
-   labels inside are what fade. */
-@media (prefers-reduced-motion: reduce) {
-  .sidebar { transition: none; }
 }
 
 @media (max-width: 1023px) {
   .sidebar { display: none; }
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  /* Matches .navItem's inline padding exactly, so the mark sits on the same
-     x-axis as every nav icon below it. */
-  padding: var(--s-2) var(--s-3);
-  margin-bottom: var(--s-5);
-  min-width: 0;
-  height: var(--control-md);
-  box-sizing: content-box;
-}
-
-/* The emblem itself, not a letterform standing in for it. It carries the
-   product's whole colour story, so it is the one place all five logo colours
-   appear at once. */
-/* 28px, not 34: the emblem then occupies the same optical width as a 16px nav
-   icon inside its 40px row, so the rail has one icon column rather than two. */
-.mark { width: 28px; height: 28px; flex: none; object-fit: contain; }
-
-.brandText { display: flex; flex-direction: column; min-width: 0; }
-.brandName { font-size: var(--text-card-title); font-weight: 600; letter-spacing: -0.02em; }
-.brandSub { font-size: var(--text-micro); color: var(--color-text-muted); font-weight: 500; }
-
-.navGroup { display: flex; flex-direction: column; gap: 2px; }
-
-/* Full-bleed to the rail's padding, so the rule reads as a divider of the rail
-   rather than a line floating inside it. */
-.navRule { height: 1px; background: var(--color-border); margin: var(--s-4) 0; }
-
+/* A nav target: square-ish tile with a fully rounded corner so it reads as
+   part of the pill, sized to the touch floor. */
 .navItem {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  height: var(--control-md);
-  padding-inline: var(--s-3);
-  border-radius: var(--radius-control);
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-sm);
-  font-weight: 500;
-  white-space: nowrap;
+  display: grid;
+  place-items: center;
+  width: var(--control-touch);
+  height: var(--control-touch);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
   transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
 }
 .navItem:hover { background: var(--hover-wash); color: var(--color-text-primary); }
 
-/* §5: obvious without being a saturated block. The weight changes, the icon
-   takes the accent, the surface lifts to the card colour, and a 3px accent bar
-   marks the row — four quiet signals instead of one loud fill. The rail is
-   navigation, not the subject of the page. */
-.navItemActive {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-weight: 600;
-  box-shadow: var(--shadow-card);
-}
-.navItemActive:hover { background: var(--color-surface); color: var(--color-text-primary); }
-.navItemActive::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 18px;
-  border-radius: 0 var(--radius-bar) var(--radius-bar) 0;
-  background: var(--color-action);
-}
-.navItemActive svg { color: var(--color-action); }
+/* The active target is filled, because at icon-only size the quieter signals
+   that worked on a labelled row (weight, a 3px bar) have nothing to attach to. */
+.navItemActive { background: var(--color-action); color: var(--color-action-text); }
+.navItemActive:hover { background: var(--color-action-hover); color: var(--color-action-text); }
 
+/* The label, revealed on hover. A real element rather than `title`, because a
+   native tooltip is slow, unstyleable, and never appears on keyboard focus. */
 .navLabel {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  position: absolute;
+  left: calc(100% + var(--s-3));
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  padding: 6px var(--s-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-text-primary);
+  color: var(--color-bg);
+  font-size: var(--text-meta);
+  font-weight: 500;
   white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease);
+  z-index: 1;
+}
+.navItem:hover .navLabel,
+.navItem:focus-visible .navLabel {
   opacity: 1;
-  transition: opacity 120ms var(--ease);
+  transform: translateY(-50%) translateX(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .navLabel { transition: none; }
 }
 
+/* Counts ride the icon as a small badge, since there is no row to sit in. */
 .navCount {
-  flex: none;
-  transition: opacity 120ms var(--ease);
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  min-width: 16px;
+  height: 16px;
+  padding-inline: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-action);
+  color: var(--color-action-text);
   font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-muted);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  border: 2px solid var(--color-surface);
 }
-.navItemActive .navCount { color: var(--color-text-muted); }
+.navItemActive .navCount { background: var(--color-surface); color: var(--color-action); border-color: var(--color-action); }
 
-/* Pinned to the bottom of the rail, below the navigation, with the account
-   slab last. `margin-top: auto` inside the sidebar's flex column is what
-   actually holds it there — before, the nav groups were sized by content and
-   the footer floated wherever they ended. */
-.sidebarFoot { margin-top: auto; display: flex; flex-direction: column; gap: var(--s-2); padding-top: var(--s-4); }
+.navGroup { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.navRule { width: 20px; height: 1px; background: var(--color-border); margin: var(--s-2) 0; }
 
+.sidebarFoot { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+
+/* The account target matches a nav target exactly, so the pill has one column. */
 .account {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  width: 100%;
-  padding: var(--s-3);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  text-align: left;
-  min-width: 0;
-  transition: border-color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--control-touch);
+  height: var(--control-touch);
+  border-radius: var(--radius-pill);
+  transition: background var(--motion-fast) var(--ease);
 }
-.account:hover { border-color: var(--color-border-hover); background: var(--color-surface-secondary); }
+.account:hover { background: var(--hover-wash); }
 
 .avatar {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  flex: none;
+  width: 30px;
+  height: 30px;
   border-radius: var(--radius-pill);
   background: var(--color-action);
   color: var(--color-action-text);
-  font-size: var(--text-meta);
+  font-size: var(--text-micro);
   font-weight: 600;
 }
-.accountBody { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.accountName { font-size: var(--text-body-sm); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.accountSub { font-size: var(--text-micro); color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* §15 bottom: a quiet line stating where the data came from. §72 — freshness
-   where it affects a decision, and nowhere else. */
-.sourceNote {
-  padding: var(--s-2) var(--s-3) 0;
-  font-size: var(--text-micro);
-  line-height: 1.45;
-  color: var(--color-text-muted);
+/* The brand moves out of the rail and into the top-left of the header. */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+  flex: none;
 }
+.mark { width: 30px; height: 30px; flex: none; object-fit: contain; }
+.brandText { display: flex; flex-direction: column; min-width: 0; }
+.brandName { font-size: var(--text-body-sm); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+.brandSub { font-size: var(--text-micro); color: var(--color-text-muted); font-weight: 500; }
 
 /* -------------------------------------------------------------- header ---
    §17: 64px, lightweight, breadcrumb + search + profile. No second nav bar. */
 
-.main { margin-left: var(--sidebar-w); min-width: 0; }
+/* Clears the floating rail: its left offset + its width + the same gap again,
+   so the gutter to the left of the content matches the gutter to the left of
+   the rail. */
+.main { margin-left: calc(var(--s-4) * 2 + 60px); min-width: 0; }
 @media (max-width: 1023px) { .main { margin-left: 0; } }
 
 .header {
@@ -478,80 +452,3 @@
 .noteSub { font-size: var(--text-micro); color: var(--color-text-muted); }
 
 .menuEmpty { padding: var(--s-6) var(--s-4); text-align: center; font-size: var(--text-body-sm); color: var(--color-text-muted); }
-
-/* ------------------------------------------------- collapsed rail ---------
-   §6. The rail narrows to an icon column; labels and counts fade out first so
-   text never squeezes mid-transition, and every icon lands on the same centre
-   line it occupied when expanded, which is what stops the content jumping.
-
-   180ms, which sits in the brief's 150–220ms window and matches the app's
-   existing --motion. No spring, no bounce. */
-
-.collapseBtn {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  height: var(--control-md);
-  padding-inline: var(--s-3);
-  border-radius: var(--radius-control);
-  color: var(--color-text-muted);
-  font-size: var(--text-meta);
-  font-weight: 500;
-  white-space: nowrap;
-  width: 100%;
-  transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
-}
-.collapseBtn:hover { background: var(--hover-wash); color: var(--color-text-primary); }
-.collapseIcon { flex: none; transition: transform 180ms var(--ease); }
-
-/* --- the collapsed state --------------------------------------------------
-   Scoped to the shell, so one attribute drives the rail, the chevron and the
-   content margin together. */
-
-.shell[data-collapsed="true"] .sidebar { padding-inline: var(--s-2); }
-
-/* Labels and counts go first and fast; the width follows. Reversing that order
-   is what makes a collapsing sidebar look like it is crushing its own text. */
-.shell[data-collapsed="true"] .navLabel,
-.shell[data-collapsed="true"] .navCount,
-.shell[data-collapsed="true"] .brandText,
-.shell[data-collapsed="true"] .accountBody,
-.shell[data-collapsed="true"] .sourceNote,
-.shell[data-collapsed="true"] .collapseBtn span:not(.collapseIcon) {
-  /* `flex: 0 0 0` is the load-bearing part. .navLabel is `flex: 1 1 auto`, so
-     width:0 alone still let it GROW to fill the row and shove the icon off
-     centre — the icons measured at 16px from the rail edge instead of the
-     36px centre line. Zeroing the grow factor is what actually collapses it. */
-  flex: 0 0 0 !important;
-  opacity: 0;
-  width: 0;
-  min-width: 0;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-/* Centre everything on the icon column. The row keeps its height, so the
-   vertical rhythm is identical in both states. */
-.shell[data-collapsed="true"] .navItem,
-.shell[data-collapsed="true"] .collapseBtn,
-.shell[data-collapsed="true"] .brand {
-  justify-content: center;
-  padding-inline: 0;
-  gap: 0;
-}
-.shell[data-collapsed="true"] .account {
-  justify-content: center;
-  padding-inline: 0;
-}
-.shell[data-collapsed="true"] .account svg { display: none; }
-.shell[data-collapsed="true"] .navItemActive::before { left: -2px; }
-.shell[data-collapsed="true"] .collapseIcon { transform: rotate(180deg); }
-.shell[data-collapsed="true"] .navRule { margin-inline: var(--s-1); }
-
-/* The rail is hidden below 1024px anyway (the bottom bar takes over), so the
-   collapse control has no job there. */
-@media (max-width: 1023px) {
-  .collapseBtn { display: none; }
-}

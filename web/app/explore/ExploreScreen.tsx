@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import o from "@/components/opportunities/opportunity.module.css";
+import card from "@/components/opportunities/card.module.css";
 import u from "@/components/ui/ui.module.css";
 import { PageHead } from "@/components/layout/AppShell";
 import layout from "@/components/layout/layout.module.css";
@@ -177,7 +178,7 @@ export function ExploreScreen() {
             }
           />
         ) : list.initial ? (
-          <div className={o.grid}>
+          <div className={card.grid}>
             <GridSkeleton count={CHUNK} />
           </div>
         ) : list.items.length === 0 ? (
@@ -209,7 +210,7 @@ export function ExploreScreen() {
           )
         ) : (
           <>
-            <div className={o.grid}>
+            <div className={card.grid}>
               {list.items.map((item) => (
                 <OpportunityCard key={item.id} item={item} />
               ))}

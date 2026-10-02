@@ -7,6 +7,7 @@
 
 import { useMemo, useState } from "react";
 import o from "@/components/opportunities/opportunity.module.css";
+import card from "@/components/opportunities/card.module.css";
 import { PageHead } from "@/components/layout/AppShell";
 import { OpportunityCard } from "@/components/opportunities/OpportunityCard";
 import { GridSkeleton } from "@/components/feedback/Skeletons";
@@ -57,7 +58,7 @@ export default function SavedPage() {
       />
 
       {!ready || initial ? (
-        <div className={o.grid}>
+        <div className={card.grid}>
           <GridSkeleton count={3} />
         </div>
       ) : error ? (
@@ -123,7 +124,7 @@ export default function SavedPage() {
               }
             />
           ) : (
-            <div className={o.grid}>
+            <div className={card.grid}>
               {shown.map((item) => (
                 <OpportunityCard key={item.id} item={item} />
               ))}

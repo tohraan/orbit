@@ -1,0 +1,151 @@
+/* The opportunity card.
+ *
+ * Reorganised to the reference layout: provenance at the top where it frames
+ * everything under it, the three numbers that decide an application in one
+ * measured row, and actions split secondary-left / primary-right.
+ *
+ * The regions are fixed so that every card in a grid row has its metrics band
+ * and its action row on the same line, whatever the source published. */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-height: var(--card-h);
+  padding: var(--s-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease),
+    box-shadow var(--motion-fast) var(--ease);
+}
+.card:hover { border-color: var(--color-border-hover); transform: translateY(-1px); box-shadow: var(--shadow-raised); }
+.cardCompared { border-color: var(--color-border-active); box-shadow: 0 0 0 1px var(--color-border-active); }
+.cardCompared:hover { border-color: var(--color-border-active); }
+
+@media (max-width: 639px) {
+  .card { min-height: 0; padding: var(--s-4); gap: var(--s-3); }
+  .card:hover { transform: none; }
+}
+
+/* --- provenance, at the top ------------------------------------------------
+   The domain leads, because half this index comes from one aggregator and a
+   student is entitled to know whose claim they are reading before they read
+   it. The posted age sits beside it; the save control closes the row. */
+.top { display: flex; align-items: center; gap: var(--s-2); justify-content: space-between; flex: none; }
+.origin { display: flex; align-items: center; gap: var(--s-2); min-width: 0; }
+
+.domain {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 4px var(--s-2);
+  border-radius: var(--radius-chip);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.age { font-size: var(--text-micro); color: var(--color-text-muted); white-space: nowrap; }
+
+/* --- identity -------------------------------------------------------------- */
+.titleBlock { display: flex; flex-direction: column; gap: var(--s-1); flex: none; }
+
+.title {
+  font-size: var(--text-card-title);
+  line-height: var(--lh-card-title);
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  /* Two lines reserved, so a one-line title does not lift the whole body of
+     the card relative to its neighbours. */
+  min-height: calc(var(--lh-card-title) * 2);
+}
+.title:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+.org { font-size: var(--text-body-sm); color: var(--color-text-muted); }
+
+.tags { display: flex; flex-wrap: wrap; gap: var(--s-2); flex: none; }
+
+/* --- the three numbers ------------------------------------------------------
+   Funding, deadline and fit, measured against each other on one line. This is
+   the row the card exists for; everything above it is identification.
+   margin-top:auto pins it, so it lands on the same line on every card. */
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: var(--s-3);
+  align-items: start;
+  margin-top: auto;
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--color-border);
+  flex: none;
+}
+.metric { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.metricLabel {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.metricValue {
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.metricSub { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--color-text-muted); }
+.metricNone { font-size: var(--text-body-sm); color: var(--color-text-muted); font-weight: 400; }
+
+/* The fit ring. Only rendered when there is a profile to score against —
+   §105, never imply a number we do not have. */
+.ring { position: relative; width: 44px; height: 44px; flex: none; }
+.ringSvg { transform: rotate(-90deg); display: block; }
+.ringTrack { stroke: var(--color-surface-muted); }
+.ringFill { stroke: var(--color-action); stroke-linecap: round; }
+.ringLow .ringFill { stroke: var(--color-text-muted); }
+.ringLabel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- actions ---------------------------------------------------------------
+   Secondary left, primary right, per the reference. One row, one height. */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--color-border);
+  flex: none;
+}
+.actionsRight { display: flex; align-items: center; gap: var(--s-2); }
+
+.cardLink { position: absolute; inset: 0; border-radius: inherit; z-index: 0; }
+.card > *:not(.cardLink) { position: relative; z-index: 1; }
+
+/* --- grid ------------------------------------------------------------------ */
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-6); }
+@media (max-width: 1279px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); } }
+@media (max-width: 767px)  { .grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); } }

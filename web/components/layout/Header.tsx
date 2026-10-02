@@ -7,6 +7,7 @@
  * whole product, and two search inputs on one screen (the header's and
  * Explore's) was a duplicate affordance (§81, §114). */
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -16,7 +17,7 @@ import { CommandTrigger } from "../command/CommandPalette";
 import { CurrencySwitch } from "../ui/CurrencySwitch";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { TITLES } from "./nav";
-import { APP_NAME } from "./brand";
+import { APP_NAME, APP_TAGLINE } from "./brand";
 import { useItemsByIds } from "@/lib/useApi";
 import { daysUntil } from "@rof/core";
 import type { OpportunitySummary } from "@rof/core";
@@ -241,7 +242,16 @@ export function Header({ onOpenCommand }: { onOpenCommand: () => void }) {
 
   return (
     <header className={s.header}>
-      <nav className={s.crumbs} aria-label="Breadcrumb">
+      {/* The emblem sits top-left now that the rail is icon-only. */}
+      <Link href="/" className={s.brand}>
+        <Image className={s.mark} src="/bits-logo-128.png" alt="" width={30} height={30} priority />
+        <span className={s.brandText}>
+          <span className={s.brandName}>{APP_NAME}</span>
+          <span className={s.brandSub}>{APP_TAGLINE}</span>
+        </span>
+      </Link>
+
+      <nav className={s.crumbs} aria-label="Breadcrumb" style={{ marginLeft: "var(--s-5)" }}>
         {pathname.startsWith("/opportunity/") ? (
           <>
             <Link href="/explore" className={s.crumb}>

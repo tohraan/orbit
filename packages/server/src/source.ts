@@ -40,8 +40,20 @@ export type Index = {
   loadedAt: number;
 };
 
-let cache: Index | null = null;
-let inflight: Promise<Index> | null = null;
+/* The cache lives on globalThis, not in a module variable.
+ *
+ * Next does not guarantee one module instance per process: instrumentation.ts
+ * and the route handlers are compiled into different bundles, so each got its
+ * OWN `cache` binding. The boot warm genuinely ran — the log proved it — and
+ * the first request still paid 2.6s, because it was reading a different copy
+ * of this module with an empty cache.
+ *
+ * A global key is shared by construction, which is the only thing that makes
+ * warming on boot actually reach the request path. */
+type Store = { cache: Index | null; inflight: Promise<Index> | null };
+const KEY = Symbol.for("rof.index.store");
+const store: Store = ((globalThis as Record<symbol, unknown>)[KEY] as Store) ?? { cache: null, inflight: null };
+(globalThis as Record<symbol, unknown>)[KEY] = store;
 
 function finalise(all: OpportunityDetail[], origin: "live" | "snapshot"): Index {
   /* A closed listing leaves the portal entirely -- not muted, not sorted last,
@@ -141,15 +153,30 @@ async function loadLive(url: string, key: string): Promise<Index> {
 
   const select =
     "select=id,source_slug,external_id,url,payload,detail,deadline,deadline_kind,first_seen_at";
+
+  /* The open-call filter goes in the QUERY, not in the loop below.
+   *
+   * It used to fetch every raw_item and discard the ones from awarded,
+   * institutional and programme sources in JavaScript. That meant pulling
+   * 2,274 rows to keep 432 -- 81% of the download thrown away -- and because
+   * payload and detail are large jsonb blobs, a page of 500 is about 3 MB.
+   * Five pages, ~13.6 MB, and a measured 9.4 SECONDS before the first card
+   * could render. With the TTL at five minutes, one visitor in every window
+   * paid that.
+   *
+   * PostgREST's `in.()` takes the slugs directly, so the database sends only
+   * the rows that were ever going to be kept. */
+  const slugs = [...openCall];
+  if (!slugs.length) throw new Error("no open_call sources configured");
+  const only = `&source_slug=in.(${slugs.map((s) => encodeURIComponent(s)).join(",")})`;
+
   const items: OpportunityDetail[] = [];
   let after = 0;
   for (;;) {
-    const page = await get<RawItem[]>(`raw_items?${select}&id=gt.${after}&order=id.asc&limit=${PAGE}`);
+    const page = await get<RawItem[]>(`raw_items?${select}${only}&id=gt.${after}&order=id.asc&limit=${PAGE}`);
     if (!page.length) break;
-    for (const r of page) {
-      if (!openCall.has(r.source_slug)) continue;
-      items.push(fromRawItem(r, meta.get(r.source_slug)));
-    }
+    for (const r of page) items.push(fromRawItem(r, meta.get(r.source_slug)));
+    if (page.length < PAGE) break;
     after = page[page.length - 1].id;
   }
   if (!items.length) throw new Error("supabase returned no open calls");
@@ -164,15 +191,43 @@ async function loadLive(url: string, key: string): Promise<Index> {
  * instances the others still serve their own cache until it expires, which is
  * the honest limit of an in-process cache and the reason the TTL is short. */
 export function invalidateIndex(): void {
-  cache = null;
+  store.cache = null;
 }
 
-/** The whole open-call index, cached. Never throws: falls back to the snapshot. */
-export async function getIndex(): Promise<Index> {
-  if (cache && Date.now() - cache.loadedAt < TTL_MS) return cache;
-  if (inflight) return inflight;
+/** Kick off a refresh without waiting for it. Errors are swallowed on purpose:
+ *  a failed background refresh must never surface to a request that is already
+ *  being served perfectly well from cache. */
+function refreshInBackground(): void {
+  if (store.inflight) return;
+  void load().catch(() => {});
+}
 
-  inflight = (async () => {
+/** The whole open-call index.
+ *
+ * STALE-WHILE-REVALIDATE. A request never waits for a refresh it did not
+ * cause: once there is a cache, an expired one is returned immediately and the
+ * refresh happens behind it. Before this, the unlucky visitor who arrived just
+ * after the TTL lapsed paid the entire reload -- which was the 9-second stall.
+ *
+ * Only the very first request of a process can block, and `warm()` below moves
+ * even that off the request path.
+ *
+ * Never throws: falls back to the committed snapshot.
+ */
+export async function getIndex(): Promise<Index> {
+  if (store.cache) {
+    if (Date.now() - store.cache.loadedAt >= TTL_MS) refreshInBackground();
+    return store.cache;
+  }
+  if (store.inflight) return store.inflight;
+
+  return load();
+}
+
+function load(): Promise<Index> {
+  if (store.inflight) return store.inflight;
+
+  store.inflight = (async () => {
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_KEY;
     if (url && key) {
@@ -187,12 +242,19 @@ export async function getIndex(): Promise<Index> {
     return loadSnapshot();
   })()
     .then((idx) => {
-      cache = idx;
+      store.cache = idx;
       return idx;
     })
     .finally(() => {
-      inflight = null;
+      store.inflight = null;
     });
 
-  return inflight;
+  return store.inflight;
+}
+
+/* Warm the cache as the process starts, so the first visitor does not pay for
+ * the first load either. Fire-and-forget: if it fails, the first real request
+ * falls back to the snapshot exactly as before. */
+export function warm(): void {
+  refreshInBackground();
 }

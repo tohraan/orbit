@@ -15,6 +15,7 @@
 import Link from "next/link";
 import s from "./home.module.css";
 import o from "@/components/opportunities/opportunity.module.css";
+import card from "@/components/opportunities/card.module.css";
 import { PageHead, Section } from "@/components/layout/AppShell";
 import { OpportunityCard } from "@/components/opportunities/OpportunityCard";
 import { DeadlineIndicator } from "@/components/opportunities/Indicators";
@@ -276,7 +277,7 @@ export default function HomePage() {
             }
           />
         ) : initial ? (
-          <div className={o.grid}>
+          <div className={card.grid}>
             <GridSkeleton count={6} />
           </div>
         ) : !data?.items.length ? (
@@ -295,7 +296,7 @@ export default function HomePage() {
             <p className="t-meta c-muted" style={{ marginBottom: "var(--s-4)" }}>
               A mixed batch: some closing this week, some months away. Reload for a different set.
             </p>
-            <div className={o.grid}>
+            <div className={card.grid}>
               {data.items.slice(0, 6).map((item) => (
                 <OpportunityCard key={item.id} item={item} />
               ))}
