@@ -199,18 +199,17 @@ export function Timeline({
     return out;
   }, [range]);
 
-  /* The gradient is anchored to the SAME urgency bands the cards use (≤7 days
-   * danger, ≤30 warning, beyond that neutral), converted to positions for the
-   * current range. Fixed percentage stops would mean a 30-day axis fading to
-   * neutral at its right-hand end, where listings are in fact still inside the
-   * 30-day warning band — the axis would be contradicting the chips below it. */
-  const axisGradient = useMemo(() => {
+  /* Solid segments, not a gradient. The urgency bands are discrete — a
+   * listing is inside seven days or it is not — so the axis is divided rather
+   * than faded, and each segment is painted in the same fill its chips use. */
+  const bands = useMemo(() => {
     const at = (days: number) => Math.min(100, 1.5 + (days / range) * 97);
-    return (
-      `linear-gradient(to right, var(--color-danger) 0%, var(--color-danger) ${at(5).toFixed(1)}%, ` +
-      `var(--warning) ${at(9).toFixed(1)}%, var(--warning) ${at(26).toFixed(1)}%, ` +
-      `var(--border-strong) ${at(34).toFixed(1)}%, var(--color-border) 100%)`
-    );
+    const out: { cls: "urgent" | "soon" | "later"; from: number; to: number }[] = [];
+    if (range >= 7) out.push({ cls: "urgent", from: 0, to: at(7) });
+    else out.push({ cls: "urgent", from: 0, to: 100 });
+    if (range > 7) out.push({ cls: "soon", from: at(7), to: Math.min(100, at(30)) });
+    if (range > 30) out.push({ cls: "later", from: at(30), to: 100 });
+    return out.filter((b) => b.to > b.from);
   }, [range]);
 
   const openCol = columns.find((c) => c.date === open) ?? null;
@@ -272,7 +271,15 @@ export function Timeline({
               ))}
             </div>
 
-            <div className={s.axis} style={{ background: axisGradient }}>
+            <div className={s.axis}>
+              {bands.map((b) => (
+                <span
+                  key={b.cls}
+                  className={[s.axisBand, b.cls === "urgent" ? s.axisBandUrgent : b.cls === "soon" ? s.axisBandSoon : s.axisBandLater].join(" ")}
+                  style={{ left: `${b.from}%`, width: `${b.to - b.from}%` }}
+                  aria-hidden="true"
+                />
+              ))}
               <span className={s.today} style={{ left: "0%" }} aria-hidden="true" />
             </div>
 

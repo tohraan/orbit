@@ -93,9 +93,9 @@
 .note {
   padding: var(--s-4);
   border-radius: var(--radius-md);
-  background: var(--surface-info);
-  border: 1px solid var(--surface-info-border);
+  background: var(--fill-info);
+  border: 1px solid var(--fill-info);
   font-size: var(--text-body-sm);
   line-height: 1.55;
-  color: var(--color-text-secondary);
+  color: var(--on-fill);
 }

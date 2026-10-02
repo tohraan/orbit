@@ -141,9 +141,17 @@
   flex: none;
   min-height: 42px;
 }
-.decideUrgent { background: var(--surface-urgent); border-color: var(--surface-urgent-border); }
-.decideSoon { background: var(--surface-soon); border-color: var(--surface-soon-border); }
-.decideFunded { background: var(--surface-funding); border-color: var(--surface-funding-border); }
+/* A solid band inverts everything inside it, labels included — otherwise the
+   uppercase micro-label keeps its muted grey and disappears into the fill. */
+.decideUrgent,
+.decideSoon,
+.decideFunded { color: var(--on-fill); }
+.decideUrgent .decideLabel,
+.decideSoon .decideLabel,
+.decideFunded .decideLabel { color: var(--on-fill); opacity: 0.85; }
+.decideUrgent { background: var(--fill-urgent); border-color: var(--fill-urgent); }
+.decideSoon { background: var(--fill-soon); border-color: var(--fill-soon); }
+.decideFunded { background: var(--fill-funding); border-color: var(--fill-funding); }
 
 .decideLeft { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .decideLabel {

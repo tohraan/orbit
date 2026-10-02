@@ -130,11 +130,14 @@
 
 /* The high-CTA cell. Tinted one step off the page so it reads as the thing to
    act on without a border treatment that would make it look like an alert. */
+/* The high-CTA cell. Solid fill, and everything inside inverts — the panel it
+   wraps keeps its own white surface, so the tint reads as a frame around the
+   call to action rather than as a coloured card. */
 .boxAccent {
-  background: linear-gradient(0deg, var(--surface-compare), var(--surface-compare)),
-              var(--color-surface);
-  border-color: var(--surface-compare-border);
+  background: var(--fill-compare);
+  border-color: var(--fill-compare);
 }
+.boxAccent .boxTitle { color: var(--on-fill); }
 
 /* A compact stat strip for the rail: four numbers, no chrome. */
 .statRows { display: flex; flex-direction: column; }

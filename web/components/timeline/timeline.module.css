@@ -103,10 +103,19 @@
   height: 3px;
   border-radius: 2px;
   margin-top: var(--s-2);
-  /* Fallback only. Timeline.tsx replaces this with stops anchored to the
-     urgency bands for the range actually on screen. */
-  background: linear-gradient(to right, var(--color-danger) 0%, var(--warning) 18%, var(--border-strong) 52%, var(--color-border) 100%);
+  /* Neutral rail. Timeline.tsx lays the solid urgency bands over it as
+     absolutely positioned segments — see .axisBand. */
+  background: var(--color-border);
+  overflow: hidden;
 }
+
+/* One solid segment per urgency band, butted edge to edge. A gradient implied
+   a continuous scale the bands do not have: a listing is inside seven days or
+   it is not, and the axis should say which rather than fade between them. */
+.axisBand { position: absolute; top: 0; bottom: 0; }
+.axisBandUrgent { background: var(--fill-urgent); }
+.axisBandSoon { background: var(--fill-soon); }
+.axisBandLater { background: var(--color-border-hover); }
 
 .today {
   position: absolute;
