@@ -63,9 +63,9 @@
   gap: var(--s-2);
   padding: var(--s-3);
   border-radius: var(--radius-md);
-  background: var(--fill-urgent);
-  border: 1px solid var(--fill-urgent);
-  color: var(--on-fill);
+  background: var(--surface-urgent);
+  border: 1px solid var(--surface-urgent-border);
+  color: var(--ink-urgent);
   font-size: var(--text-body-sm);
   animation: reveal 180ms var(--ease) both;
 }
@@ -75,9 +75,9 @@
   gap: var(--s-2);
   padding: var(--s-3);
   border-radius: var(--radius-md);
-  background: var(--fill-success);
-  border: 1px solid var(--fill-success);
-  color: var(--on-fill);
+  background: var(--surface-funding);
+  border: 1px solid var(--surface-funding-border);
+  color: var(--ink-funding);
   font-size: var(--text-body-sm);
   animation: reveal 180ms var(--ease) both;
 }

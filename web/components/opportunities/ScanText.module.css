@@ -41,10 +41,11 @@
 
 /* A requirement — "must", "required", "minimum". These are the sentences that
    decide whether an application is worth starting. */
-/* A requirement is marked by weight and by the solid rule beside it
-   (.markerKey), not by a highlighter wash — a tinted underlay is the one
-   effect that cannot survive becoming a solid fill. */
-.req { font-weight: 600; color: var(--color-text-primary); }
+.req {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  box-shadow: inset 0 -0.5em 0 var(--surface-funding);
+}
 
 .more {
   display: inline-flex;

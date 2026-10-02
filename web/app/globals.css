@@ -99,56 +99,37 @@
   --color-danger: var(--danger);
   --color-info: var(--info);
 
-  /* Accent FILLS. Solid, never tinted: a chip is painted in its accent and the
-     text inverts to white. Measured, not eyeballed -- white on the raw logo
-     gold is 3.3:1 and on the raw sky 1.9:1, both unreadable, so those two are
-     taken to the depth where white clears AA while staying the same hue:
+  /* Accent SURFACES. Each is its accent at low alpha over white, so text on
+     top still clears AA (§5.1: pastels support, they do not shout). */
+  --surface-funding: #fdf6dd;
+  --surface-funding-border: #f0e1a6;
+  --surface-saved: #fbeef7;
+  --surface-saved-border: #f1d4e8;
+  --surface-compare: #eaeaf7;
+  --surface-compare-border: #c9c9e8;
+  --surface-info: #e8f7fc;
+  --surface-info-border: #bfe6f4;
+  --surface-urgent: #fcebeb;
+  --surface-urgent-border: #f3cdcd;
+  --surface-soon: #fbf3e0;
+  --surface-soon-border: #ecdcb0;
+  --surface-college: #eaeaf7;
+  --surface-college-border: #c9c9e8;
 
-       navy    #282888  12.0:1   actions, comparison, college listings
-       red     #C82020   5.7:1   urgency and danger
-       gold    #7E6019   5.9:1   funding
-       amber   #8F6414   5.3:1   a deadline inside 30 days
-       teal    #1C7A99   4.9:1   informational
-       magenta #8A3C70   7.1:1   saved, a personal collection
-       green   #1F7A46   5.3:1   success
+  /* Ink for text sitting ON an accent surface. Literals inside component rules
+     are exactly the bug §4 warns about: a colour defined once for one theme
+     reads as unstyled in the other. */
+  --ink-funding: #6b5312;
+  --ink-saved: #8a3c70;
+  --ink-compare: var(--bits-navy);
+  --ink-info: #15607a;
+  --ink-urgent: #9c1a1a;
+  --ink-soon: #7d5713;
+  --ink-college: var(--bits-navy);
 
-     §108 still holds: the fill is never the only signal -- every chip says in
-     words what its colour says in hue. */
-  --fill-funding: #7e6019;
-  --fill-saved: #8a3c70;
-  --fill-compare: #282888;
-  --fill-info: #1c7a99;
-  --fill-urgent: #c82020;
-  --fill-soon: #8f6414;
-  --fill-college: #282888;
-  --fill-success: #1f7a46;
-  --on-fill: #ffffff;
-
-  /* The surface/border/ink names stay so no component rule has to change: they
-     now all resolve to the same solid fill, with white on top. */
-  --surface-funding: var(--fill-funding);
-  --surface-funding-border: var(--fill-funding);
-  --surface-saved: var(--fill-saved);
-  --surface-saved-border: var(--fill-saved);
-  --surface-compare: var(--fill-compare);
-  --surface-compare-border: var(--fill-compare);
-  --surface-info: var(--fill-info);
-  --surface-info-border: var(--fill-info);
-  --surface-urgent: var(--fill-urgent);
-  --surface-urgent-border: var(--fill-urgent);
-  --surface-soon: var(--fill-soon);
-  --surface-soon-border: var(--fill-soon);
-  --surface-college: var(--fill-college);
-  --surface-college-border: var(--fill-college);
-
-  --ink-funding: var(--on-fill);
-  --ink-saved: var(--on-fill);
-  --ink-compare: var(--on-fill);
-  --ink-info: var(--on-fill);
-  --ink-urgent: var(--on-fill);
-  --ink-soon: var(--on-fill);
-  --ink-college: var(--on-fill);
-
+  /* Surfaces that are not a flat colour: nav hover, modal scrim, and the
+     shimmer that travels across a skeleton — all three invert wrongly if
+     written as white- or black-biased literals. */
   --hover-wash: rgba(13, 13, 16, 0.05);
   --scrim: rgba(13, 13, 16, 0.4);
   --shimmer: rgba(255, 255, 255, 0.72);
@@ -264,44 +245,32 @@
     --color-link: #8fb8f5;
     --color-link-hover: #a9c9f8;
 
-    /* Dark inverts the other way round: a navy chip on a near-black page is
-       invisible, so the fill brightens and the text goes near-black. Same
-       hues, same meanings; every pair clears 9:1. */
-    --fill-funding: #dcc27a;
-    --fill-saved: #eda9cf;
-    --fill-compare: #a9b2fa;
-    --fill-info: #8ad4ec;
-    --fill-urgent: #f09a97;
-    --fill-soon: #e3be6a;
-    --fill-college: #a9b2fa;
-    --fill-success: #86d6a6;
-    --on-fill: #0b0b0d;
+    --surface-funding: #2b2614;
+    --surface-funding-border: #4c4322;
+    --surface-saved: #2b1c28;
+    --surface-saved-border: #4b3144;
+    --surface-compare: #1d1d33;
+    --surface-compare-border: #34345e;
+    --surface-info: #14262e;
+    --surface-info-border: #25454f;
+    --surface-urgent: #2f1818;
+    --surface-urgent-border: #53292a;
+    --surface-soon: #2c2416;
+    --surface-soon-border: #4c3e23;
+    --surface-college: #1d1d33;
+    --surface-college-border: #34345e;
 
-    --surface-funding: var(--fill-funding);
-    --surface-funding-border: var(--fill-funding);
-    --surface-saved: var(--fill-saved);
-    --surface-saved-border: var(--fill-saved);
-    --surface-compare: var(--fill-compare);
-    --surface-compare-border: var(--fill-compare);
-    --surface-info: var(--fill-info);
-    --surface-info-border: var(--fill-info);
-    --surface-urgent: var(--fill-urgent);
-    --surface-urgent-border: var(--fill-urgent);
-    --surface-soon: var(--fill-soon);
-    --surface-soon-border: var(--fill-soon);
-    --surface-college: var(--fill-college);
-    --surface-college-border: var(--fill-college);
-
-    --ink-funding: var(--on-fill);
-    --ink-saved: var(--on-fill);
-    --ink-compare: var(--on-fill);
-    --ink-info: var(--on-fill);
-    --ink-urgent: var(--on-fill);
-    --ink-soon: var(--on-fill);
-    --ink-college: var(--on-fill);
+    --ink-funding: #e6d08a;
+    --ink-saved: #efb3d8;
+    --ink-compare: #b6bdf7;
+    --ink-info: #8fd6ee;
+    --ink-urgent: #f4a5a4;
+    --ink-soon: #e5c384;
+    --ink-college: #b6bdf7;
 
     --hover-wash: rgba(255, 255, 255, 0.06);
     --scrim: rgba(0, 0, 0, 0.62);
+    /* A white sweep over a dark block is a flash, not a shimmer. */
     --shimmer: rgba(255, 255, 255, 0.07);
     --on-action-muted: rgba(11, 11, 13, 0.66);
 
@@ -343,44 +312,32 @@
   --color-link: #8fb8f5;
   --color-link-hover: #a9c9f8;
 
-  /* Dark inverts the other way round: a navy chip on a near-black page is
-     invisible, so the fill brightens and the text goes near-black. Same
-     hues, same meanings; every pair clears 9:1. */
-  --fill-funding: #dcc27a;
-  --fill-saved: #eda9cf;
-  --fill-compare: #a9b2fa;
-  --fill-info: #8ad4ec;
-  --fill-urgent: #f09a97;
-  --fill-soon: #e3be6a;
-  --fill-college: #a9b2fa;
-  --fill-success: #86d6a6;
-  --on-fill: #0b0b0d;
+  --surface-funding: #2b2614;
+  --surface-funding-border: #4c4322;
+  --surface-saved: #2b1c28;
+  --surface-saved-border: #4b3144;
+  --surface-compare: #1d1d33;
+  --surface-compare-border: #34345e;
+  --surface-info: #14262e;
+  --surface-info-border: #25454f;
+  --surface-urgent: #2f1818;
+  --surface-urgent-border: #53292a;
+  --surface-soon: #2c2416;
+  --surface-soon-border: #4c3e23;
+  --surface-college: #1d1d33;
+  --surface-college-border: #34345e;
 
-  --surface-funding: var(--fill-funding);
-  --surface-funding-border: var(--fill-funding);
-  --surface-saved: var(--fill-saved);
-  --surface-saved-border: var(--fill-saved);
-  --surface-compare: var(--fill-compare);
-  --surface-compare-border: var(--fill-compare);
-  --surface-info: var(--fill-info);
-  --surface-info-border: var(--fill-info);
-  --surface-urgent: var(--fill-urgent);
-  --surface-urgent-border: var(--fill-urgent);
-  --surface-soon: var(--fill-soon);
-  --surface-soon-border: var(--fill-soon);
-  --surface-college: var(--fill-college);
-  --surface-college-border: var(--fill-college);
-
-  --ink-funding: var(--on-fill);
-  --ink-saved: var(--on-fill);
-  --ink-compare: var(--on-fill);
-  --ink-info: var(--on-fill);
-  --ink-urgent: var(--on-fill);
-  --ink-soon: var(--on-fill);
-  --ink-college: var(--on-fill);
+  --ink-funding: #e6d08a;
+  --ink-saved: #efb3d8;
+  --ink-compare: #b6bdf7;
+  --ink-info: #8fd6ee;
+  --ink-urgent: #f4a5a4;
+  --ink-soon: #e5c384;
+  --ink-college: #b6bdf7;
 
   --hover-wash: rgba(255, 255, 255, 0.06);
   --scrim: rgba(0, 0, 0, 0.62);
+  /* A white sweep over a dark block is a flash, not a shimmer. */
   --shimmer: rgba(255, 255, 255, 0.07);
   --on-action-muted: rgba(11, 11, 13, 0.66);
 

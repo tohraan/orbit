@@ -34,9 +34,9 @@
   width: 54px;
   height: 54px;
   border-radius: var(--radius-md);
-  background: var(--fill-compare);
-  border: 1px solid var(--fill-compare);
-  color: var(--on-fill);
+  background: var(--surface-compare);
+  border: 1px solid var(--surface-compare-border);
+  color: var(--ink-compare);
 }
 /* Below the confidence floor the score is deliberately drained of colour: it
    is a number we are not confident in, and it should not look like one we are. */
@@ -61,7 +61,7 @@
   font-size: var(--text-micro);
   color: var(--color-text-secondary);
 }
-.reasonGood { background: var(--fill-funding); border-color: var(--fill-funding); color: var(--on-fill); }
+.reasonGood { background: var(--surface-funding); border-color: var(--surface-funding-border); color: var(--ink-funding); }
 .reasonUnknown { color: var(--color-text-muted); font-style: italic; }
 
 /* The "we need this from you" prompt. Not a modal and not dismissible-forever:
@@ -72,21 +72,17 @@
   gap: var(--s-3);
   padding: var(--s-5);
   border-radius: var(--radius-lg);
-  background: var(--fill-info);
-  border: 1px solid var(--fill-info);
-  /* Solid fill, so everything inside inverts — including the two child rules
-     below, which would otherwise keep their muted greys on a teal ground. */
-  color: var(--on-fill);
+  background: var(--surface-info);
+  border: 1px solid var(--surface-info-border);
 }
-.gaps strong { color: var(--on-fill); }
 .gapList { display: flex; flex-direction: column; gap: var(--s-2); }
-.gapItem { display: flex; align-items: flex-start; gap: var(--s-2); font-size: var(--text-body-sm); color: var(--on-fill); opacity: 0.92; }
+.gapItem { display: flex; align-items: flex-start; gap: var(--s-2); font-size: var(--text-body-sm); color: var(--color-text-secondary); }
 .gapWorth {
   flex: none;
   font-family: var(--font-mono);
   font-size: var(--text-micro);
   font-weight: 600;
-  color: var(--on-fill);
+  color: var(--ink-info);
   min-width: 34px;
 }
 .confidence { font-size: var(--text-meta); color: var(--color-text-muted); }
