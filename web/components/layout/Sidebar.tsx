@@ -17,17 +17,21 @@ import { APP_NAME, APP_TAGLINE } from "./brand";
 import { useCompare, useProfile, useSaved, useTracker } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 
-function Row({ item, counts }: { item: NavItem; counts: Record<string, number> }) {
+function Row({ item, counts, collapsed }: { item: NavItem; counts: Record<string, number>; collapsed: boolean }) {
   const pathname = usePathname();
   const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
   const count = item.count ? counts[item.count] : 0;
   return (
     <Link
       href={item.href}
+      /* The label is hidden when collapsed, so the row needs its name back for
+       * a screen reader and for the hover tooltip (§6). */
+      title={collapsed ? `${item.label}${count ? ` (${count})` : ""}` : undefined}
+      aria-label={collapsed ? item.label : undefined}
       className={[s.navItem, active ? s.navItemActive : null].filter(Boolean).join(" ")}
       aria-current={active ? "page" : undefined}
     >
-      <Icon name={active && item.icon === "bookmark" ? "bookmark-filled" : item.icon} size={17} />
+      <Icon name={active && item.icon === "bookmark" ? "bookmark-filled" : item.icon} size={16} />
       <span className={s.navLabel}>{item.label}</span>
       {count ? (
         <span className={s.navCount} aria-label={`${count} items`}>
@@ -38,7 +42,7 @@ function Row({ item, counts }: { item: NavItem; counts: Record<string, number> }
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const { saved } = useSaved();
   const { compare } = useCompare();
   const { entries } = useTracker();
@@ -57,8 +61,8 @@ export function Sidebar() {
 
   return (
     <aside className={s.sidebar}>
-      <Link href="/" className={s.brand}>
-        <Image className={s.mark} src="/bits-logo-128.png" alt="" width={34} height={34} priority />
+      <Link href="/" className={s.brand} title={collapsed ? APP_NAME : undefined}>
+        <Image className={s.mark} src="/bits-logo-128.png" alt="" width={28} height={28} priority />
         <span className={s.brandText}>
           <span className={s.brandName}>{APP_NAME}</span>
           <span className={s.brandSub}>{APP_TAGLINE}</span>
@@ -67,7 +71,7 @@ export function Sidebar() {
 
       <nav className={s.navGroup} aria-label="Main">
         {PRIMARY_NAV.map((item) => (
-          <Row key={item.href} item={item} counts={counts} />
+          <Row key={item.href} item={item} counts={counts} collapsed={collapsed} />
         ))}
       </nav>
 
@@ -75,14 +79,18 @@ export function Sidebar() {
 
       <nav className={s.navGroup} aria-label="Tools">
         {SECONDARY_NAV.map((item) => (
-          <Row key={item.href} item={item} counts={counts} />
+          <Row key={item.href} item={item} counts={counts} collapsed={collapsed} />
         ))}
       </nav>
 
       <div className={s.sidebarFoot}>
         {/* The account slab: who is signed in on this device, and the way into
             their details. Last element in the rail, by design. */}
-        <Link href={signedIn ? "/account" : configured ? "/account" : started ? "/profile" : "/welcome"} className={s.account}>
+        <Link
+          href={signedIn ? "/account" : configured ? "/account" : started ? "/profile" : "/welcome"}
+          className={s.account}
+          title={collapsed ? name || "Your account" : undefined}
+        >
           <span className={s.avatar} aria-hidden="true">
             {initials}
           </span>
@@ -98,12 +106,23 @@ export function Sidebar() {
                     : "Takes about a minute"}
             </span>
           </span>
-          <Icon name="chevron-right" size={15} />
+          <Icon name="chevron-right" size={16} />
         </Link>
 
         {/* §72: freshness and provenance, stated once, where it affects whether
             a student trusts a deadline. */}
         <p className={s.sourceNote}>Aggregated from seven sources, including the college desk.</p>
+
+        <button
+          type="button"
+          className={s.collapseBtn}
+          onClick={onToggle}
+          aria-label={collapsed ? "Expand the sidebar" : "Collapse the sidebar"}
+          title={collapsed ? "Expand the sidebar" : "Collapse the sidebar"}
+        >
+          <Icon name="chevron-left" size={16} className={s.collapseIcon} />
+          <span>Collapse</span>
+        </button>
       </div>
     </aside>
   );

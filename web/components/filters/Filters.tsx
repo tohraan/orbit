@@ -323,7 +323,7 @@ export function ActiveFilters({ facets }: { facets: Facets | null }) {
             aria-label={`Remove ${c.groupLabel} filter ${c.label}`}
             onClick={() => (c.group === "deadline" ? f.setOne("deadline", null) : f.toggle(c.group, c.value))}
           >
-            <Icon name="close" size={12} strokeWidth={2} />
+            <Icon name="close" size={14} strokeWidth={2} />
           </button>
         </span>
       ))}
@@ -345,7 +345,6 @@ export function SortControl({ fallback = "deadline" }: { fallback?: string }) {
       <span className="t-meta c-muted">Sort</span>
       <span style={{ minWidth: 180 }}>
         <Select
-          size="sm"
           value={value}
           options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
           onChange={(v) => f.setOne("sort", v)}

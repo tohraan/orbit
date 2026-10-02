@@ -101,7 +101,7 @@
 .axis {
   position: relative;
   height: 3px;
-  border-radius: 2px;
+  border-radius: var(--radius-bar);
   margin-top: var(--s-2);
   /* Fallback only. Timeline.tsx replaces this with stops anchored to the
      urgency bands for the range actually on screen. */

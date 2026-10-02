@@ -35,7 +35,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       <div className={u.toastDock} aria-live="polite" aria-atomic="false">
         {toasts.map((t) => (
           <div className={u.toast} key={t.id}>
-            <Icon name="check" size={15} strokeWidth={2} />
+            <Icon name="check" size={16} strokeWidth={2} />
             <span>{t.message}</span>
           </div>
         ))}

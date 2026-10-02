@@ -69,7 +69,7 @@ export function ThemeToggle({ compact }: { compact?: boolean }) {
           title={`${o.label} theme`}
           onClick={() => pick(o.value)}
         >
-          <Icon name={o.icon} size={15} />
+          <Icon name={o.icon} size={16} />
           <span className="sr-only">{o.label} theme</span>
         </button>
       ))}

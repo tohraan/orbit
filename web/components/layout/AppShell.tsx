@@ -9,7 +9,7 @@
  * components; none of them currently needs to be, since every screen fetches
  * through /api and shows the skeletons while it does. */
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import s from "./layout.module.css";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
@@ -24,11 +24,36 @@ export function AppShell({ children }: { children: ReactNode }) {
    * there is exactly one palette instance regardless of which page is open. */
   const { open, setOpen } = useCommandPalette();
 
+  /* The collapse choice persists, because a student who narrows the rail means
+   * it. Read after mount rather than during render: localStorage in the
+   * initial state would make the server HTML and the first client render
+   * disagree, and React resolves that by throwing the tree away. */
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem("orbit.sidebar") === "collapsed");
+    } catch {
+      /* Storage blocked; the rail simply starts expanded. */
+    }
+  }, []);
+
+  const toggle = () => {
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        window.localStorage.setItem("orbit.sidebar", next ? "collapsed" : "expanded");
+      } catch {
+        /* Not load-bearing. */
+      }
+      return next;
+    });
+  };
+
   return (
     <AuthProvider>
     <ToastProvider>
-      <div className={s.shell}>
-        <Sidebar />
+      <div className={s.shell} data-collapsed={collapsed}>
+        <Sidebar collapsed={collapsed} onToggle={toggle} />
         <div className={s.main}>
           <Header onOpenCommand={() => setOpen(true)} />
           <MobileHeader onOpenCommand={() => setOpen(true)} />

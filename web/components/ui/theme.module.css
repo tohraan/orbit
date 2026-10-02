@@ -14,8 +14,8 @@
 .opt {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: var(--control-seg);
+  height: var(--control-seg);
   border-radius: var(--radius-sm);
   color: var(--color-text-muted);
   transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
@@ -29,7 +29,7 @@
 }
 
 @media (pointer: coarse) {
-  .opt { width: 36px; height: 36px; }
+  .opt { width: var(--control-seg); height: var(--control-seg); }
 }
 
 /* The mobile header is tight, so there it collapses to the two real choices

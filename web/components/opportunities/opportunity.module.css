@@ -24,6 +24,8 @@
   min-height: var(--card-h);
   overflow: hidden;
   padding: var(--s-5);
+  /* Every region below inherits this inline padding; nothing inside the card
+     sets its own, so all left edges align by construction (§25). */
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -82,7 +84,7 @@
 /* §32: two to three lines, deterministic. */
 .summary {
   font-size: var(--text-body-sm);
-  line-height: var(--lh-body-sm);
+  line-height: 1.55;
   color: var(--color-text-secondary);
   flex: none;
 }
@@ -100,18 +102,25 @@
   grid-template-columns: auto minmax(0, 1fr);
   gap: 7px var(--s-3);
   align-items: baseline;
-  padding: var(--s-3);
+  padding: var(--s-3) var(--s-4);
   border-radius: var(--radius-md);
+  /* Surface alone, no border. The card is already bordered; a bordered panel
+     inside a bordered card inside a bordered grid is the stacking §17 warns
+     about, and the surface step is enough to group these rows. */
   background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
-  flex: none;
+  /* Fills the space between the summary and the footer, so its bottom edge
+     meets the footer on EVERY card regardless of how many rows the source
+     published (§25). A fixed height would either clip a four-row card or
+     leave a visible gap under a three-row one. */
+  flex: 1 1 auto;
+  align-content: start;
 }
 
+/* A label, not a heading: it names the row and then gets out of the way, so
+   the VALUE is what the eye lands on (§11). */
 .factLabel {
-  font-size: var(--text-micro);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: var(--text-meta);
+  font-weight: 400;
   color: var(--color-text-muted);
   white-space: nowrap;
 }
@@ -134,16 +143,15 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s-3);
-  padding: var(--s-2) var(--s-3);
+  padding: var(--s-2) var(--s-4);
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
   background: var(--color-surface-secondary);
   flex: none;
-  min-height: 42px;
+  min-height: var(--control-md);
 }
-.decideUrgent { background: var(--surface-urgent); border-color: var(--surface-urgent-border); }
-.decideSoon { background: var(--surface-soon); border-color: var(--surface-soon-border); }
-.decideFunded { background: var(--surface-funding); border-color: var(--surface-funding-border); }
+.decideUrgent { background: var(--surface-urgent); }
+.decideSoon { background: var(--surface-soon); }
+.decideFunded { background: var(--surface-funding); }
 
 .decideLeft { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .decideLabel {
@@ -171,12 +179,15 @@
   color: var(--color-text-muted);
 }
 
+/* The one border inside the card, because it separates content from controls
+   rather than merely outlining a group. margin-top:auto on .foot is what keeps
+   this row on the same line across every card in a row (§9). */
 .actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--s-2);
-  padding-top: var(--s-3);
+  padding-top: var(--s-4);
   border-top: 1px solid var(--color-border);
 }
 

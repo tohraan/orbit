@@ -157,7 +157,7 @@ export default function ProfilePage() {
                         ph.complete ? s.phaseIconDone : isNext ? s.phaseIconNext : null,
                       ].filter(Boolean).join(" ")}
                     >
-                      <Icon name={ph.complete ? "check" : (ph.icon as IconName)} size={17} />
+                      <Icon name={ph.complete ? "check" : (ph.icon as IconName)} size={16} />
                     </span>
                     <span className={s.phaseBody}>
                       <span className={s.phaseTitle}>{ph.title}</span>
@@ -179,7 +179,7 @@ export default function ProfilePage() {
           {/* ---- the fields, folded away ---- */}
           <div className={s.card}>
             <button type="button" className={s.disclose} onClick={() => setEditing((e) => !e)} aria-expanded={editing}>
-              <Icon name={editing ? "minus" : "plus"} size={15} />
+              <Icon name={editing ? "minus" : "plus"} size={16} />
               {editing ? "Hide the individual fields" : "Edit a single field instead"}
             </button>
 

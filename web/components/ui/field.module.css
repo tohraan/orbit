@@ -17,7 +17,7 @@
   width: 100%;
   /* 40px matches .btn exactly, so a Select sitting in a row of buttons shares
      their baseline instead of standing a few pixels proud. */
-  height: 40px;
+  height: var(--control-md);
   padding-inline: var(--s-3);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -29,7 +29,7 @@
 }
 .trigger:hover { border-color: var(--color-border-hover); }
 .triggerOpen { border-color: var(--color-border-active); }
-.sm { height: 36px; font-size: var(--text-meta); }
+.sm { height: var(--control-sm); font-size: var(--text-meta); }
 .placeholder { color: var(--color-text-muted); }
 .value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chev { flex: none; color: var(--color-text-muted); transition: transform var(--motion-fast) var(--ease); }
@@ -58,7 +58,7 @@
   justify-content: space-between;
   gap: var(--s-2);
   width: 100%;
-  min-height: 40px;
+  min-height: var(--control-md);
   padding-inline: var(--s-3);
   border-radius: var(--radius-sm);
   font-size: var(--text-body-sm);
@@ -79,8 +79,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
-  min-height: 44px;
-  padding: 6px var(--s-2);
+  min-height: var(--control-md);
+  padding: 4px var(--s-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
@@ -91,7 +91,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 28px;
+  height: var(--control-sm);
   padding-inline: var(--s-2) 5px;
   border-radius: var(--radius-sm);
   background: var(--surface-compare);
@@ -102,13 +102,13 @@
   max-width: 100%;
 }
 .tagText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tagX { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; color: inherit; opacity: 0.65; }
+.tagX { display: grid; place-items: center; width: 18px; height: 18px; border-radius: var(--radius-xs); color: inherit; opacity: 0.65; }
 .tagX:hover { opacity: 1; background: var(--hover-wash); }
 
 .tagInput {
   flex: 1 1 90px;
   min-width: 90px;
-  height: 30px;
+  height: var(--control-sm);
   border: 0;
   background: none;
   outline: none;
@@ -119,7 +119,7 @@
 
 .suggest { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-2); }
 .suggestChip {
-  height: 30px;
+  height: var(--control-sm);
   padding-inline: var(--s-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -144,7 +144,7 @@
   overflow: hidden;
 }
 .affix:focus-within { border-color: var(--color-border-active); outline: 2px solid var(--color-action); outline-offset: 2px; }
-.affixInput { flex: 1 1 auto; min-width: 0; height: 42px; padding-inline: var(--s-3); border: 0; background: none; outline: none; font-size: var(--text-body-sm); color: var(--color-text-primary); }
+.affixInput { flex: 1 1 auto; min-width: 0; height: calc(var(--control-md) - 2px); padding-inline: var(--s-3); border: 0; background: none; outline: none; font-size: var(--text-body-sm); color: var(--color-text-primary); }
 .affixTail {
   display: flex;
   align-items: center;

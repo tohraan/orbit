@@ -45,7 +45,7 @@ export function SaveButton({
         onClick={click}
         disabled={!ready}
       >
-        <Icon name={on ? "bookmark-filled" : "bookmark"} size={15} />
+        <Icon name={on ? "bookmark-filled" : "bookmark"} size={16} />
         {on ? "Saved" : "Save"}
       </button>
     );
@@ -62,7 +62,7 @@ export function SaveButton({
       disabled={!ready}
       style={on ? { color: "var(--ink-saved)" } : undefined}
     >
-      <Icon name={on ? "bookmark-filled" : "bookmark"} size={17} />
+      <Icon name={on ? "bookmark-filled" : "bookmark"} size={16} />
     </button>
   );
 }
@@ -90,7 +90,7 @@ export function CompareButton({ id, title, size = "sm" }: { id: number; title?: 
       }}
       disabled={!ready}
     >
-      <Icon name={on ? "check" : "compare"} size={15} />
+      <Icon name={on ? "check" : "compare"} size={16} />
       {on ? "Comparing" : "Compare"}
     </button>
   );

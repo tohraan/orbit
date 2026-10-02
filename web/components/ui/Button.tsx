@@ -90,7 +90,7 @@ export function ExternalButton({
       {...rest}
     >
       {children}
-      <Icon name="external" size={15} />
+      <Icon name="external" size={16} />
     </a>
   );
 }
@@ -117,7 +117,7 @@ export function IconButton({
       className={[s.btn, s[variant], s.iconOnly, className].filter(Boolean).join(" ")}
       {...rest}
     >
-      <Icon name={name} size={17} />
+      <Icon name={name} size={16} />
     </button>
   );
 }

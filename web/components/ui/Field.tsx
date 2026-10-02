@@ -125,7 +125,7 @@ export function Select({
               onClick={() => choose(o.value)}
             >
               <span className={s.value}>{o.label}</span>
-              {o.value === value ? <Icon name="check" size={15} /> : o.hint ? <span className={s.optionHint}>{o.hint}</span> : null}
+              {o.value === value ? <Icon name="check" size={16} /> : o.hint ? <span className={s.optionHint}>{o.hint}</span> : null}
             </button>
           ))}
         </div>
@@ -170,7 +170,7 @@ export function TagPicker({
           <span className={s.tag} key={t}>
             <span className={s.tagText}>{t}</span>
             <button type="button" className={s.tagX} aria-label={`Remove ${t}`} onClick={() => drop(t)}>
-              <Icon name="close" size={11} strokeWidth={2.4} />
+              <Icon name="close" size={14} strokeWidth={2.4} />
             </button>
           </span>
         ))}
@@ -272,7 +272,14 @@ export function PhoneField({ value, onChange }: { value: string; onChange: (v: s
       <span className={s.phoneNum}>
         <input
           className={s.affixInput}
-          style={{ height: 44, border: "1px solid var(--color-border)", borderRadius: "var(--radius-control)", width: "100%" }}
+          /* Shares --control-md with the dial-code Select beside it, so the
+             two halves of the phone row sit on one baseline. */
+          style={{
+            height: "var(--control-md)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-control)",
+            width: "100%",
+          }}
           value={rest}
           inputMode="tel"
           placeholder="50 123 4567"

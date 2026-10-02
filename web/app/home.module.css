@@ -15,7 +15,16 @@
    └──────────────────────────────────────────────────┘
 */
 
-.bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s-6); }
+/* align-items: start, so a cell is as tall as its content rather than as tall
+   as the tallest cell in its row. Stretching left the four-row stats rail
+   matching the height of the match panel, which is §24's "equal-sized boxes
+   simply to fill space" — the empty half read as something failing to load. */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--s-6);
+  align-items: start;
+}
 
 /* §24: bento sizing follows content importance, never a wish to fill space.
    The match panel is the screen's one real call to action, so it takes the
@@ -119,12 +128,12 @@
   padding-block: var(--s-2);
 }
 .bandLabel { flex: none; width: 118px; font-size: var(--text-body-sm); }
-.bandTrack { flex: 1 1 auto; min-width: 0; height: 6px; border-radius: 3px; background: var(--color-surface-muted); overflow: hidden; }
+.bandTrack { flex: 1 1 auto; min-width: 0; height: 6px; border-radius: var(--radius-bar); background: var(--color-surface-muted); overflow: hidden; }
 /* display:block is load-bearing. The fill is a <span> and the track is not a
  * flex container, so without it the element stays inline, width and height do
  * not apply, and every bar renders empty — four identical grey tracks that
  * look deliberate and say nothing. */
-.bandFill { display: block; height: 100%; border-radius: 3px; background: var(--color-action); }
+.bandFill { display: block; height: 100%; border-radius: var(--radius-bar); background: var(--color-action); }
 .bandCount { flex: none; width: 34px; text-align: right; font-family: var(--font-mono); font-size: var(--text-meta); font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
 
 

@@ -175,7 +175,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     <div className={s.scrim} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={s.panel} role="dialog" aria-modal="true" aria-label="Command palette">
         <div className={s.inputRow}>
-          <Icon name="search" size={19} />
+          <Icon name="search" size={20} />
           <input
             ref={inputRef}
             className={s.input}
@@ -219,7 +219,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                     onMouseEnter={() => setActive(i)}
                     onClick={e.run}
                   >
-                    <Icon name={e.icon} size={17} className={s.itemIcon} />
+                    <Icon name={e.icon} size={16} className={s.itemIcon} />
                     <span className={s.itemBody}>
                       <span className={s.itemTitle}>{e.title}</span>
                       {e.sub ? <span className={s.itemSub}>{e.sub}</span> : null}

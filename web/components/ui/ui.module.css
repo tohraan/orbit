@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
-  height: 40px;
+  height: var(--control-md);
   padding-inline: var(--s-4);
   border-radius: var(--radius-control);
   font-size: var(--text-body-sm);
@@ -22,14 +22,14 @@
 
 .btn:disabled { cursor: default; opacity: 0.45; }
 
-.sm { height: 32px; padding-inline: var(--s-3); font-size: var(--text-meta); }
-.lg { height: 48px; padding-inline: var(--s-5); font-size: var(--text-body); }
+.sm { height: var(--control-sm); padding-inline: var(--s-3); font-size: var(--text-meta); }
+.lg { height: var(--control-lg); padding-inline: var(--s-5); font-size: var(--text-body); }
 
 /* §58: a 40px control is under the 44px mobile touch target, so the small and
    default sizes grow on a touch screen rather than staying thumb-hostile. */
 @media (pointer: coarse) {
-  .btn { min-height: 44px; }
-  .sm { min-height: 44px; }
+  .btn { min-height: var(--control-touch); }
+  .sm { min-height: var(--control-touch); }
 }
 
 .primary {
@@ -64,13 +64,13 @@
 
 /* Icon-only. §74 wants an accessible label, which Button requires in props. */
 .iconOnly {
-  width: 36px;
-  height: 36px;
+  width: var(--control-md);
+  height: var(--control-md);
   padding: 0;
   border-radius: var(--radius-sm);
 }
 @media (pointer: coarse) {
-  .iconOnly { width: 44px; height: 44px; }
+  .iconOnly { width: var(--control-touch); height: var(--control-touch); }
 }
 
 /* --------------------------------------------------------------- chips ---
@@ -118,7 +118,7 @@
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  height: 40px;
+  height: var(--control-md);
   padding-inline: var(--s-3);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -141,7 +141,7 @@
 .fieldInput::placeholder { color: var(--color-text-muted); }
 
 .select {
-  height: 40px;
+  height: var(--control-md);
   padding-inline: var(--s-3) var(--s-8);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -251,7 +251,7 @@
 .sheetHandle {
   width: 44px;
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-bar);
   background: var(--color-border-strong, var(--border-strong));
   margin: var(--s-3) auto var(--s-1);
   flex: none;

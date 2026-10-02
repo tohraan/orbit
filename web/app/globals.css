@@ -185,6 +185,10 @@
      as a button someone forgot to finish. */
   --radius-pill: 999px;
   --radius-chip: 6px;
+  /* Sub-scale radii that were literals scattered through the components:
+     the inner corner of a nested element, and the end of a progress bar. */
+  --radius-xs: 4px;
+  --radius-bar: 2px;
   --radius-control: 10px;
 
   /* --- shadow (§13): borders carry the weight, not elevation --- */
@@ -196,6 +200,32 @@
   --motion-fast: 150ms;
   --motion: 180ms;
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* --- control heights ---------------------------------------------------
+     An audit found ELEVEN distinct interactive heights across the app, with
+     form inputs alone using three (40, 42, 44) for the same kind of control.
+     That is the "five slightly different button heights" problem, and it is
+     why rows of mixed controls never quite shared a baseline.
+
+     Three sizes, and everything that is a control picks one. Anything that
+     sits in a row with a button — input, select, icon button, filter trigger
+     — is --control-md, so they line up by construction rather than by luck. */
+  --control-sm: 32px;
+  --control-md: 40px;
+  --control-lg: 48px;
+  /* Touch floor (§58 / WCAG): coarse pointers grow to this, never below. */
+  --control-touch: 44px;
+  /* A segmented option sits inside a --control-md shell with 2px padding and
+     a 1px border on each side. */
+  --control-seg: 34px;
+
+  /* --- icon sizes ---------------------------------------------------------
+     Nine sizes were in use (11–20). Three, chosen so the optical weight
+     matches the text beside them: sm rides with meta text, md with body,
+     lg stands alone. */
+  --icon-sm: 14px;
+  --icon-md: 16px;
+  --icon-lg: 20px;
 
   /* --- layout (§14, §22) --- */
   --sidebar-w: 232px;
@@ -406,7 +436,7 @@ img, svg { max-width: 100%; display: block; }
 :focus-visible {
   outline: 2px solid var(--color-action);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 ::selection { background: var(--accent-lilac); color: var(--foreground); }
@@ -501,7 +531,7 @@ img, svg { max-width: 100%; display: block; }
   to { transform: translateX(100%); }
 }
 
-.skeleton-line { height: 12px; border-radius: 6px; }
+.skeleton-line { height: 12px; border-radius: var(--radius-chip); }
 .skeleton-line.tall { height: 16px; }
 
 /* A deliberately staggered start, so a grid of skeletons reads as a surface

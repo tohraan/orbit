@@ -277,8 +277,10 @@ function DetailSkeleton() {
           ))}
         </div>
         <div style={{ display: "flex", gap: 8, paddingTop: 12, borderTop: "1px solid var(--color-border)" }}>
-          <span className="skeleton" style={{ width: 200, height: 48, borderRadius: 10 }} />
-          <span className="skeleton" style={{ width: 92, height: 48, borderRadius: 10 }} />
+          {/* Matches the real controls' height exactly; reserving 48 for a
+              40px button made the page jump when the data arrived. */}
+          <span className="skeleton" style={{ width: 200, height: "var(--control-md)", borderRadius: 10 }} />
+          <span className="skeleton" style={{ width: 92, height: "var(--control-md)", borderRadius: 10 }} />
         </div>
       </div>
       <div className={s.stack}>

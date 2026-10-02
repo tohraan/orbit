@@ -34,7 +34,7 @@ export function Chip({
 }) {
   return (
     <span className={[s.chip, TONE[tone], className].filter(Boolean).join(" ")} title={title}>
-      {icon ? <Icon name={icon} size={13} strokeWidth={1.8} /> : null}
+      {icon ? <Icon name={icon} size={14} strokeWidth={1.8} /> : null}
       {children}
     </span>
   );

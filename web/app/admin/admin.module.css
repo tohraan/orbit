@@ -33,7 +33,7 @@
   font-size: var(--text-body-sm);
   color: var(--color-text-primary);
 }
-.input { height: 42px; }
+.input { height: var(--control-md); }
 .textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
 .input:focus, .textarea:focus { outline: 2px solid var(--color-action); outline-offset: 2px; border-color: var(--color-border-active); }
 
@@ -48,7 +48,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  height: 34px;
+  height: var(--control-md);
   padding-inline: var(--s-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);

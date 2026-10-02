@@ -8,7 +8,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  height: 40px;
+  height: var(--control-md);
   padding-inline: var(--s-3);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -64,7 +64,7 @@
   align-items: center;
   gap: var(--s-3);
   width: 100%;
-  min-height: 40px;
+  min-height: var(--control-md);
   padding-inline: var(--s-3);
   border-radius: var(--radius-sm);
   font-size: var(--text-body-sm);
@@ -80,7 +80,7 @@
   height: 16px;
   flex: none;
   border: 1px solid var(--color-border-strong);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: var(--color-surface);
   color: var(--color-action-text);
 }
@@ -102,7 +102,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  height: 28px;
+  height: var(--control-sm);
   padding-inline: var(--s-2) 6px;
   border-radius: var(--radius-sm);
   background: var(--color-surface-secondary);
@@ -111,7 +111,7 @@
   color: var(--color-text-secondary);
 }
 .pillKey { color: var(--color-text-muted); }
-.pillX { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; color: var(--color-text-muted); }
+.pillX { display: grid; place-items: center; width: 18px; height: 18px; border-radius: var(--radius-xs); color: var(--color-text-muted); }
 .pillX:hover { background: var(--color-surface-muted); color: var(--color-text-primary); }
 
 /* ----------------------------------------------------------- mobile bar ---

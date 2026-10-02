@@ -49,7 +49,7 @@ export function Popover({
       >
         {label}
         {count ? <span className={s.triggerCount}>{count}</span> : null}
-        <Icon name="chevron-down" size={15} />
+        <Icon name="chevron-down" size={16} />
       </button>
       {open ? (
         <div className={[s.pop, align === "right" ? s.popRight : null].filter(Boolean).join(" ")}>
@@ -82,7 +82,7 @@ export function Option({
       onClick={onToggle}
     >
       <span className={[s.box, radio ? s.boxRound : null, checked ? s.boxOn : null].filter(Boolean).join(" ")}>
-        {checked ? <Icon name="check" size={11} strokeWidth={2.4} /> : null}
+        {checked ? <Icon name="check" size={14} strokeWidth={2.4} /> : null}
       </span>
       <span className={s.optionLabel}>{label}</span>
       {count != null ? <span className={s.optionCount}>{count}</span> : null}

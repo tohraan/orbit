@@ -93,7 +93,7 @@ function Notifications() {
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        <Icon name="bell" size={17} />
+        <Icon name="bell" size={16} />
         {notes.length ? <span className={s.badge}>{notes.length > 9 ? "9+" : notes.length}</span> : null}
       </button>
 
@@ -176,7 +176,7 @@ function AccountMenu() {
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        {signedIn || started ? <span style={{ fontSize: 12, fontWeight: 600 }}>{initials}</span> : <Icon name="user" size={17} />}
+        {signedIn || started ? <span style={{ fontSize: 12, fontWeight: 600 }}>{initials}</span> : <Icon name="user" size={16} />}
       </button>
 
       {open ? (
@@ -277,7 +277,7 @@ export function MobileHeader({ onOpenCommand }: { onOpenCommand: () => void }) {
       <span className={s.mobileTitle}>{title}</span>
       <div style={{ display: "flex", gap: "var(--s-2)" }}>
         <button type="button" className={s.iconBtn} aria-label="Search" onClick={onOpenCommand}>
-          <Icon name="search" size={17} />
+          <Icon name="search" size={16} />
         </button>
         <Notifications />
       </div>

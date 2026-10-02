@@ -118,7 +118,7 @@ export function GlobalSearch({ placeholder = "Search opportunities..." }: { plac
         />
         {term ? (
           <button type="button" aria-label="Clear search" onClick={() => setTerm("")} style={{ color: "inherit" }}>
-            <Icon name="close" size={15} />
+            <Icon name="close" size={16} />
           </button>
         ) : null}
       </div>

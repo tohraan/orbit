@@ -18,6 +18,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import o from "@/components/opportunities/opportunity.module.css";
 import u from "@/components/ui/ui.module.css";
 import { PageHead } from "@/components/layout/AppShell";
+import layout from "@/components/layout/layout.module.css";
 import { OpportunityCard } from "@/components/opportunities/OpportunityCard";
 import { ActiveFilters, FilterBar, MobileFilterBar, SortControl, useFilters } from "@/components/filters/Filters";
 import { GridSkeleton } from "@/components/feedback/Skeletons";
@@ -270,8 +271,8 @@ function SearchField() {
   const timer = useRef<number | undefined>(undefined);
 
   return (
-    <div className={u.field} style={{ maxWidth: 520, height: 44 }}>
-      <Icon name="search" size={17} />
+    <div className={u.field} style={{ maxWidth: 520 }}>
+      <Icon name="search" size={16} />
       <input
         className={u.fieldInput}
         defaultValue={params.get("q") ?? ""}

@@ -9,7 +9,7 @@
 }
 
 .opt {
-  height: 30px;
+  height: var(--control-seg);
   padding-inline: var(--s-3);
   border-radius: var(--radius-sm);
   font-size: var(--text-meta);
@@ -26,5 +26,5 @@
 }
 
 @media (pointer: coarse) {
-  .opt { min-height: 36px; }
+  .opt { min-height: var(--control-seg); }
 }
