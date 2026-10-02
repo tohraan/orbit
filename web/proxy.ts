@@ -64,6 +64,12 @@ export function proxy(req: NextRequest) {
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob:`,
     `font-src 'self'`,
+    /* The Dossier reads PDFs in a Web Worker (pdf.js), served from our own
+     * origin. worker-src is NOT covered by script-src here: 'strict-dynamic'
+     * makes the browser ignore the 'self' allowance for scripts, so without
+     * this line the worker is blocked and every PDF silently fails to parse.
+     * blob: is pdf.js's fallback path when it constructs the worker itself. */
+    `worker-src 'self' blob:`,
     `connect-src 'self' ${apiOrigin()} ${authOrigin()}${dev ? " ws: wss:" : ""}`.replace(/\s+/g, " ").trim(),
     `form-action 'self'`,
     `frame-ancestors 'none'`,

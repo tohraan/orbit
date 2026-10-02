@@ -11,3 +11,4 @@ export * from "./shuffle";
 export * from "./query";
 export * from "./project";
 export * from "./match";
+export * from "./dossier";

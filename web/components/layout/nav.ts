@@ -20,6 +20,10 @@ export const PRIMARY_NAV: NavItem[] = [
   { href: "/saved", label: "Saved", icon: "bookmark", count: "saved", mobile: true },
   { href: "/applications", label: "Applications", icon: "applications", count: "tracker", mobile: true },
   { href: "/deadlines", label: "Deadlines", icon: "calendar" },
+  /* The Dossier is the student's own material rather than the index's, so it
+   * sits at the end of the primary group — reached often, but never the thing
+   * you came to the portal for. */
+  { href: "/dossier", label: "Dossier", icon: "file" },
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
@@ -40,6 +44,7 @@ export const TITLES: Record<string, string> = {
   "/applications": "Applications",
   "/deadlines": "Deadlines",
   "/compare": "Compare",
+  "/dossier": "Dossier",
   "/profile": "Profile",
   "/welcome": "Set up your profile",
   "/admin": "College desk",

@@ -1,0 +1,250 @@
+/* The Dossier. A list of real objects the student owns, so the rows are solid
+   and physical, and one panel — the review — that carries the weight, because
+   it is where consent is asked for. */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--s-6);
+  align-items: start;
+}
+@media (max-width: 1023px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+.list { display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; }
+.rail { display: flex; flex-direction: column; gap: var(--s-5); min-width: 0; }
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+/* ------------------------------------------------------------ document --- */
+
+.doc {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--motion-fast) var(--ease);
+}
+.doc:hover { border-color: var(--color-border-hover); }
+
+.docIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.docBody { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+
+/* The title is a button because clicking it renames: a document the student
+   named "Final CV v4" is easier to find than "f20250304_resume(1).pdf". */
+.docTitle {
+  font-size: var(--text-body);
+  font-weight: 600;
+  text-align: left;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.docTitle:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+.renameInput {
+  width: 100%;
+  height: var(--control-sm);
+  padding-inline: var(--s-2);
+  border: 1px solid var(--color-border-active);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.docMeta { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.docState { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+
+.reviewLink {
+  font-size: var(--text-meta);
+  color: var(--color-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.reviewLink:hover { color: var(--color-link-hover); }
+
+.docActions { flex: none; display: flex; align-items: center; gap: var(--s-1); }
+@media (max-width: 639px) {
+  .doc { flex-wrap: wrap; }
+  .docActions { width: 100%; justify-content: flex-end; }
+}
+
+/* ------------------------------------------------------------ dropzone --- */
+
+.drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-6);
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-hover);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
+}
+.dropFirst { padding: var(--s-10) var(--s-6); }
+.dropActive { border-color: var(--color-action); background: var(--color-surface-secondary); }
+
+.dropIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+.dropText { display: flex; flex-direction: column; gap: var(--s-1); max-width: 52ch; }
+.dropTitle { font-size: var(--text-section); line-height: var(--lh-section); font-weight: 600; }
+
+/* -------------------------------------------------------------- review --- */
+
+/* The consent panel. The one tinted surface on the screen, because it is the
+   one thing that needs answering before it is dismissed. */
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-6);
+  margin-bottom: var(--s-6);
+  background: var(--surface-info);
+  border: 1px solid var(--surface-info-border);
+  border-radius: var(--radius-xl);
+}
+
+.reviewHead { display: flex; align-items: flex-start; gap: var(--s-3); }
+.reviewMark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--surface-info-border);
+  color: var(--ink-info);
+}
+.reviewClose {
+  margin-left: auto;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--control-sm);
+  height: var(--control-sm);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+}
+.reviewClose:hover { background: var(--color-surface); color: var(--color-text-primary); }
+
+.terms { display: flex; flex-direction: column; gap: var(--s-2); }
+
+.term,
+.levelRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--motion-fast) var(--ease);
+}
+.term:hover, .levelRow:hover { border-color: var(--color-border-hover); }
+.termOn { border-color: var(--color-action); }
+
+.term input, .levelRow input { margin-top: 3px; flex: none; accent-color: var(--color-action); }
+
+.termBody, .levelBody { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.termTop { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.termName { font-size: var(--text-body-sm); font-weight: 600; text-transform: capitalize; }
+
+/* Reach is the honest part of this panel: it says whether adding the term will
+   change anything. Mono and tabular so the numbers compare down the column. */
+.termReach {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+.termMatched { font-size: var(--text-micro); color: var(--color-text-muted); }
+
+/* The sentence the claim came from. Quoting the document is what lets a
+   student disagree with us. */
+.evidence {
+  font-size: var(--text-micro);
+  color: var(--color-text-secondary);
+  font-style: italic;
+  border-left: 2px solid var(--color-border);
+  padding-left: var(--s-2);
+}
+
+.reviewFoot { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; padding-top: var(--s-1); }
+.inlineLink { color: var(--color-link); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ------------------------------------------------------------- to-gather --- */
+
+.todo { display: flex; flex-direction: column; gap: var(--s-3); }
+.todoRow { display: flex; align-items: flex-start; gap: var(--s-3); }
+.todoDot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-hover);
+}
+.todoBody { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.todoLabel { font-size: var(--text-body-sm); font-weight: 500; }
+.todoWhy { font-size: var(--text-micro); color: var(--color-text-muted); }
+
+/* ------------------------------------------------------------ progress --- */
+
+.uploading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-5);
+  margin-bottom: var(--s-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.uploadingBar { display: block; height: 6px; border-radius: var(--radius-bar); background: var(--color-surface-muted); overflow: hidden; }
+.uploadingFill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-bar);
+  background: var(--color-action);
+  transition: width var(--motion) var(--ease);
+}
