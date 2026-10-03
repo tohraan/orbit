@@ -11,7 +11,7 @@
  * the single most common bug in apps that do this.
  */
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { AUTH_CONFIGURED, isCampusEmail, supabase } from "./supabase";
 
@@ -32,6 +32,9 @@ type AuthValue = {
    * new password — the reset silently does nothing. */
   recovery: boolean;
   updatePassword: (password: string) => Promise<string | null>;
+  /** The session ended without anyone pressing Sign out. */
+  expired: boolean;
+  dismissExpired: () => void;
 };
 
 const Ctx = createContext<AuthValue>({
@@ -45,6 +48,8 @@ const Ctx = createContext<AuthValue>({
   resetPassword: async () => "Accounts are not configured.",
   recovery: false,
   updatePassword: async () => "Accounts are not configured.",
+  expired: false,
+  dismissExpired: () => {},
 });
 
 export const useAuth = () => useContext(Ctx);
@@ -53,6 +58,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [status, setStatus] = useState<Status>(AUTH_CONFIGURED ? "loading" : "signed-out");
   const [recovery, setRecovery] = useState(false);
+  /* True when the session ended on its own rather than because anyone pressed
+   * Sign out. Read by the UI to explain itself. */
+  const [expired, setExpired] = useState(false);
+  const deliberate = useRef(false);
 
   useEffect(() => {
     const sb = supabase();
@@ -72,11 +81,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setStatus(next ? "signed-in" : "signed-out");
       if (event === "PASSWORD_RECOVERY") setRecovery(true);
       if (event === "SIGNED_OUT") setRecovery(false);
+
+      /* A sign-out nobody asked for is the interesting one. `signOut()` sets
+       * this flag first, so anything reaching here without it is the library
+       * dropping the session on its own — an expired refresh token, a failed
+       * refresh, or another tab rotating the token out from under this one.
+       * Saying so is the difference between "it logged me out again" and a
+       * message that explains itself. */
+      if (event === "SIGNED_OUT" && !deliberate.current) setExpired(true);
+      if (next) setExpired(false);
+      deliberate.current = false;
     });
+
+    /* Recover when the tab comes back.
+     *
+     * autoRefreshToken only runs while the page is awake. A laptop closed over
+     * lunch, or a tab left in the background past the hour, wakes with an
+     * access token that expired while nothing was running — and the first
+     * request made with it fails. getSession() refreshes from the stored
+     * refresh token, so the tab reconnects instead of appearing signed out. */
+    const wake = () => {
+      if (document.visibilityState !== "visible") return;
+      void sb.auth.getSession().then(({ data }) => {
+        if (!alive) return;
+        setSession(data.session);
+        setStatus(data.session ? "signed-in" : "signed-out");
+      });
+    };
+    document.addEventListener("visibilitychange", wake);
+    window.addEventListener("online", wake);
 
     return () => {
       alive = false;
       sub.subscription.unsubscribe();
+      document.removeEventListener("visibilitychange", wake);
+      window.removeEventListener("online", wake);
     };
   }, []);
 
@@ -124,6 +163,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    deliberate.current = true;
+    setExpired(false);
     await supabase()?.auth.signOut();
   }, []);
 
@@ -158,8 +199,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       resetPassword,
       recovery,
       updatePassword,
+      expired,
+      dismissExpired: () => setExpired(false),
     }),
-    [status, session, signIn, signUp, signOut, resetPassword, recovery, updatePassword],
+    [status, session, signIn, signUp, signOut, resetPassword, recovery, updatePassword, expired],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

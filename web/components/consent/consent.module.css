@@ -78,5 +78,5 @@
   .link { display: none; }
 }
 
-@keyframes consentIn { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+@keyframes consentIn { from { opacity: 0 } to { opacity: 1 } }
 @media (prefers-reduced-motion: reduce) { .wrap { animation: none; } }

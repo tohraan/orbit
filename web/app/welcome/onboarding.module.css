@@ -17,7 +17,7 @@
    that eases to its new width is the one moving thing in a form, and it draws
    the eye away from the question being asked. */
 .fill { display: block; height: 100%; border-radius: var(--radius-bar); background: var(--color-action); }
-.pct { font-family: var(--font-mono); font-size: var(--text-meta); color: var(--color-text-muted); font-variant-numeric: tabular-nums; flex: none; }
+.pct {  font-size: var(--text-meta); color: var(--color-text-muted); font-variant-numeric: tabular-nums; flex: none; }
 
 .card {
   display: flex;

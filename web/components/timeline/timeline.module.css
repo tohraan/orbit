@@ -74,14 +74,16 @@
     border-color var(--motion-fast) var(--ease);
   cursor: pointer;
 }
-.dot:hover { background: var(--color-text-muted); border-color: var(--color-text-secondary); transform: scale(1.3); }
+/* Step 6.6.2: a hovered dot takes a ring, not a scale. Growing the dot moved
+   every neighbour's apparent position on a chart whose whole job is position. */
+.dot:hover { background: var(--text-secondary); border-color: var(--text-secondary); box-shadow: 0 0 0 2px var(--accent); }
 
 /* §108: "yours" is carried by shape, not only by colour -- a filled ring that
    survives being looked at in greyscale. */
 .dotMine { background: var(--color-action); border-color: var(--color-action); }
 .dotMine:hover { background: var(--color-action); }
 
-.dotOpen { transform: scale(1.45); background: var(--color-action); border-color: var(--color-action); }
+.dotOpen { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 
 /* The dots are small, so each gets an invisible 24px hit area around it.
    §74 and §58 both want a real touch target. */
@@ -197,7 +199,7 @@
 
 .popHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-2); }
 .popDate {
-  font-family: var(--font-mono);
+  
   font-size: var(--text-meta);
   font-variant-numeric: tabular-nums;
   color: var(--color-text-muted);

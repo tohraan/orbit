@@ -184,12 +184,12 @@ function AccountMenu() {
     <div className={s.menuWrap} ref={ref}>
       <button
         type="button"
-        className={s.iconBtn}
+        className={s.avatarBtn}
         aria-label="Account"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        {signedIn || name ? <span style={{ fontSize: 12, fontWeight: 600 }}>{initials}</span> : <Icon name="user" size={16} />}
+        {signedIn || name ? initials : <Icon name="user" size={18} />}
       </button>
 
       {open ? (
@@ -259,6 +259,8 @@ export function Header({ onOpenCommand }: { onOpenCommand: () => void }) {
 
   return (
     <header className={s.header}>
+      {/* Full-bleed bar, page-aligned content (Step 5). */}
+      <div className={s.headerInner}>
       {/* The emblem sits top-left now that the rail is icon-only. */}
       <Link href="/" className={s.brand}>
         <Image className={s.mark} src="/bits-logo-128.png" alt="" width={30} height={30} priority />
@@ -268,14 +270,16 @@ export function Header({ onOpenCommand }: { onOpenCommand: () => void }) {
         </span>
       </Link>
 
-      <nav className={s.crumbs} aria-label="Breadcrumb" style={{ marginLeft: "var(--s-5)" }}>
+      <span className={s.headerDivider} aria-hidden="true" />
+
+      <nav className={s.crumbs} aria-label="Breadcrumb">
         {pathname.startsWith("/opportunity/") ? (
           <>
             <Link href="/explore" className={s.crumb}>
               Explore
             </Link>
-            <span className={s.crumb} aria-hidden="true">
-              /
+            <span className={s.crumbSep} aria-hidden="true">
+              <Icon name="chevron-right" size={14} />
             </span>
           </>
         ) : null}
@@ -290,6 +294,7 @@ export function Header({ onOpenCommand }: { onOpenCommand: () => void }) {
         <ThemeToggle />
         <Notifications />
         <AccountMenu />
+      </div>
       </div>
     </header>
   );

@@ -108,7 +108,7 @@
 .metricUrgent { background: var(--surface-urgent); border-color: var(--surface-urgent-border); }
 
 .metricValue {
-  font-family: var(--font-mono);
+  
   font-size: 26px;
   line-height: 32px;
   font-weight: 600;
@@ -152,7 +152,7 @@
  * not apply, and every bar renders empty — four identical grey tracks that
  * look deliberate and say nothing. */
 .bandFill { display: block; height: 100%; border-radius: var(--radius-bar); background: var(--color-action); }
-.bandCount { flex: none; width: 34px; text-align: right; font-family: var(--font-mono); font-size: var(--text-meta); font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+.bandCount { flex: none; width: 34px; text-align: right;  font-size: var(--text-meta); font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
 
 
 /* .boxAccent is gone. The hero cell wrapped MatchPanel, which already renders
@@ -175,7 +175,7 @@
 .statRow:hover .statLabel { color: var(--color-link); }
 .statLabel { font-size: var(--text-body-sm); color: var(--color-text-secondary); }
 .statValue {
-  font-family: var(--font-mono);
+  
   font-size: var(--text-section);
   font-weight: 600;
   font-variant-numeric: tabular-nums;

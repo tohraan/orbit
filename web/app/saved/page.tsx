@@ -86,7 +86,7 @@ export default function SavedPage() {
               {tabs.map((t) => (
                 <Button
                   key={t.value}
-                  variant={tab === t.value ? "primary" : "secondary"}
+                  variant={tab === t.value ? "selected" : "secondary"}
                   size="sm"
                   role="tab"
                   aria-selected={tab === t.value}

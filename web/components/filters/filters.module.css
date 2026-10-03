@@ -8,21 +8,28 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  height: var(--control-md);
-  padding-inline: var(--s-3);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  height: 40px;
+  padding-inline: var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-control);
-  font-size: var(--text-body-sm);
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 500;
-  color: var(--color-text-secondary);
-  transition: border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+  color: var(--text-primary);
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.trigger:hover { border-color: var(--color-border-hover); color: var(--color-text-primary); }
+.trigger:hover { background: var(--surface-hover); border-color: var(--border-strong); }
 
-/* §104: the active state of a filter is a dark border, not a fill — a filled
-   control would compete with the primary action. */
-.triggerActive { border-color: var(--color-border-active); color: var(--color-text-primary); }
+/* Step 3.8: a selected filter is tinted, never filled. Solid accent is
+   reserved for primary buttons, the active rail item, the avatar and bar
+   fills — a filled pill competes with the one real action on the screen. */
+.triggerActive {
+  background: var(--accent-subtle);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
+}
+.triggerActive:hover { background: var(--accent-subtle); border-color: var(--accent-border); }
 
 .triggerCount {
   display: grid;
@@ -30,12 +37,11 @@
   min-width: 18px;
   height: 18px;
   padding-inline: 5px;
-  border-radius: var(--radius-chip);
-  background: var(--color-action);
-  color: var(--color-action-text);
-  font-family: var(--font-mono);
+  border-radius: var(--radius-tag);
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 10px;
-  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
 .popWrap { position: relative; }
@@ -89,7 +95,7 @@
 .boxRound { border-radius: 50%; }
 
 .optionLabel { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.optionCount { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--color-text-muted); flex: none; }
+.optionCount { font-variant-numeric: tabular-nums; font-size: var(--text-micro); color: var(--color-text-muted); flex: none; }
 
 .popFoot { display: flex; justify-content: space-between; gap: var(--s-2); padding: var(--s-2) var(--s-2) 0; margin-top: var(--s-2); border-top: 1px solid var(--color-border); }
 
@@ -101,18 +107,25 @@
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-2);
-  height: var(--control-sm);
-  padding-inline: var(--s-2) 6px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
-  font-size: var(--text-meta);
-  color: var(--color-text-secondary);
+  gap: var(--space-2);
+  height: 32px;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-control);
+  /* This pill IS an active filter, so it wears the selected style (Step 3.8)
+     rather than the unselected one — it is a statement of what is on, not a
+     control waiting to be pressed. */
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-border);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--accent-text);
+  white-space: nowrap;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.pillKey { color: var(--color-text-muted); }
-.pillX { display: grid; place-items: center; width: 18px; height: 18px; border-radius: var(--radius-xs); color: var(--color-text-muted); }
-.pillX:hover { background: var(--color-surface-muted); color: var(--color-text-primary); }
+.pillKey { color: var(--text-tertiary); }
+.pillX { display: grid; place-items: center; width: 18px; height: 18px; border-radius: var(--radius-xs); color: var(--accent-text); }
+.pillX:hover { background: var(--surface-active); color: var(--text-primary); }
 
 /* ----------------------------------------------------------- mobile bar ---
    §43: [Filter] [Sort] only, opening a bottom sheet. */

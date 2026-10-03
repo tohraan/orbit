@@ -24,18 +24,19 @@
 
 .sidebar {
   position: fixed;
-  left: var(--s-4);
+  left: var(--space-4);
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s-1);
-  padding: var(--s-2);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--shadow-raised);
+  gap: var(--space-1);
+  width: 56px;
+  padding: var(--space-2);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 28px;
+  box-shadow: var(--shadow-sm);
   z-index: 40;
 }
 
@@ -49,18 +50,18 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: var(--control-touch);
-  height: var(--control-touch);
-  border-radius: var(--radius-pill);
-  color: var(--color-text-muted);
-  transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-nested);
+  color: var(--text-tertiary);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.navItem:hover { background: var(--hover-wash); color: var(--color-text-primary); }
+.navItem:hover { background: var(--surface-hover); color: var(--text-secondary); }
 
 /* The active target is filled, because at icon-only size the quieter signals
    that worked on a labelled row (weight, a 3px bar) have nothing to attach to. */
-.navItemActive { background: var(--color-action); color: var(--color-action-text); }
-.navItemActive:hover { background: var(--color-action-hover); color: var(--color-action-text); }
+.navItemActive { background: var(--accent); color: var(--on-accent); }
+.navItemActive:hover { background: var(--accent); color: var(--on-accent); }
 
 /* The label, revealed on hover. A real element rather than `title`, because a
    native tooltip is slow, unstyleable, and never appears on keyboard focus. */
@@ -93,24 +94,27 @@
 /* Counts ride the icon as a small badge, since there is no row to sit in. */
 .navCount {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: -4px;
+  right: -4px;
   min-width: 16px;
   height: 16px;
   padding-inline: 4px;
-  border-radius: var(--radius-pill);
-  background: var(--color-action);
-  color: var(--color-action-text);
-  font-family: var(--font-mono);
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 10px;
   line-height: 16px;
+  font-weight: 600;
   text-align: center;
-  border: 2px solid var(--color-surface);
+  border: 2px solid var(--surface-raised);
 }
 .navItemActive .navCount { background: var(--color-surface); color: var(--color-action); border-color: var(--color-action); }
 
 .navGroup { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.navRule { width: 20px; height: 1px; background: var(--color-border); margin: var(--s-2) 0; }
+.navRule { width: 24px; height: 1px; background: var(--border-subtle); margin: var(--space-2) auto; }
+/* On the filled active item the badge inverts, or an accent chip on an accent
+   tile is invisible. */
+.navItemActive .navCount { background: var(--on-accent); color: var(--accent); border-color: var(--accent); }
 
 .sidebarFoot { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 
@@ -119,10 +123,10 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: var(--control-touch);
-  height: var(--control-touch);
-  border-radius: var(--radius-pill);
-  transition: background var(--motion-fast) var(--ease);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  transition: background-color var(--dur) var(--ease);
 }
 .account:hover { background: var(--hover-wash); }
 
@@ -160,19 +164,38 @@
 .main { margin-left: calc(var(--s-4) * 2 + 60px); min-width: 0; }
 @media (max-width: 1023px) { .main { margin-left: 0; } }
 
+/* The bar is full-bleed, its content is not.
+   .main is offset to clear the rail, so a header inside it began its border at
+   x=128 and the page looked like it had a notch cut out of the top-left. The
+   negative margin undoes that offset so the rule spans the viewport; .headerInner
+   puts it back, with the page's own container and padding, so the crest lands on
+   the same left edge as the h1 beneath it. */
 .header {
   position: sticky;
   top: 0;
   z-index: 30;
+  height: 64px;
+  margin-left: calc(-1 * (var(--space-4) * 2 + 60px));
+  background: color-mix(in srgb, var(--bg-app) 85%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+@media (max-width: 1023px) { .header { margin-left: 0; } }
+
+.headerInner {
   display: flex;
   align-items: center;
-  gap: var(--s-4);
-  height: var(--header-h);
-  padding-inline: var(--page-pad-x);
-  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
-  backdrop-filter: saturate(150%) blur(10px);
-  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-4);
+  height: 100%;
+  max-width: calc(var(--container) + (var(--space-4) * 2 + 60px));
+  margin-inline: auto;
+  padding-inline: calc((var(--space-4) * 2 + 60px) + var(--space-8)) var(--space-8);
 }
+@media (max-width: 1023px) { .headerInner { padding-inline: var(--space-8); max-width: var(--container); } }
+@media (max-width: 767px)  { .headerInner { padding-inline: var(--space-4); } }
+
+/* Step 5: a divider between the wordmark and the breadcrumb. */
+.headerDivider { width: 1px; height: 24px; background: var(--border-subtle); flex: none; margin-inline: var(--space-4); }
 
 @media (max-width: 1023px) {
   .header { display: none; }
@@ -254,7 +277,7 @@
   border-radius: var(--radius-chip);
   background: var(--color-action);
   color: var(--color-action-text);
-  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 9px;
   line-height: 15px;
   text-align: center;
@@ -269,16 +292,24 @@
    grid is allowed to use them. Side padding still holds the gutter, and the
    components that genuinely need a measure — running prose on the detail page
    — cap themselves rather than capping the whole app. */
+/* Step 4.1: one container, centred in the space the rail leaves. The header
+   below uses the identical measurements, so the crest sits exactly above the
+   page title rather than approximately above it. */
 .page {
   width: 100%;
-  padding: var(--s-8) var(--page-pad-x) var(--s-20);
+  max-width: var(--container);
+  margin-inline: auto;
+  padding: var(--space-8) var(--space-8) var(--space-16);
   min-width: 0;
 }
 
+@media (max-width: 767px) {
+  .page { padding-inline: var(--space-4); }
+}
+
 @media (max-width: 1023px) {
-  /* Clearance for the bottom navigation, so §119 "bottom navigation does not
-     cover content" holds even on the last card. */
-  .page { padding-block: var(--s-6) calc(var(--mobile-nav-h) + var(--s-10)); }
+  /* Step 7.3: clearance for the bottom bar, so the last card is never under it. */
+  .page { padding-block: var(--space-6) 88px; }
 }
 
 /* §93: eyebrow, title, explanation, primary action. */
@@ -289,22 +320,38 @@
      section    -> --s-10 between sections
    Screens use these classes rather than setting their own margins, which is
    how neighbouring elements ended up with arbitrary gaps. */
+/* Step 4.2. The actions are TOP-aligned against the h1 row, not centred
+   against the whole block: centring them meant a page with a two-line
+   description pushed its button halfway down, so no two pages put their
+   primary action in the same place. */
 .pageHead {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--s-6);
-  margin-bottom: var(--s-8);
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
 }
 
 /* The band of search, filters and sort between the header and the content. */
-.controls { display: flex; flex-direction: column; gap: var(--s-4); margin-bottom: var(--s-8); }
+.controls { display: flex; flex-direction: column; gap: var(--space-4); margin-bottom: var(--space-8); }
+
 @media (max-width: 767px) {
-  .pageHead { flex-direction: column; align-items: stretch; gap: var(--s-4); margin-bottom: var(--s-6); }
+  .pageHead { margin-bottom: var(--space-6); }
+}
+/* Step 7.5. */
+@media (max-width: 639px) {
+  .pageHead { flex-direction: column; align-items: stretch; gap: var(--space-4); }
+  .pageHeadActions { width: 100%; }
+  .pageHeadActions > * { flex: 1 1 auto; }
 }
 
-.pageHeadText { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; max-width: 62ch; }
-.pageHeadActions { display: flex; align-items: center; gap: var(--s-2); flex: none; }
+/* eyebrow -> h1 (4) -> description (8), per Step 4.2. */
+.pageHeadText { display: flex; flex-direction: column; min-width: 0; }
+.pageHeadText > h1 { margin-top: var(--space-1); }
+.pageHeadText > p { margin-top: var(--space-2); max-width: 60ch; }
+/* Clears the eyebrow so the action sits on the h1's line. */
+.pageHeadActions { display: flex; align-items: center; gap: var(--space-2); flex: none; padding-top: var(--space-5); }
+@media (max-width: 639px) { .pageHeadActions { padding-top: 0; } }
 
 /* §109: sections are separated, not stacked against one another. */
 .section { margin-top: var(--s-10); }
@@ -359,19 +406,39 @@
 
 .menuWrap { position: relative; }
 
+/* Step 5: every control in the right cluster is 36 high, so the row shares
+   one baseline by construction rather than by luck. */
 .iconBtn {
   position: relative;
   display: grid;
   place-items: center;
-  width: var(--control-md);
-  height: var(--control-md);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  transition: border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-default);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.iconBtn:hover { border-color: var(--color-border-hover); color: var(--color-text-primary); }
+.iconBtn:hover { background: var(--surface-hover); border-color: var(--border-strong); color: var(--text-primary); }
+
+/* The avatar is the same object as the rail's, so it is a filled circle, not
+   a bordered square with initials in it. */
+.avatarBtn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  border: 0;
+  transition: background-color var(--dur) var(--ease);
+}
+.avatarBtn:hover { background: var(--accent-hover); }
 
 /* §108: the count is the signal, the dot is only its shape. */
 .badge {
@@ -383,8 +450,8 @@
   padding-inline: 4px;
   border-radius: var(--radius-chip);
   background: var(--color-danger);
-  color: #fff;
-  font-family: var(--font-mono);
+  color: var(--on-accent);
+  font-variant-numeric: tabular-nums;
   font-size: 10px;
   line-height: 17px;
   text-align: center;
@@ -546,3 +613,8 @@
   .pageHeadCompact { flex-direction: column; align-items: stretch; gap: var(--s-3); margin-bottom: var(--s-4); }
   .pageHeadCompact .pageHeadActions { flex: 1 1 auto; max-width: none; }
 }
+
+/* Step 3.11: the breadcrumb separator is a chevron, not a slash — a slash is
+   a character in a path, which is what this stopped being when it became a
+   trail of links. */
+.crumbSep { display: inline-flex; align-items: center; color: var(--text-tertiary); flex: none; }

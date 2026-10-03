@@ -19,7 +19,7 @@
   border-bottom: 1px solid var(--color-border-hover);
 }
 .groupTitle { font-size: var(--text-section); line-height: var(--lh-section); font-weight: 600; letter-spacing: -0.01em; }
-.groupCount { font-family: var(--font-mono); font-size: var(--text-meta); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.groupCount {  font-size: var(--text-meta); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
 
 .list { display: flex; flex-direction: column; }
 
@@ -52,7 +52,7 @@
 }
 
 .date {
-  font-family: var(--font-mono);
+  
   font-size: var(--text-body-sm);
   font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
@@ -84,13 +84,14 @@
   grid-template-columns: 64px minmax(0, 1fr) auto;
   gap: var(--s-4);
   align-items: center;
-  padding: var(--s-3) var(--s-3) var(--s-3) 0;
-  border-radius: var(--radius-lg);
-  border: 1px solid transparent;
+  padding: var(--space-4) var(--space-5);
+  border: 0;
   transition: border-color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
 }
-.dRow + .dRow { margin-top: 6px; }
-.dRow:hover { background: var(--color-surface); border-color: var(--color-border); }
+/* One card, hairline separators. Forty-six individually bordered rows gave
+   the page forty-six edges and no list. */
+.dRow + .dRow { border-top: 1px solid var(--border-subtle); }
+.dRow:hover { background: var(--surface-hover); }
 
 @media (max-width: 767px) {
   .dRow { grid-template-columns: 56px minmax(0, 1fr); grid-template-areas: "date body" "date meta"; row-gap: var(--s-2); }
@@ -115,7 +116,7 @@
 .dDateUrgent { background: var(--fill-urgent); border-color: var(--fill-urgent); color: var(--on-fill); }
 .dDateSoon { background: var(--fill-soon); border-color: var(--fill-soon); color: var(--on-fill); }
 
-.dDay { font-family: var(--font-mono); font-size: 19px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.dDay {  font-size: 19px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
 .dMon { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
 
 .dBody { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -128,7 +129,7 @@
 
 /* Days-left, stated once, in words — §108: the fill is never the only signal. */
 .dLeft {
-  font-family: var(--font-mono);
+  
   font-size: var(--text-meta);
   font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
@@ -152,3 +153,59 @@
   border-bottom: 1px solid var(--color-border-hover);
 }
 @media (max-width: 1023px) { .dGroupHead { top: calc(var(--mobile-header-h) + 1px); } }
+
+
+/* ============================================ deadlines: calendar + list ===
+   Step 4.4's two-column template. The calendar is reference and sticks; the
+   list is the work and scrolls past it. */
+
+.dLayout {
+  display: grid;
+  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.dCal { position: sticky; top: 88px; }
+
+/* Below 1024 the calendar stops sticking and simply leads: a sticky panel on
+   a narrow screen eats the viewport the list needs. */
+@media (max-width: 1023px) {
+  .dLayout { grid-template-columns: minmax(0, 1fr); }
+  .dCal { position: static; }
+}
+
+.dList { min-width: 0; }
+
+.dListHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.dListMeta { display: inline-flex; align-items: baseline; gap: var(--space-3); font-size: 13px; line-height: 18px; color: var(--text-tertiary); }
+
+.dClear { font-size: 13px; line-height: 18px; font-weight: 500; color: var(--accent-text); }
+.dClear:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* The container the rows live in. overflow:hidden so the first and last row's
+   hover background is clipped by the card's radius instead of squaring it. */
+.dCard {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.dAside {
+  margin-top: var(--space-4);
+  font-size: 12.5px;
+  line-height: 20px;
+  color: var(--text-tertiary);
+}
+.dAsideLink { color: var(--accent-text); font-weight: 500; }
+.dAsideLink:hover { text-decoration: underline; text-underline-offset: 3px; }

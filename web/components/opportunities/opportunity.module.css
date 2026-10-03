@@ -35,7 +35,7 @@
 .deadlineValue { display: inline-flex; align-items: baseline; gap: var(--s-2); }
 
 .deadlineDate {
-  font-family: var(--font-mono);
+  
   font-size: var(--text-body-sm);
   font-variant-numeric: tabular-nums;
   font-weight: 500;
@@ -73,14 +73,16 @@
 
 /* -------------------------------------------------------- money display --- */
 
-.money { display: inline-flex; align-items: baseline; gap: var(--s-2); flex-wrap: wrap; }
+/* Step 6.2.6: the conversion goes BENEATH the figure, not beside it. Two
+   currencies sharing a line read as one long number, and in a grid of cards
+   they make the funding column impossible to scan down. */
+.money { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .moneyMain {
-  font-family: var(--font-mono);
-  font-size: var(--text-body);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
 }
-.moneyAlt { font-family: var(--font-mono); font-size: var(--text-meta); color: var(--color-text-muted); }
+.moneyAlt { font-size: 12px; line-height: 16px; color: var(--text-tertiary); }
 
 /* ------------------------------------------------------------ pagination ---
    §102: compact, and it preserves position rather than jumping. */
@@ -104,3 +106,25 @@
 
 /* Progress through a long list, kept quieter than the total beside it. */
 .countSeen { color: var(--color-text-muted); }
+
+/* Step 6.3.2: search and filters are one band. They are the same job —
+   narrowing the list — and splitting them across two rows made the search
+   read as a header control that happened to sit near some filters. */
+.toolbar2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-5);
+}
+.toolbar2 > :first-child { flex: 1 1 320px; max-width: 480px; }
+
+.results { margin-top: var(--space-6); }
+
+/* Step 7.6: on a phone the search takes the row, and the filters become one
+   scrollable line rather than wrapping into a block that pushes the results
+   off the screen. */
+@media (max-width: 767px) {
+  .toolbar2 { flex-wrap: nowrap; align-items: stretch; flex-direction: column; }
+  .toolbar2 > :first-child { max-width: none; flex: 1 1 auto; }
+}

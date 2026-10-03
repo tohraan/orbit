@@ -1,16 +1,18 @@
 "use client";
 
-/* §54 and §88: upcoming deadlines, grouped by date, highly scannable — now
- * with the horizontal timeline band above the list.
+/* §54 and §88: upcoming deadlines — a calendar beside the list.
  *
- * One range control drives BOTH. The band and the list are rendered from the
- * same single response, so they cannot disagree about what falls inside the
- * window: whatever you can see plotted is exactly what is listed underneath.
- * That is also why this screen fetches up to 120 rows in one request instead
- * of paging — the whole dated index is 111 listings.
+ * WHY THE BAND WENT. The horizontal dot timeline took the widest, highest part
+ * of the page to answer one question ("when is it busy") with a row of dots
+ * nobody could count, and it could not be acted on. A calendar answers the
+ * same question in a shape every student already reads, and picking a day
+ * filters the list next to it.
  *
- * Below 768px the range is forced to 30 days. A six-month axis on a 390px
- * screen is about 2px per day, which is a line, not a timeline.
+ * ONE REQUEST, NO REFETCH ON NAVIGATION. The whole dated index is ~111
+ * listings, so the six-month window is fetched once and the calendar pages
+ * through it in memory. Moving to another month cannot produce a spinner, and
+ * the calendar and the list are rendered from the same array — so they can
+ * never disagree about what closes when.
  *
  * Listings whose deadline has passed are not here and are not anywhere else
  * either: packages/server/src/source.ts drops them from the index.
@@ -20,7 +22,13 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import r from "../rows.module.css";
 import { PageHead } from "@/components/layout/AppShell";
-import { Timeline, type TimelineRange } from "@/components/timeline/Timeline";
+import {
+  MonthCalendar,
+  cursorFromKey,
+  monthLabel,
+  todayKey,
+  type Cursor,
+} from "@/components/deadlines/MonthCalendar";
 import { FundingIndicator } from "@/components/opportunities/Indicators";
 import { SaveButton } from "@/components/opportunities/Actions";
 import { RowsSkeleton } from "@/components/feedback/Skeletons";
@@ -33,40 +41,26 @@ import { countryLabel, daysUntil, typeLabel } from "@rof/core";
 import type { ListResponse, OpportunitySummary } from "@rof/core";
 import { STATUS_LABELS, STATUS_TONE, useSaved, useTracker } from "@/lib/data";
 
-const RANGES: { value: TimelineRange; label: string; window: string; wide?: boolean }[] = [
-  { value: 30, label: "30 days", window: "d30" },
-  { value: 90, label: "90 days", window: "d90", wide: true },
-  { value: 180, label: "6 months", window: "d180", wide: true },
-];
-
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
 
 export default function DeadlinesPage() {
-  const [range, setRange] = useState<TimelineRange>(30);
   const { saved } = useSaved();
   const { entries, statusOf } = useTracker();
 
-  /* The wide ranges are hidden by CSS below 768px, but hiding a button does
-   * not change the state behind it — so the value is forced back as well,
-   * otherwise a phone rotated from landscape keeps a 180-day axis it cannot
-   * render. matchMedia rather than a resize listener: it fires only on the
-   * crossing, not on every pixel. */
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const apply = () => {
-      if (mq.matches) setRange(30);
-    };
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
+  /* The calendar opens on the current month and the list opens unfiltered:
+   * arriving on a screen that has already filtered itself hides most of what
+   * the page is for. */
+  const [cursor, setCursor] = useState<Cursor>(() => cursorFromKey(todayKey()));
+  const [day, setDay] = useState<string | null>(null);
 
-  const window_ = RANGES.find((x) => x.value === range)!.window;
-  const { data, initial, loading, error, reload } = useApi<ListResponse>(
-    api(`/api/opportunities?deadline=${window_}&sort=deadline&pageSize=120`),
+  /* Six months, once. Paging the calendar is a slice of this array, not a
+   * request — a month that spins before it draws is a month nobody flips
+   * through. */
+  const { data, initial, error, reload } = useApi<ListResponse>(
+    api(`/api/opportunities?deadline=d180&sort=deadline&pageSize=120`),
     "The deadline list couldn't be loaded right now.",
   );
 
@@ -80,11 +74,17 @@ export default function DeadlinesPage() {
     [saved, entries],
   );
 
-  /* Grouped by calendar month, built from the date digits rather than a Date
-   * object — see the note in packages/core/src/format.ts about why. */
+  /* What the list shows. A picked day narrows it to that day; otherwise it is
+   * every dated listing, grouped by month. Built from the date DIGITS rather
+   * than a Date object — see the note in packages/core/src/format.ts. */
+  const shown = useMemo(
+    () => (day ? items.filter((i) => i.deadline?.slice(0, 10) === day) : items),
+    [items, day],
+  );
+
   const groups = useMemo(() => {
     const out = new Map<string, { label: string; items: OpportunitySummary[] }>();
-    for (const item of items) {
+    for (const item of shown) {
       if (!item.deadline) continue;
       const [y, m] = item.deadline.split("-");
       const key = `${y}-${m}`;
@@ -92,20 +92,15 @@ export default function DeadlinesPage() {
       out.get(key)!.items.push(item);
     }
     return [...out.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([key, g]) => ({ key, ...g }));
-  }, [items]);
+  }, [shown]);
 
-  const rangeControl = RANGES.map((opt) => (
-    <Button
-      key={opt.value}
-      variant={range === opt.value ? "primary" : "secondary"}
-      size="sm"
-      aria-pressed={range === opt.value}
-      className={opt.wide ? "rangeWide" : undefined}
-      onClick={() => setRange(opt.value)}
-    >
-      {opt.label}
-    </Button>
-  ));
+  /* Picking a day in a month the list is not showing would leave the student
+   * looking at an empty column with no explanation, so selection always moves
+   * the calendar with it. */
+  function pickDay(next: string | null) {
+    setDay(next);
+    if (next) setCursor(cursorFromKey(next));
+  }
 
   return (
     <>
@@ -120,14 +115,46 @@ export default function DeadlinesPage() {
         }
       />
 
-      <Timeline
-        items={items}
-        range={range}
-        mineIds={mineIds}
-        loading={initial}
-        rangeControl={rangeControl}
-        count={items.length}
-      />
+      <div className={r.dLayout}>
+        {/* The calendar sticks: scrolling a long list should not cost you the
+            thing you navigate it with. */}
+        <aside className={r.dCal}>
+          <MonthCalendar
+            items={items}
+            cursor={cursor}
+            onCursor={setCursor}
+            selected={day}
+            onSelect={pickDay}
+            mineIds={mineIds}
+          />
+
+          {/* §105: say what is NOT on this screen — and say it here, beside
+              the calendar, rather than under a list you must reach the end of
+              to discover that a third of the index was never on it. */}
+          <p className={r.dAside}>
+            107 of 427 listings publish a date. The rest are rolling or undated and are not on this calendar.{" "}
+            <Link href="/explore?deadline=rolling" className={r.dAsideLink}>
+              See the rolling listings
+            </Link>
+            .
+          </p>
+        </aside>
+
+        <div className={r.dList}>
+          {/* What the list is currently showing, and the way back out of it. */}
+          <div className={r.dListHead}>
+            <h2 className={r.groupTitle}>
+              {day ? `${Number(day.slice(8))} ${monthLabel(cursorFromKey(day))}` : "Everything upcoming"}
+            </h2>
+            <span className={r.dListMeta}>
+              {shown.length} {shown.length === 1 ? "deadline" : "deadlines"}
+              {day ? (
+                <button type="button" className={r.dClear} onClick={() => pickDay(null)}>
+                  Show all
+                </button>
+              ) : null}
+            </span>
+          </div>
 
       {error && !data ? (
         <ErrorState
@@ -144,13 +171,17 @@ export default function DeadlinesPage() {
       ) : groups.length === 0 ? (
         <EmptyState
           icon="calendar"
-          title="Nothing closes in this window"
-          body="Widen the window, or look at the listings with no fixed date — many of those accept applications all year."
+          title={day ? "Nothing closes on this day" : "Nothing closes in the next six months"}
+          body={
+            day
+              ? "Pick another day, or show everything upcoming."
+              : "Many listings accept applications all year and publish no date at all."
+          }
           actions={
             <>
-              {range !== 180 ? (
-                <Button variant="secondary" onClick={() => setRange(180)}>
-                  Try the next 6 months
+              {day ? (
+                <Button variant="secondary" onClick={() => pickDay(null)}>
+                  Show all
                 </Button>
               ) : null}
               <ButtonLink href="/explore?deadline=rolling" variant="ghost">
@@ -160,7 +191,7 @@ export default function DeadlinesPage() {
           }
         />
       ) : (
-        <div style={loading ? { opacity: 0.55, transition: "opacity var(--motion) var(--ease)" } : undefined}>
+        <div>
           {groups.map((g) => (
             <section key={g.key}>
               <div className={r.dGroupHead}>
@@ -169,10 +200,11 @@ export default function DeadlinesPage() {
                   {g.items.length} {g.items.length === 1 ? "deadline" : "deadlines"}
                 </span>
               </div>
-              <div>
+              <div className={r.dCard}>
                 {g.items.map((item) => {
                   const days = daysUntil(item.deadline) ?? 0;
-                  const tone = days <= 7 ? "urgent" : days <= 30 ? "soon" : "later";
+                  /* Same bands as every other deadline badge: 3 and 14. */
+                  const tone = days <= 3 ? "urgent" : days <= 14 ? "soon" : "later";
                   const st = statusOf(item.id);
                   const day = item.deadline!.slice(8);
                   const mon = MONTHS[Number(item.deadline!.slice(5, 7)) - 1]?.slice(0, 3);
@@ -223,17 +255,10 @@ export default function DeadlinesPage() {
             </section>
           ))}
 
-          {/* §105: say what is NOT on this screen. 111 of 431 listings carry a
-              date; the rest are rolling and have no place on a timeline. */}
-          <p className="t-body-sm c-muted" style={{ marginTop: "var(--s-8)" }}>
-            Listings with no published date are not on this timeline.{" "}
-            <Link href="/explore?deadline=rolling" style={{ textDecoration: "underline", textUnderlineOffset: 2 }}>
-              See the rolling and undated listings
-            </Link>
-            .
-          </p>
         </div>
       )}
+        </div>
+      </div>
     </>
   );
 }

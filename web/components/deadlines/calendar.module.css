@@ -1,0 +1,174 @@
+/* The deadline calendar. A reference object, so it is quiet: the information
+   is where the density sits, not in the chrome around it. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--card-pad-lg);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}
+
+.head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+.headText { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.title { font-size: 16px; line-height: 22px; font-weight: 600; }
+.sub { font-size: 13px; line-height: 18px; color: var(--text-tertiary); }
+
+.nav { display: flex; gap: var(--space-1); flex: none; }
+.navBtn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+}
+.navBtn:hover { background: var(--surface-hover); color: var(--text-primary); }
+.navBtn:active { background: var(--surface-active); }
+
+/* One grid definition, used by the weekday header and the days, so the
+   columns cannot drift apart. */
+.weekdays,
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.weekday {
+  text-align: center;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.pad { aspect-ratio: 1; }
+
+.day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  aspect-ratio: 1;
+  min-height: 40px;
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  color: var(--text-tertiary);
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+/* A day with nothing on it is not a target. Disabling it rather than styling
+   it to look inert means the keyboard skips it too. */
+.day:disabled { cursor: default; }
+.dayHas { color: var(--text-primary); cursor: pointer; }
+.dayHas:hover { background: var(--surface-hover); }
+
+.daySelected {
+  background: var(--accent-subtle);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
+}
+.daySelected:hover { background: var(--accent-subtle); }
+
+/* Today is marked by a ring rather than a fill, so it cannot be confused with
+   the selected day — two filled cells would be two claims of "you are here". */
+.dayToday { border-color: var(--border-strong); }
+.dayToday.daySelected { border-color: var(--accent-border); }
+
+/* A past day inside the current month: dimmed, because the index no longer
+   carries anything that closed. */
+.dayPast { opacity: 0.45; }
+
+.dayNum { font-size: 14px; line-height: 18px; font-weight: 500; }
+.daySelected .dayNum { font-weight: 600; }
+
+/* How many close that day, printed. The colour ranks the days against each
+   other; only the number says how many, and a calendar that makes you hover
+   to find that out is a calendar you have to interrogate. */
+.dayCount {
+  font-size: 10px;
+  line-height: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+.lvl3 .dayCount,
+.lvl4 .dayCount { color: var(--text-secondary); }
+.daySelected .dayCount { color: var(--accent-text); }
+
+/* Four steps of the accent, mixed against the card so the lightest is a tint
+   of the surface rather than a grey that happens to be blue. Quartiles, not a
+   continuous ramp: thirty indistinguishable shades read as noise. */
+.lvl1 { background: var(--cal-1); }
+.lvl2 { background: var(--cal-2); }
+.lvl3 { background: var(--cal-3); }
+.lvl4 { background: var(--cal-4); }
+
+/* Every step is a TINT, and the day number keeps the theme's own ink on all
+   four. The first attempt made the top step a solid accent fill with white on
+   it, which measured 4.21:1 in dark — under AA — and spent the solid accent
+   that is reserved for primary actions on thirty calendar cells. Tints also
+   keep the selected day unmistakable: it is the only cell with a ring. */
+
+.dayHas:hover { filter: none; border-color: var(--border-strong); }
+.lvl3:hover, .lvl4:hover { border-color: var(--accent-active); }
+
+/* Selection outranks density: it must be unmistakable which day the list is
+   showing, so it takes the border and the ring rather than another fill. */
+.daySelected,
+.daySelected.lvl1,
+.daySelected.lvl2,
+.daySelected.lvl3,
+.daySelected.lvl4 {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  color: var(--accent-text);
+}
+.daySelected .dayNum { color: var(--accent-text); }
+
+/* Yours, on any density step. White on the dark steps, accent on the light
+   ones, so it never disappears into the cell it sits on. */
+.mineDot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  flex: none;
+}
+.lvl3 .mineDot,
+.lvl4 .mineDot { background: var(--text-primary); }
+
+.legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+  font-size: 12.5px;
+  line-height: 20px;
+  color: var(--text-tertiary);
+}
+.legendItem { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+.scale { display: inline-flex; align-items: center; gap: var(--space-2); }
+.scaleLabel { font-size: 12.5px; color: var(--text-tertiary); }
+.scaleStep {
+  width: 18px;
+  height: 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Step 7.9: the visual cell is unchanged; the hit area meets the touch floor. */
+@media (max-width: 767px) {
+  .day { min-height: 44px; }
+}

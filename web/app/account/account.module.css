@@ -24,7 +24,7 @@
   animation: settle 220ms var(--ease) both;
 }
 @keyframes settle {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; }
   to { opacity: 1; transform: none; }
 }
 
@@ -54,7 +54,7 @@
    form does not look like it jumped. */
 .conditional { animation: reveal 180ms var(--ease) both; }
 @keyframes reveal {
-  from { opacity: 0; transform: translateY(-4px); }
+  from { opacity: 0; }
   to { opacity: 1; transform: none; }
 }
 

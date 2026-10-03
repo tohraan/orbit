@@ -3,10 +3,12 @@
 
 .group {
   display: inline-flex;
-  padding: 2px;
+  padding: 3px;
   gap: 2px;
-  background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
+  height: 36px;
+  align-items: center;
+  background: var(--surface-sunken);
+  border: 0;
   border-radius: var(--radius-control);
   flex: none;
 }
@@ -14,18 +16,18 @@
 .opt {
   display: grid;
   place-items: center;
-  width: var(--control-seg);
-  height: var(--control-seg);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
-  transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.opt:hover { color: var(--color-text-primary); }
+.opt:hover { color: var(--text-primary); }
 
 .optActive {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  box-shadow: var(--shadow-card);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 @media (pointer: coarse) {

@@ -24,6 +24,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import c from "./consent.module.css";
 import { Icon } from "../ui/Icon";
 import { useAuth } from "@/lib/auth";
@@ -54,6 +55,43 @@ async function push(next: Choice, userId: string | undefined) {
   } catch {
     /* see above */
   }
+}
+
+/* Says why the session ended, instead of the page quietly reverting to its
+ * signed-out state and leaving the student to conclude the site logged them
+ * out for no reason. */
+export function SessionNotice() {
+  const { expired, dismissExpired } = useAuth();
+  const pathname = usePathname();
+  if (!expired) return null;
+  return (
+    <div className={c.wrap} role="status">
+      <div className={c.panel}>
+        <span className={c.mark} aria-hidden="true">
+          <Icon name="alert" size={18} />
+        </span>
+        <div className={c.body}>
+          <p className={c.title}>Your session ended</p>
+          <p className={c.text}>
+            Signing in again picks up exactly where you were — your saved list, applications and documents are on your
+            account, not in this browser.
+          </p>
+        </div>
+        <div className={c.actions}>
+          <Link
+            href={`/account?next=${encodeURIComponent(pathname)}`}
+            className={c.primary}
+            onClick={dismissExpired}
+          >
+            Sign in
+          </Link>
+          <button type="button" className={c.secondary} onClick={dismissExpired}>
+            Not now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function ConsentBanner() {

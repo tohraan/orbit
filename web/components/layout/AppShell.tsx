@@ -19,7 +19,7 @@ import { ToastProvider } from "../feedback/Toast";
 import { CommandPalette, useCommandPalette } from "../command/CommandPalette";
 import { AuthProvider } from "@/lib/auth";
 import { GateProvider } from "@/lib/gate";
-import { ConsentBanner } from "../consent/Consent";
+import { ConsentBanner, SessionNotice } from "../consent/Consent";
 
 export function AppShell({ children }: { children: ReactNode }) {
   /* ⌘K / Ctrl-K lives at the shell, so the shortcut works on every screen and
@@ -44,6 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <CompareTray />
         <MobileNav />
         <CommandPalette open={open} onClose={() => setOpen(false)} />
+        <SessionNotice />
         <ConsentBanner />
       </div>
     </ToastProvider>
@@ -78,7 +79,7 @@ export function PageHead({
       <div className={s.pageHeadText}>
         <span className="eyebrow">{eyebrow}</span>
         <h1 className={compact ? "t-section" : "t-page-title"}>{title}</h1>
-        {description ? <p className={compact ? "t-body-sm c-secondary" : "t-body c-secondary"}>{description}</p> : null}
+        {description ? <p className={compact ? "t-meta c-secondary" : "t-page-desc"}>{description}</p> : null}
       </div>
       {actions ? <div className={s.pageHeadActions}>{actions}</div> : null}
     </div>

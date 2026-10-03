@@ -1,94 +1,125 @@
 /* Shared controls. Every value is a token (design-ieee.md §4). */
 
 /* ------------------------------------------------------------- buttons ---
-   §57, §58: 40px default height, 10px radius, dark primary, white secondary
-   with a hairline, ghost with no border. Exactly three variants — §114 forbids
-   five button styles. */
+   Step 3.3. Two sizes only — md 40 and sm 32 — because a third size is how a
+   row of controls stops sharing a baseline. */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--s-2);
-  height: var(--control-md);
-  padding-inline: var(--s-4);
+  gap: var(--space-2);
+  height: 40px;
+  padding-inline: var(--space-4);
   border-radius: var(--radius-control);
-  font-size: var(--text-body-sm);
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 500;
   white-space: nowrap;
-  transition: background var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease),
-    color var(--motion-fast) var(--ease);
+  border: 1px solid transparent;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
 
-.btn:disabled { cursor: default; opacity: 0.45; }
+.sm { height: 32px; padding-inline: var(--space-3); font-size: 13px; line-height: 20px; }
+/* .lg is retained as an alias of md: callers still pass size="lg", and a third
+   height is exactly what Step 3.3 removes. */
+.lg { height: 40px; padding-inline: var(--space-4); font-size: 14px; }
 
-.sm { height: var(--control-sm); padding-inline: var(--s-3); font-size: var(--text-meta); }
-.lg { height: var(--control-lg); padding-inline: var(--s-5); font-size: var(--text-body); }
-
-/* §58: a 40px control is under the 44px mobile touch target, so the small and
-   default sizes grow on a touch screen rather than staying thumb-hostile. */
-@media (pointer: coarse) {
-  .btn { min-height: var(--control-touch); }
-  .sm { min-height: var(--control-touch); }
+/* Step 7.9: the visual size is unchanged; only the hit area grows. */
+@media (max-width: 767px) {
+  .btn { position: relative; }
+  .btn::after {
+    content: "";
+    position: absolute;
+    inset: 50% 0 auto;
+    transform: translateY(-50%);
+    min-height: 40px;
+    height: 100%;
+    width: 100%;
+  }
 }
 
 .primary {
-  background: var(--color-action);
-  color: var(--color-action-text);
-  border: 1px solid var(--color-action);
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
 }
-.primary:hover:not(:disabled) { background: var(--color-action-hover); border-color: var(--color-action-hover); }
+.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.primary:active:not(:disabled) { background: var(--accent-active); border-color: var(--accent-active); }
 
 .secondary {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border-color: var(--border-default);
 }
-.secondary:hover:not(:disabled) { border-color: var(--color-border-hover); background: var(--color-surface-secondary); }
+.secondary:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--border-strong); }
+.secondary:active:not(:disabled) { background: var(--surface-active); }
 
 .ghost {
   background: transparent;
-  color: var(--color-text-secondary);
-  border: 1px solid transparent;
+  color: var(--text-secondary);
 }
-.ghost:hover:not(:disabled) { background: var(--color-surface-secondary); color: var(--color-text-primary); }
+.ghost:hover:not(:disabled) { background: var(--surface-hover); color: var(--text-primary); }
+.ghost:active:not(:disabled) { background: var(--surface-active); }
 
+/* Destructive reads as ghost at rest and only turns red under the cursor: a
+   row of permanently red controls makes the whole screen look like a warning,
+   and the moment that matters is the moment before the click. */
 .danger {
-  background: var(--color-surface);
-  color: var(--color-danger);
-  border: 1px solid var(--surface-urgent-border);
+  background: transparent;
+  color: var(--text-secondary);
 }
-.danger:hover:not(:disabled) { background: var(--surface-urgent); }
+.danger:hover:not(:disabled) { background: var(--error-bg); color: var(--error-fg); }
+.danger:active:not(:disabled) { background: var(--error-bg); color: var(--error-fg); }
+
+.btn:disabled {
+  background: var(--surface-sunken);
+  color: var(--text-disabled);
+  border-color: transparent;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* Step 3.8: the SELECTED state of a pill or tab. Tinted, never filled —
+   solid accent stays reserved for the one primary action on a screen, the
+   active rail item, the avatar and bar fills. A row of filled tabs makes
+   every option look like the thing to press. */
+.selected {
+  background: var(--accent-subtle);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
+}
+.selected:hover:not(:disabled) { background: var(--accent-subtle); border-color: var(--accent-border); }
 
 .block { width: 100%; }
 
-/* Icon-only. §74 wants an accessible label, which Button requires in props. */
+/* Icon-only, ghost behaviour. */
 .iconOnly {
-  width: var(--control-md);
-  height: var(--control-md);
+  width: 36px;
+  height: 36px;
   padding: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
 }
-@media (pointer: coarse) {
-  .iconOnly { width: var(--control-touch); height: var(--control-touch); }
-}
+.iconOnly.sm { width: 32px; height: 32px; }
 
-/* --------------------------------------------------------------- chips ---
-   A chip states a fact. §3.2 forbids stacking badges, so a card uses at most
-   four of these and they are sized to read as metadata, not as buttons. */
+/* --------------------------------------------------------------- tags ----
+   Step 3.4 and 3.5. A tag states a fact and carries no border; a badge means
+   a status and takes a semantic surface. Same geometry, so a row of them
+   shares one baseline whatever mix it holds. */
 
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   height: 24px;
-  padding-inline: 7px;
-  border-radius: var(--radius-chip);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-secondary);
-  color: var(--color-text-secondary);
-  font-size: var(--text-meta);
-  line-height: 1;
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-tag);
+  border: 1px solid transparent;
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 16px;
   font-weight: 500;
   white-space: nowrap;
   max-width: 100%;
@@ -96,20 +127,18 @@
   text-overflow: ellipsis;
 }
 
-/* §7, §108: each accent carries one meaning, and the meaning is also in the
-   text, never in the colour alone. */
-.chipFunding { background: var(--surface-funding); border-color: var(--surface-funding-border); color: var(--ink-funding); }
-.chipSaved   { background: var(--surface-saved);   border-color: var(--surface-saved-border);   color: var(--ink-saved); }
-.chipCompare { background: var(--surface-compare); border-color: var(--surface-compare-border); color: var(--ink-compare); }
-.chipInfo    { background: var(--surface-info);    border-color: var(--surface-info-border);    color: var(--ink-info); }
-.chipUrgent  { background: var(--surface-urgent);  border-color: var(--surface-urgent-border);  color: var(--ink-urgent); }
-.chipSoon    { background: var(--surface-soon);    border-color: var(--surface-soon-border);    color: var(--ink-soon); }
-.chipQuiet   { background: transparent; border-color: var(--color-border); color: var(--color-text-muted); }
-.chipSolid   { background: var(--color-action); border-color: var(--color-action); color: var(--color-action-text); }
-/* Listings a member of staff entered by hand (db/014). The only chip that is
-   about PROVENANCE rather than about the opportunity, which is why it gets its
-   own surface instead of reusing one that already means something else. */
-.chipCollege { background: var(--surface-college); border-color: var(--surface-college-border); color: var(--ink-college); font-weight: 600; }
+/* Status badges. Amber now means a warning and nothing else — "fully funded"
+   is a success, not a caution, and it used to be styled as one. */
+.chipFunding { background: var(--success-bg); border-color: var(--success-border); color: var(--success-fg); }
+.chipUrgent  { background: var(--error-bg);   border-color: var(--error-border);   color: var(--error-fg); }
+.chipSoon    { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning-fg); }
+.chipCompare { background: var(--accent-subtle); border-color: var(--accent-border); color: var(--accent-text); }
+.chipCollege { background: var(--accent-subtle); border-color: var(--accent-border); color: var(--accent-text); font-weight: 600; }
+.chipInfo    { background: var(--accent-subtle); border-color: var(--accent-border); color: var(--accent-text); }
+/* Saved and quiet are facts, not statuses, so they are plain neutral tags. */
+.chipSaved   { background: var(--surface-sunken); color: var(--text-secondary); }
+.chipQuiet   { background: var(--surface-sunken); color: var(--text-secondary); }
+.chipSolid   { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
 /* -------------------------------------------------------------- inputs ---
    §98: 40–44px, 12px padding, 10–12px radius, hairline border, dark on focus. */
@@ -230,7 +259,7 @@
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; }
   to   { opacity: 1; transform: none; }
 }
 
@@ -260,7 +289,7 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
   animation: sheetIn var(--motion) var(--ease);
 }
-@keyframes sheetIn { from { transform: translateY(14px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+@keyframes sheetIn { from { opacity: 0.6; } to { transform: none; opacity: 1; } }
 
 .sheetHandle {
   width: 44px;

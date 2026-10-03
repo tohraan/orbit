@@ -134,24 +134,19 @@ export function ExploreScreen() {
 
   return (
     <>
-      {/* Compact, with the search field sharing the row: the cards start near
-          the top of the screen instead of below a title block the student has
-          already read. The long description this used to carry is now in the
-          search placeholder, where it is read at the moment it is useful. */}
-      <PageHead
-        compact
-        eyebrow="Discover"
-        title="Explore"
-        actions={<SearchField total={list.total} />}
-      />
+      {/* Step 6.3.1: eyebrow and title only. The search belongs with the
+          filters it works alongside, not in the header opposite the title. */}
+      <PageHead compact eyebrow="Discover" title="Explore" />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
+      {/* Step 6.3.2: one toolbar — search first, then the filters. */}
+      <div className={o.toolbar2}>
+        <SearchField total={list.total} />
         <FilterBar facets={facets} />
         <MobileFilterBar facets={facets} sortFallback={sort} />
-        <ActiveFilters facets={facets} />
       </div>
+      <ActiveFilters facets={facets} />
 
-      <section style={{ marginTop: "var(--s-6)" }} id="results">
+      <section className={o.results} id="results">
         <div className={o.toolbar}>
           {/* The total is the headline; how far through you are is secondary and
               phrased as progress, not as a batch size. Naming the batch made a

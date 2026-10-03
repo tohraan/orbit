@@ -11,7 +11,21 @@ import type { OpportunitySummary } from "@rof/core";
 
 /* §33: normal shows a date, upcoming and urgent show days left, expired says
  * so, and an unknown deadline is explicit but quiet (§105). §108: the tone is
- * never the only signal — the label carries the same meaning. */
+ * never the only signal — the label carries the same meaning.
+ *
+ * The BADGE thresholds are tighter than deadlineState's: error at 3 days or
+ * fewer, warning at 14 or fewer, neutral beyond. deadlineState's own bands
+ * (7 and 30) stay as they are — they are shared with the data service and
+ * decide ordering and filtering, not colour — but a listing 28 days out was
+ * being painted amber, which spends the alarm colour on something that is not
+ * yet worth alarm. Colour is decided here, where it is a presentation choice. */
+function badgeTone(days: number | null, fallback: string): ChipTone {
+  if (days == null) return TONE[fallback] ?? "quiet";
+  if (days <= 3) return "urgent";
+  if (days <= 14) return "soon";
+  return "neutral";
+}
+
 const TONE: Record<string, ChipTone> = {
   urgent: "urgent",
   soon: "soon",
@@ -42,7 +56,7 @@ export function DeadlineIndicator({
   return (
     <span className={s.deadlineValue}>
       {withLabel ? <span className={s.deadlineLabel}>Deadline</span> : null}
-      <Chip tone={TONE[d.tone]} icon={d.tone === "urgent" ? "clock" : undefined}>
+      <Chip tone={d.tone === "expired" ? "quiet" : badgeTone(d.days, d.tone)} icon={d.days != null && d.days <= 3 ? "clock" : undefined}>
         {d.label}
       </Chip>
     </span>

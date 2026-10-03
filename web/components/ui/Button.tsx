@@ -5,7 +5,7 @@ import { Icon, type IconName } from "./Icon";
 
 /* §57, §81: three variants and one implementation, so every button that does
  * the same job looks and behaves the same everywhere. */
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "selected";
 type Size = "sm" | "md" | "lg";
 
 const classes = (variant: Variant, size: Size, block?: boolean, extra?: string) =>

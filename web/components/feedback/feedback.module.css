@@ -2,61 +2,35 @@
    bold line, one or two sentences of real guidance, and an action. §45 and
    §113 both forbid the giant illustration. */
 
+/* Step 3.12. A page-level empty state is a dashed outline around nothing,
+   which reads as "this will fill up" rather than as a broken panel; the same
+   content inside a card drops the outline, because a dashed box inside a
+   bordered box is two frames around one message. */
 .state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s-3);
   text-align: center;
-  padding: var(--s-12) var(--s-6);
-  border: 1px dashed var(--color-border-hover);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  min-height: 280px;
+  justify-content: center;
+  padding: var(--space-12) var(--space-6);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-card);
+  background: transparent;
 }
 
-.stateCompact { padding: var(--s-8) var(--s-5); }
-
-.stateIcon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  background: var(--color-surface-secondary);
-  color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
+.stateCompact {
+  min-height: 0;
+  padding: var(--space-6);
+  border: 0;
+  border-radius: 0;
 }
 
 .stateIconDanger { background: var(--surface-urgent); border-color: var(--surface-urgent-border); color: var(--color-danger); }
 
-.stateTitle { font-size: var(--text-card-title); line-height: var(--lh-card-title); font-weight: 600; }
+.stateTitle { font-size: 16px; line-height: 22px; font-weight: 600; color: var(--text-primary); }
 
-.stateBody {
-  max-width: 44ch;
-  font-size: var(--text-body-sm);
-  line-height: var(--lh-body);
-  color: var(--color-text-secondary);
-}
-
-.stateActions { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: center; margin-top: var(--s-1); }
-
-/* ------------------------------------------------------------ skeletons ---
-   §103: the card skeleton matches the real card's geometry exactly — same
-   height, same 20px padding, same row rhythm — so the grid does not move when
-   the data lands. */
-
-.skCard {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
-  height: var(--card-h);
-  min-height: 300px;
-  padding: var(--s-5);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-}
+.stateActions { display: flex; gap: var(--space-2); flex-wrap: wrap; justify-content: center; margin-top: var(--space-5); }
 
 .skRow { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
 .skStack { display: flex; flex-direction: column; gap: var(--s-2); }

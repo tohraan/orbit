@@ -82,7 +82,7 @@ export default function ApplicationsPage() {
         <>
           <div className={r.tabs}>
             <Button
-              variant={filter === "all" ? "primary" : "secondary"}
+              variant={filter === "all" ? "selected" : "secondary"}
               size="sm"
               aria-pressed={filter === "all"}
               onClick={() => setFilter("all")}
@@ -92,7 +92,7 @@ export default function ApplicationsPage() {
             {STATUSES.filter((st) => counts.get(st)).map((st) => (
               <Button
                 key={st}
-                variant={filter === st ? "primary" : "secondary"}
+                variant={filter === st ? "selected" : "secondary"}
                 size="sm"
                 aria-pressed={filter === st}
                 onClick={() => setFilter(st)}

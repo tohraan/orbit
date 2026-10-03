@@ -86,10 +86,10 @@ export function OpportunityCard({ item }: { item: OpportunitySummary }) {
         <h3 className={`${s.title} clamp-2`}>
           <Link href={`/opportunity/${item.id}`}>{item.title}</Link>
         </h3>
-        <p className={`${s.org} clamp-1`}>
-          {item.sourceName}
-          {item.country ? ` · ${countryLabel(item.country)}` : ""}
-        </p>
+        {/* Step 6.2.3: the publisher is already named as the domain in the row
+            above, so repeating it here spends a line on nothing. Country only,
+            and the line is not rendered at all when there is none. */}
+        {item.country ? <p className={`${s.org} clamp-1`}>{countryLabel(item.country)}</p> : null}
       </div>
 
       {/* who it is for */}
@@ -106,6 +106,8 @@ export function OpportunityCard({ item }: { item: OpportunitySummary }) {
           </Chip>
         ) : null}
       </div>
+
+      <span className={s.spacer} aria-hidden="true" />
 
       {/* the three numbers */}
       <div className={s.metrics}>
@@ -124,7 +126,11 @@ export function OpportunityCard({ item }: { item: OpportunitySummary }) {
             <>
               <span className={s.metricValue}>{longDate(item.deadline)}</span>
               <span>
-                <Chip tone={dl.tone === "urgent" ? "urgent" : dl.tone === "soon" ? "soon" : "quiet"}>{dl.label}</Chip>
+                {/* Step 3.5 thresholds, matching DeadlineIndicator: error at
+                    3 days or fewer, warning at 14 or fewer, neutral beyond. */}
+                <Chip tone={dl.days != null && dl.days <= 3 ? "urgent" : dl.days != null && dl.days <= 14 ? "soon" : "quiet"}>
+                  {dl.label}
+                </Chip>
               </span>
             </>
           ) : (

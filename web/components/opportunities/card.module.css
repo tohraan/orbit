@@ -7,28 +7,24 @@
  * The regions are fixed so that every card in a grid row has its metrics band
  * and its action row on the same line, whatever the source published. */
 
+/* Step 6.2: a column of fixed regions, so every card in a row lands its
+   metrics band and its footer on the same baseline whatever the source
+   published. No shadow at rest and no transform on hover (Step 8.1) — a card
+   that lifts under the cursor is motion spent on nothing. */
 .card {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
-  min-height: var(--card-h);
-  padding: var(--s-5);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  transition: border-color var(--motion-fast) var(--ease), transform var(--motion-fast) var(--ease),
-    box-shadow var(--motion-fast) var(--ease);
+  height: 100%;
+  padding: var(--card-pad);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.card:hover { border-color: var(--color-border-hover); transform: translateY(-1px); box-shadow: var(--shadow-raised); }
-.cardCompared { border-color: var(--color-border-active); box-shadow: 0 0 0 1px var(--color-border-active); }
-.cardCompared:hover { border-color: var(--color-border-active); }
-
-@media (max-width: 639px) {
-  .card { min-height: 0; padding: var(--s-4); gap: var(--s-3); }
-  .card:hover { transform: none; }
-}
+.card:hover { border-color: var(--border-default); background: var(--surface-raised); }
+.cardCompared { border-color: var(--accent-border); }
+.cardCompared:hover { border-color: var(--accent-border); }
 
 /* --- provenance, at the top ------------------------------------------------
    The domain leads, because half this index comes from one aggregator and a
@@ -37,28 +33,25 @@
 .top { display: flex; align-items: center; gap: var(--s-2); justify-content: space-between; flex: none; }
 .origin { display: flex; align-items: center; gap: var(--s-2); min-width: 0; }
 
+/* Provenance reads as provenance, not as a label applied to the listing: it
+   is who is making the claim, so it sits as plain text rather than in a chip
+   that would give it the weight of a status. */
 .domain {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-1);
   max-width: 100%;
-  padding: 4px var(--s-2);
-  border-radius: var(--radius-chip);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-secondary);
-  font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  line-height: 16px;
+  color: var(--text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.age { font-size: var(--text-micro); color: var(--color-text-muted); white-space: nowrap; }
+.age { font-size: 12.5px; line-height: 16px; color: var(--text-tertiary); white-space: nowrap; }
 
 /* --- identity -------------------------------------------------------------- */
-.titleBlock { display: flex; flex-direction: column; gap: var(--s-1); flex: none; }
+.titleBlock { display: flex; flex-direction: column; gap: var(--space-1); flex: none; margin-top: var(--space-3); min-width: 0; }
 
 .title {
   font-size: var(--text-card-title);
@@ -67,13 +60,18 @@
   letter-spacing: -0.006em;
   /* Two lines reserved, so a one-line title does not lift the whole body of
      the card relative to its neighbours. */
-  min-height: calc(var(--lh-card-title) * 2);
+  min-height: 44px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .title:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
 
-.org { font-size: var(--text-body-sm); color: var(--color-text-muted); }
+.org { font-size: 13px; line-height: 18px; color: var(--text-tertiary); }
 
-.tags { display: flex; flex-wrap: wrap; gap: var(--s-2); flex: none; }
+.tags { display: flex; flex-wrap: wrap; gap: var(--space-2); flex: none; margin-top: var(--space-3); }
+/* Step 6.2.5: everything above is identification, everything below is the
+   decision. The spacer is what keeps the two apart at a fixed line. */
+.spacer { flex: 1 1 auto; }
 
 /* --- the three numbers ------------------------------------------------------
    Funding, deadline and fit, measured against each other on one line. This is
@@ -81,26 +79,27 @@
    margin-top:auto pins it, so it lands on the same line on every card. */
 .metrics {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: var(--s-3);
+  grid-template-columns: 1.4fr 1fr auto;
+  gap: var(--space-4);
   align-items: start;
-  margin-top: auto;
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
   flex: none;
 }
 .metric { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 
 .metricLabel {
-  font-size: var(--text-micro);
+  font-size: 11px;
+  line-height: 16px;
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--text-tertiary);
 }
 .metricValue {
-  font-family: var(--font-mono);
-  font-size: var(--text-body);
+  font-size: 15px;
+  line-height: 20px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -108,23 +107,26 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.metricSub { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--color-text-muted); }
-.metricNone { font-size: var(--text-body-sm); color: var(--color-text-muted); font-weight: 400; }
+/* The conversion sits on its own line under the figure, not beside it: two
+   currencies on one line read as one number and are impossible to scan down
+   a column. */
+.metricSub { display: block; font-size: 12px; line-height: 16px; color: var(--text-tertiary); }
+.metricNone { font-size: 14px; line-height: 20px; color: var(--text-tertiary); font-weight: 400; }
 
 /* The fit ring. Only rendered when there is a profile to score against —
    §105, never imply a number we do not have. */
-.ring { position: relative; width: 44px; height: 44px; flex: none; }
+.ring { position: relative; width: 40px; height: 40px; flex: none; }
 .ringSvg { transform: rotate(-90deg); display: block; }
-.ringTrack { stroke: var(--color-surface-muted); }
-.ringFill { stroke: var(--color-action); stroke-linecap: round; }
-.ringLow .ringFill { stroke: var(--color-text-muted); }
+.ringTrack { stroke: var(--border-default); }
+.ringFill { stroke: var(--accent); stroke-linecap: round; }
+.ringLow .ringFill { stroke: var(--text-tertiary); }
 .ringLabel {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  font-family: var(--font-mono);
-  font-size: var(--text-meta);
+  font-size: 13px;
+  line-height: 16px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -135,20 +137,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s-2);
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--color-border);
+  gap: var(--space-2);
+  margin-top: var(--space-4);
   flex: none;
 }
-.actionsRight { display: flex; align-items: center; gap: var(--s-2); }
+.actionsRight { display: flex; align-items: center; gap: var(--space-2); }
 
 .cardLink { position: absolute; inset: 0; border-radius: inherit; z-index: 0; }
 .card > *:not(.cardLink) { position: relative; z-index: 1; }
 
 /* --- grid ------------------------------------------------------------------ */
-.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-6); }
-@media (max-width: 1279px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); } }
-@media (max-width: 767px)  { .grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); } }
+/* Step 7.1 and Step 4.5: equal-height cards, and column counts set by how
+   wide a readable card is rather than by device names. */
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); align-items: stretch; }
+@media (max-width: 1199px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 719px)  { .grid { grid-template-columns: minmax(0, 1fr); } }
 
 /* How many students are interested. Deliberately quiet and in the corner with
    Save rather than among the three metrics: funding, deadline and fit are
@@ -163,11 +166,9 @@
   gap: 3px;
   height: 20px;
   padding-inline: 6px;
-  border-radius: var(--radius-chip);
-  background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-  font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  font-variant-numeric: tabular-nums;
+  border-radius: var(--radius-tag);
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 16px;
 }

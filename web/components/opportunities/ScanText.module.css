@@ -72,4 +72,4 @@
   font-size: var(--text-meta);
 }
 .factLabel { color: var(--color-text-muted); }
-.factValue { font-family: var(--font-mono); font-weight: 600; color: var(--color-text-primary); }
+.factValue { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--color-text-primary); }
