@@ -28,6 +28,7 @@
 import { countryLabel, daysUntil } from "./format";
 import { fundingBucket } from "./query";
 import type { OpportunitySummary } from "./types";
+import { mentions } from "./dossier";
 
 export type StudentProfile = {
   level: string;
@@ -129,7 +130,18 @@ export function score(item: OpportunitySummary, profile: StudentProfile): MatchR
       reasons.push({ factor: "field", label: "Your fields are not set", points: 0, of: w, unknown: true });
     } else {
       const hay = `${item.title ?? ""} ${item.summary ?? ""} ${item.fields.join(" ")}`.toLowerCase();
-      const hits = mine.filter((t) => hay.includes(t));
+      /* mentions() rather than hay.includes(), for two reasons that are really
+       * one: what we promise has to be what we deliver.
+       *
+       * The Dossier tells a student "artificial intelligence — 4 listings",
+       * having counted listings that say "AI" or "LLM". If the matcher then
+       * looked for the literal string "artificial intelligence" it would find
+       * one of them, and the student would have been told a number we did not
+       * honour. The same expansion therefore runs on both sides.
+       *
+       * It also stops substring matches: "design" no longer scores against
+       * "designing", and a two-letter field like "ai" cannot match "Dubai". */
+      const hits = mine.filter((t) => mentions(hay, t));
       if (hits.length) {
         /* Diminishing returns: two matching terms is much better than one,
          * four is not twice as good as two. */

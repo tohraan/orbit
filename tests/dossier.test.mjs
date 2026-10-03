@@ -140,4 +140,168 @@ assert.equal(new Set(DOC_KINDS).size, DOC_KINDS.length, "duplicate doc kind");
   }
 }
 
+/* ------------------------------------------- the bugs real CVs exposed ----
+ *
+ * Every assertion below is a regression. The synthetic CV above passed while
+ * all of these were broken, because it was written by the same person as the
+ * extractor and used the vocabulary the extractor already knew. Five real CVs
+ * from one student found two terms between them. */
+{
+  /* 1. SHORT FORMS. One real CV said "AI" 13 times, "LLM" 4 and "NLP" once,
+   *    and never wrote "artificial intelligence" or "machine learning" — so
+   *    the loudest thing on the page was invisible. */
+  const ai = extract("Building production-grade AI systems and LLM routing pipelines.", reach);
+  assert.ok(
+    ai.terms.some((t) => t.term === "artificial intelligence"),
+    "a CV that only ever writes the short form must still be read",
+  );
+
+  /* 2. WHOLE WORDS. "Designing market signal pipelines" reported Design as a
+   *    finding — from a verb. And a two-letter alias under substring matching
+   *    would match Dubai, email, detail. */
+  const verb = extract("Designing market signal pipelines and real-time data architecture.", reach);
+  assert.ok(!verb.terms.some((t) => t.term === "design"), "a verb was read as a discipline");
+  const dubai = extract("Contact me in Dubai for retail email detail.", reach);
+  assert.ok(
+    !dubai.terms.some((t) => t.term === "artificial intelligence"),
+    "the 'ai' alias matched inside another word",
+  );
+  const real = extract("Research in human-computer interaction and product design.", reach);
+  assert.ok(real.terms.some((t) => t.term === "design"), "a genuine mention of the discipline was lost");
+
+  /* 3. DEGREE ABBREVIATIONS. /\bb\.?\s?e\b/ cannot match "B.Eng." — the \b
+   *    after "e" fails with "n" following — so three of five real CVs
+   *    reported no level while stating one on line four. */
+  for (const [text, want] of [
+    ["B.Eng. Computer Science, BITS Pilani", "bachelors"],
+    ["B.Tech in Mechanical Engineering", "bachelors"],
+    ["M.Sc. Data Science", "masters"],
+    ["M.Eng. Robotics", "masters"],
+    ["Ph.D. candidate", "phd"],
+  ]) {
+    assert.equal(extract(text, reach).level?.value, want, `degree not read from "${text}"`);
+  }
+
+  /* 4. GRADUATION. Two separate failures, both from real layouts.
+   *    (a) "Aug 2024 - May 2027 (Expected)" — the combined cue+year pattern
+   *        matched starting at 2024, SWALLOWING 2027, so the one plausible
+   *        year on the page never got its own turn.
+   *    (b) Four of five CVs never write "Expected" at all; they put a range on
+   *        the education line and leave it to the reader. */
+  assert.equal(
+    extract("BITS Pilani, Dubai Campus Aug 2024 – May 2027 (Expected)", reach).graduation,
+    "2027",
+    "the later year in a range was swallowed by the earlier one",
+  );
+  assert.equal(
+    extract("B.Eng. Computer Science\nBITS Pilani, Dubai Campus Aug 2024 – May 2027", reach).graduation,
+    "2027",
+    "a range on an education line, with no cue word, should still be read",
+  );
+  /* But a project range must NOT become a graduation date. */
+  assert.equal(
+    extract("Trading Edge – Retail Terminal 2024 – 2027\nBuilt a platform.", reach).graduation,
+    null,
+    "a project date range was mistaken for a graduation",
+  );
+
+  /* 5. THE SPELLING REPORTED BACK. A CV saying "AI" 13 times and "agentic"
+   *    twice is about AI; naming it "agentic" because that string is longer
+   *    describes the document back to the student incorrectly. */
+  const dom = extract("AI. AI. AI. AI. Agentic systems.", reach);
+  const hit = dom.terms.find((t) => t.term === "artificial intelligence");
+  assert.equal(hit?.matched, "ai", "reported the longest spelling rather than the one actually leaned on");
+  assert.ok(hit.hits >= 5, "occurrences across spellings were not totalled");
+
+  /* 6. EVIDENCE IS NEVER THE CONTACT LINE. */
+  const ev = extract(
+    "tohraan@gmail.com | +971 58 571 8144 | linkedin.com/in/x\nResearch in public health policy across three states.",
+    reach,
+  );
+  for (const t of ev.terms) assert.ok(!/@|linkedin|\+971/.test(t.evidence), "quoted the contact line as evidence");
+}
+
+/* --------------------------------------------- the promise must be kept ----
+ *
+ * The Dossier tells a student "artificial intelligence — N listings", having
+ * counted listings that say "AI" or "LLM". If the matcher looked for the
+ * literal string instead, the student would have been told a number we do not
+ * honour. Both sides must run the same expansion.
+ *
+ * match.ts cannot be imported here — it has extensionless relative imports
+ * that node's type stripping will not resolve — so this asserts the two halves
+ * another way: that reach and the matcher's own field expression agree on real
+ * data, and that match.ts is in fact calling the shared primitive rather than
+ * substring matching. The second guard is what stops the first from becoming a
+ * test of a copy. */
+{
+  const { mentions, listingHaystack } = await import("../packages/core/src/dossier.ts");
+  const { readFileSync } = await import("node:fs");
+  const { fileURLToPath } = await import("node:url");
+  const here = fileURLToPath(new URL(".", import.meta.url));
+
+  const src = readFileSync(here + "../packages/core/src/match.ts", "utf8");
+  assert.ok(
+    /import \{[^}]*\bmentions\b[^}]*\} from "\.\/dossier"/.test(src),
+    "match.ts no longer imports mentions() — field scoring has drifted from the reach the Dossier promises",
+  );
+  assert.ok(
+    /mine\.filter\(\(t\) => mentions\(hay, t\)\)/.test(src),
+    "match.ts field scoring is not using mentions()",
+  );
+
+  for (const term of ["artificial intelligence", "computer science", "design"]) {
+    const promised = reach.get(term) ?? 0;
+    const delivered = items.filter((o) => mentions(listingHaystack(o), term)).length;
+    assert.equal(delivered, promised, `reach promises ${promised} for "${term}" but matching finds ${delivered}`);
+  }
+  console.log("\npromise check: reach and the matcher agree on every term tried");
+}
+
+/* -------------------------------------------------- a real CV, end to end
+ *
+ * Modelled on the genuine BITS Pilani Dubai résumé that exposed all of the
+ * above — the first version read two things out of it, one of which was wrong.
+ * Contact details are replaced; the LAYOUT is what this fixture is for (a
+ * dense one page, contact header, shouted section headings, bulleted project
+ * entries, a skills table), not whose CV it is.
+ * Asserted as a FLOOR rather than an exact list, so the vocabulary can keep
+ * growing without the test becoming a chore to update — but it can never
+ * quietly collapse back to two again. */
+{
+  const { readFileSync } = await import("node:fs");
+  const { fileURLToPath } = await import("node:url");
+  const here = fileURLToPath(new URL(".", import.meta.url));
+  const pdfjs = await import(here + "../node_modules/pdfjs-dist/legacy/build/pdf.mjs");
+  const { textFromItems } = await import("../packages/core/src/dossier.ts");
+
+  const data = new Uint8Array(readFileSync(here + "fixtures/dossier/real-cv.pdf"));
+  const doc = await pdfjs.getDocument({ data, isEvalSupported: false }).promise;
+  let text = "";
+  for (let i = 1; i <= doc.numPages; i++) {
+    text += textFromItems((await (await doc.getPage(i)).getTextContent()).items) + "\n";
+  }
+
+  const r = extract(text, reach);
+  console.log(`\nreal CV: ${text.length} chars -> ${r.terms.length} terms, level=${r.level?.value}, grad=${r.graduation}`);
+
+  assert.ok(r.terms.length >= 6, `only ${r.terms.length} terms from a dense real CV — it used to find 2`);
+  assert.equal(r.level?.value, "bachelors", "B.Eng. on line four was not read");
+  assert.equal(r.graduation, "2027");
+  assert.ok(
+    r.terms.some((t) => t.term === "artificial intelligence"),
+    "a CV about AI, saying so 30+ times, did not report AI",
+  );
+  assert.ok(r.terms.some((t) => t.term === "computer science"));
+  /* The original false positive: Design, from the verb "Designing". It may
+   * legitimately appear now via "interface design", but never alone from a
+   * verb — so if it is present it must carry evidence that is not the verb. */
+  const design = r.terms.find((t) => t.term === "design");
+  if (design) assert.ok(!/^Designing/.test(design.evidence), "Design is still coming from the verb");
+  for (const t of r.terms) {
+    assert.ok(t.reach > 0, `${t.term} offered with no reach`);
+    assert.ok(t.hits > 0, `${t.term} offered with no occurrences`);
+  }
+}
+
 console.log("\nall assertions passed");

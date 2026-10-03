@@ -371,8 +371,16 @@ function ReviewPanel({
                       </span>
                       {had ? <Chip tone="quiet">Already added</Chip> : null}
                     </span>
-                    {t.matched !== t.term ? (
-                      <span className={s.termMatched}>your document says “{t.matched}”</span>
+                    {/* How hard the document leans on it. A CV saying "AI"
+                        thirty times is making a claim; one that says it once is
+                        mentioning it, and the student is the right person to
+                        judge which. */}
+                    {t.matched !== t.term || t.hits > 1 ? (
+                      <span className={s.termMatched}>
+                        {t.matched !== t.term ? `your document says “${t.matched}”` : ""}
+                        {t.matched !== t.term && t.hits > 1 ? " · " : ""}
+                        {t.hits > 1 ? `${t.hits} mentions` : ""}
+                      </span>
                     ) : null}
                     {t.evidence ? <span className={s.evidence}>“{t.evidence}”</span> : null}
                   </span>
