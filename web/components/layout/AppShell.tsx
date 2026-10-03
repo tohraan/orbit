@@ -22,6 +22,7 @@ import { AuthProvider } from "@/lib/auth";
 import { GateProvider } from "@/lib/gate";
 import { ConsentBanner, SessionNotice } from "../consent/Consent";
 import { AuthWall } from "../auth/AuthWall";
+import { DemoBanner } from "../auth/DemoBanner";
 import { OnboardingOverlay } from "../auth/Onboarding";
 
 /* Routes that get the page and nothing else — no rail, no header, no trays.
@@ -75,6 +76,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <CompareTray />
         <MobileNav />
         <CommandPalette open={open} onClose={() => setOpen(false)} />
+        <DemoBanner />
         <SessionNotice />
         <ConsentBanner />
         <OnboardingOverlay />

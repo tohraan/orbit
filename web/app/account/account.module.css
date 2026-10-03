@@ -189,3 +189,20 @@
      something is still happening, and a frozen one says the opposite. It is
      a 22px rotation in the centre of the panel, not motion across the page. */
 }
+
+/* Judge mode (lib/demo.ts). Set apart from the form by a rule and a tint so a
+ * student does not read it as a third way to sign in, and only rendered when
+ * NEXT_PUBLIC_DEMO_MODE=1. */
+.judge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+  padding-top: var(--s-5);
+  border-top: 1px dashed var(--color-border);
+}
+.judgeLabel {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}

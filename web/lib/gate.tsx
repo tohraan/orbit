@@ -24,6 +24,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "./auth";
+import { useDemo } from "./demo";
 import g from "./gate.module.css";
 import { Icon, type IconName } from "@/components/ui/Icon";
 
@@ -81,15 +82,21 @@ export const useGate = () => useContext(GateCtx);
 
 export function GateProvider({ children }: { children: React.ReactNode }) {
   const { status, configured } = useAuth();
+  const { demo, ready: demoReady } = useDemo();
   const pathname = usePathname();
   const [action, setAction] = useState<GatedAction | null>(null);
 
   const signedIn = status === "signed-in";
-  const pending = status === "loading";
+  const pending = status === "loading" || !demoReady;
 
   /* With no Supabase credentials there is no sign-in to send anyone to, so the
-   * gate would be a dead end. A build without accounts stays fully open. */
-  const enforced = configured;
+   * gate would be a dead end. A build without accounts stays fully open.
+   *
+   * Judge mode (lib/demo.ts) is the same shape of exemption for the same
+   * reason: a reviewer who cannot hold a campus account cannot be sent to the
+   * campus sign-in, so offering it would be the dead end again. Their saved
+   * list and tracker land in the per-browser path in lib/store.ts. */
+  const enforced = configured && !demo;
 
   const open = useCallback((a: GatedAction) => setAction(a), []);
 
