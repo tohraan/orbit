@@ -24,10 +24,24 @@ additional_redirect_urls = [
   "http://localhost:3100/account",
 ]
 
-# Reviewers must be able to create an account and land in the portal in one
-# step. Supabase's built-in SMTP delivers only to organisation members and is
-# rate-limited, so leaving confirmations on would strand everyone else on
-# "check your inbox" for mail that never arrives.
 [auth.email]
+
+# Sign-up returns NO session while confirmations are on: the student is told to
+# check an inbox, and Supabase's built-in SMTP is rate-limited and on newer
+# projects delivers only to members of the Supabase organisation. So for
+# everyone else "check your inbox" never resolves and the portal cannot be
+# entered at all.
+#
+# THE TRADE, stated plainly: without confirmation, someone can register a campus
+# address they do not own. What still holds is that it must BE a campus address
+# (db/019 enforces that in the database), and that row-level security — which
+# does not care how anyone signed up — is what guards the data. For a campus
+# portal with per-user RLS that is an acceptable trade. BEFORE THIS CARRIES
+# ANYTHING SENSITIVE, configure real SMTP and set this back to true.
 enable_confirmations = false
+
+# One attempt a minute produced "For security purposes, you can only request
+# this after 40 seconds" for a student who simply mistyped their password and
+# tried again — and at a demo, several people share one network. Ten seconds
+# still blocks scripted abuse without punishing a typo.
 max_frequency = "10s"
