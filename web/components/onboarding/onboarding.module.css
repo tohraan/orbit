@@ -184,8 +184,21 @@
 .cardTitle { font-size: 15px; font-weight: 600; line-height: 1.3; color: var(--text-primary); }
 .cardDesc { font-size: 13px; line-height: 1.5; color: var(--text-secondary, var(--color-text-secondary)); }
 
-/* ------------------------------------------------------------------ field --- */
-.field { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; animation: stepIn 240ms var(--ease) both; }
+/* ------------------------------------------------------------------ field ---
+   The z-index dance below is load-bearing, and the reason is not obvious.
+
+   `stepIn` animates `transform`, and a transformed element creates its own
+   STACKING CONTEXT. So a Select's drop-down — absolutely positioned with
+   z-index 60 — is sealed inside the field that owns it: that z-index can only
+   rank it against its own siblings, never against the next field down the
+   form. The containing fields then paint in DOM order, so the Phone field drew
+   straight through an open Degree list and both were unreadable.
+
+   Raising the open field itself is what lets the list escape. `:has()` is the
+   only way to know a descendant is open without lifting that state into React
+   and threading it through every control. */
+.field { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; position: relative; animation: stepIn 240ms var(--ease) both; }
+.field:has([aria-expanded="true"]) { z-index: 60; }
 .fieldLabel { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 .fieldHint { font-size: 12px; line-height: 1.5; color: var(--text-tertiary, var(--color-text-muted)); }
 

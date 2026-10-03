@@ -19,11 +19,16 @@
 
 /* Two controls side by side on the optional last step. One column on a phone,
    because two dropdowns at 360px leave neither enough room for its label. */
+/* Same reason as .field in the onboarding system: the row is a stacking
+   context of its own once its children animate, so it has to be raised too or
+   an open drop-down inside it is still trapped one level up. */
 .row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
+  position: relative;
 }
+.row:has([aria-expanded="true"]) { z-index: 60; }
 
 .privacy {
   font-size: 12px;

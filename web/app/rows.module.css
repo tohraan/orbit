@@ -209,3 +209,7 @@
 }
 .dAsideLink { color: var(--accent-text); font-weight: 500; }
 .dAsideLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* The list/board switch. Grouped tightly so the two read as one control, and
+   separated from the status filters beside it. */
+.viewSwitch { display: inline-flex; gap: var(--space-1, 4px); margin-right: var(--space-3); }
