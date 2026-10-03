@@ -31,7 +31,7 @@ import { useToast } from "@/components/feedback/Toast";
 import { useAuth } from "@/lib/auth";
 import { useConsent } from "@/components/consent/Consent";
 import { EMPTY_PROFILE, useProfile, useSaved, useTracker, type Profile } from "@/lib/data";
-import { completeness, nextPhase, phaseStates } from "@/lib/completeness";
+import { PHASES, completeness, nextPhase, phaseStates } from "@/lib/completeness";
 import { RATES_AS_OF } from "@rof/core";
 
 const DEGREES = [
@@ -146,7 +146,10 @@ export default function ProfilePage() {
 
             {pct < 100 ? (
               <div className={s.cta}>
-                <ButtonLink href={`/welcome?from=${next?.id ?? "you"}`} variant="primary" size="lg" iconAfter="arrow-right">
+                {/* `next` is null only when every scored phase is done, so the
+                    fallback is the first phase rather than a phase id that no
+                    longer exists — PHASES is the only list of those. */}
+                <ButtonLink href={`/welcome?from=${next?.id ?? PHASES[0].id}`} variant="primary" size="lg" iconAfter="arrow-right">
                   {pct === 0 ? "Start setup" : "Continue setup"}
                 </ButtonLink>
                 <p className={s.note}>
@@ -168,22 +171,26 @@ export default function ProfilePage() {
                     key={ph.id}
                     className={[s.phase, isNext ? s.phaseNext : null].filter(Boolean).join(" ")}
                   >
+                    {/* A phase with no required fields is never "done" — there
+                        was nothing to finish. It reports `complete` so the
+                        nag logic skips it, but showing a tick would claim the
+                        student answered something they were never asked. */}
                     <span
                       className={[
                         s.phaseIcon,
-                        ph.complete ? s.phaseIconDone : isNext ? s.phaseIconNext : null,
+                        ph.total > 0 && ph.complete ? s.phaseIconDone : isNext ? s.phaseIconNext : null,
                       ].filter(Boolean).join(" ")}
                     >
-                      <Icon name={ph.complete ? "check" : (ph.icon as IconName)} size={16} />
+                      <Icon name={ph.total > 0 && ph.complete ? "check" : (ph.icon as IconName)} size={16} />
                     </span>
                     <span className={s.phaseBody}>
                       <span className={s.phaseTitle}>{ph.title}</span>
                       <span className={s.phaseBlurb}>{ph.blurb}</span>
-                      {!ph.complete ? <span className={s.phasePayoff}>{ph.payoff}</span> : null}
+                      {!ph.complete || ph.total === 0 ? <span className={s.phasePayoff}>{ph.payoff}</span> : null}
                     </span>
                     <span className={s.phaseTail}>
                       <span className={s.phaseCount}>
-                        {ph.done}/{ph.total}
+                        {ph.total > 0 ? `${ph.done}/${ph.total}` : "Optional"}
                       </span>
                       <Icon name="chevron-right" size={16} />
                     </span>

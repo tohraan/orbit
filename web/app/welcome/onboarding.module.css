@@ -1,99 +1,261 @@
-/* Onboarding. Three short steps rather than one long form: §56 asks for
-   progressive disclosure, and a student who meets fourteen fields at once
-   fills in none of them.
+/* Onboarding.
+ *
+ * The one place in the product where transform animation is allowed (see the
+ * header of page.tsx). Everything here is entry or hover, nothing loops, and
+ * the whole file is switched off under prefers-reduced-motion at the bottom.
+ *
+ * The budget is the product's own: 150ms on hover, matching what the rest of
+ * the app spends on a colour change, and a 2px lift — enough to feel like the
+ * card answered you, too small to shift what you were aiming at.
+ */
 
-   Every step is skippable on purpose. The matcher degrades honestly when a
-   field is missing (packages/core/src/match.ts reports confidence), so a
-   half-finished profile still produces a usable product — which is a better
-   trade than a wall that has to be climbed before the portal does anything. */
+.shell { max-width: 720px; margin-inline: auto; }
+.embedded { width: 100%; }
 
-.shell { max-width: 680px; margin-inline: auto; }
-
-.intro { display: flex; flex-direction: column; gap: var(--s-2); margin-bottom: var(--s-7); }
-
-.progress { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-6); }
-.track { flex: 1 1 auto; height: 4px; border-radius: var(--radius-bar); background: var(--color-surface-muted); overflow: hidden; }
-/* No transition: the flow is deliberately unanimated (see page.tsx). A bar
-   that eases to its new width is the one moving thing in a form, and it draws
-   the eye away from the question being asked. */
-.fill { display: block; height: 100%; border-radius: var(--radius-bar); background: var(--color-action); }
-.pct {  font-size: var(--text-meta); color: var(--color-text-muted); font-variant-numeric: tabular-nums; flex: none; }
-
+/* ------------------------------------------------------------------ card ---
+ * One surface holding the whole flow, so the step changes inside a frame that
+ * does not move. A card that resized per step made the footer jump, which is
+ * the one piece of chrome the student is aiming at.
+ */
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
-  padding: var(--s-8) var(--s-6);
-  background: var(--color-surface);
+  padding: var(--s-6);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
 }
-@media (max-width: 639px) { .card { padding: var(--s-6) var(--s-5); } }
+.embedded .card { margin: 0; max-width: none; border: 0; padding: var(--s-5); }
 
-/* Named steps rather than "Step 2 of 3": a label tells you what is being
-   asked, a number only tells you how much is left. */
-.stepRow { display: flex; flex-wrap: wrap; gap: var(--s-2); padding-bottom: var(--s-4); border-bottom: 1px solid var(--color-border); }
+/* ------------------------------------------------------------------ rail ---
+ * Dots, not named tabs. Four step names across the top competed with the
+ * question itself for the eye, and the name of the current step is already the
+ * heading directly beneath.
+ */
+.rail { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); }
+.dots { display: flex; align-items: center; gap: var(--s-2); }
 
-.stepPip {
-  font-size: var(--text-micro);
+.dot {
+  width: 28px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+  border: 0;
+  cursor: pointer;
+  transition: background 150ms var(--ease), width 150ms var(--ease);
+}
+.dot:hover { background: var(--color-border-active); }
+.dotDone { background: var(--color-link); opacity: 0.45; }
+.dotOn { width: 44px; background: var(--color-action); }
+
+.count {
+  flex: none;
+  font-size: var(--text-meta);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+/* The qualifier matters: 100% here means "everything the ranking reads", not
+   "every field exists". Saying only "100%" would promise a filled profile. */
+.countLabel { font-weight: 400; color: var(--color-text-muted); }
+
+/* ------------------------------------------------------------------ head --- */
+.head { display: flex; flex-direction: column; gap: var(--s-2); animation: rise 260ms var(--ease) both; }
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--text-meta);
+  font-weight: 500;
   color: var(--color-text-muted);
-  padding: 5px var(--s-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
-.stepPipOn { color: var(--color-action-text); background: var(--color-action); }
-.stepPipDone { color: var(--color-link); border-color: var(--color-border); }
+/* What this step buys, stated next to the step number. A question with a
+   stated payoff gets answered; one without reads as data collection. */
+.weight {
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-link);
+  font-weight: 600;
+}
 
-.row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
-@media (max-width: 639px) { .row { grid-template-columns: minmax(0, 1fr); } }
+.title { font-size: var(--text-section, 22px); font-weight: 650; line-height: 1.25; letter-spacing: -0.01em; }
+.sub { font-size: var(--text-body-sm); color: var(--color-text-secondary); line-height: 1.55; max-width: 56ch; }
 
-.field { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
-.label { font-size: var(--text-body-sm); font-weight: 500; }
-.hint { font-size: var(--text-meta); color: var(--color-text-muted); }
+/* ------------------------------------------------------------------ body --- */
+.body { display: flex; flex-direction: column; gap: var(--s-5); min-height: 240px; }
 
-.input {
-  height: var(--control-md);
-  padding-inline: var(--s-3);
+/* ----------------------------------------------------------- choice cards ---
+ * The opening question. Two columns on a desktop, one on a phone — the same
+ * shape either way, so the thing being chosen does not change between devices.
+ */
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
+
+.choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-nested);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  font-size: var(--text-body-sm);
-  color: var(--color-text-primary);
-  width: 100%;
+  cursor: pointer;
+  /* Staggered entry: --i is set per card in the JSX, so they arrive in
+     sequence rather than as one block. 40ms apart reads as deliberate; more
+     reads as slow. */
+  animation: rise 300ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+  transition:
+    border-color 150ms var(--ease),
+    background 150ms var(--ease),
+    box-shadow 150ms var(--ease),
+    transform 150ms var(--ease);
 }
-.input:focus { outline: 2px solid var(--color-action); outline-offset: 2px; border-color: var(--color-border-active); }
+.choice:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-active);
+  box-shadow: var(--shadow-raised, 0 6px 20px rgb(0 0 0 / 8%));
+}
+.choice:active { transform: translateY(0); }
+.choice:focus-visible { outline: 2px solid var(--color-action); outline-offset: 2px; }
 
-.chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
-.chip {
-  height: var(--control-md);
-  padding-inline: var(--s-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  font-size: var(--text-body-sm);
+.choiceOn {
+  border-color: var(--color-action);
+  background: var(--color-action-soft, color-mix(in srgb, var(--color-action) 8%, transparent));
+}
+/* Selection must survive a colourblind reading and a greyscale print, so it is
+   carried by the border, the tint AND the tick — never by hue alone. */
+.choiceOn .choiceMark { background: var(--color-action); color: var(--color-action-text); }
+.choiceOn .choiceTick { opacity: 1; transform: scale(1); }
+
+.choiceMark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
   color: var(--color-text-secondary);
-  transition: background var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+  transition: background 150ms var(--ease), color 150ms var(--ease);
 }
-.chip:hover { border-color: var(--color-border-active); color: var(--color-link); }
-.chipOn { background: var(--color-action); border-color: var(--color-action); color: var(--color-action-text); }
 
-.foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding-top: var(--s-5); border-top: 1px solid var(--color-border); flex-wrap: wrap; }
-.footRight { display: flex; gap: var(--s-2); }
+.choiceText { display: flex; flex-direction: column; gap: var(--s-1); }
+.choiceLabel { font-size: var(--text-body); font-weight: 600; }
+.choiceBlurb { font-size: var(--text-meta); color: var(--color-text-secondary); line-height: 1.5; }
+
+.choiceTick {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-3);
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-action);
+  color: var(--color-action-text);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 150ms var(--ease), transform 150ms var(--ease);
+}
+
+/* ---------------------------------------------------------- option rows ---
+ * The funding question. A row rather than a chip, because each answer carries
+ * a clarifying line — "Fully funded only" and "Tuition and living costs
+ * covered" together are what make the choice unambiguous.
+ */
+.options { display: flex; flex-direction: column; gap: var(--s-2); }
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--s-3) var(--s-4);
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-nested);
+  background: var(--color-surface);
+  cursor: pointer;
+  animation: rise 260ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 35ms);
+  transition:
+    border-color 150ms var(--ease),
+    background 150ms var(--ease),
+    transform 150ms var(--ease);
+}
+.option:hover { transform: translateX(2px); border-color: var(--color-border-active); }
+.option:focus-visible { outline: 2px solid var(--color-action); outline-offset: 2px; }
+.optionOn { border-color: var(--color-action); background: var(--color-action-soft, color-mix(in srgb, var(--color-action) 8%, transparent)); }
+.optionOn .optionLabel { color: var(--color-link); }
+
+.optionLabel { font-size: var(--text-body-sm); font-weight: 600; }
+.optionHint { font-size: var(--text-meta); color: var(--color-text-muted); }
+
+/* ----------------------------------------------------------------- fields --- */
+.row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+.field { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; animation: rise 260ms var(--ease) both; }
+.label { font-size: var(--text-body-sm); font-weight: 600; }
+.hint { font-size: var(--text-meta); color: var(--color-text-muted); line-height: 1.5; }
 
 .privacy {
-  padding: var(--s-4);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
   font-size: var(--text-meta);
-  line-height: 1.55;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  padding: var(--s-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
 }
 
-/* Embedded in the first-run overlay: the card is the whole presentation, so
-   it drops the page shell's own width cap and vertical padding. */
-.embedded { width: 100%; }
-.embedded .card { margin: 0; max-width: none; }
+/* ------------------------------------------------------------------ foot --- */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+/* `margin-left: auto` rather than relying on space-between, so the footer sits
+   correctly whether or not a Back button is rendered to its left. */
+.footRight { display: flex; align-items: center; gap: var(--s-3); margin-left: auto; }
+
+/* Quiet, but never absent. A flow with no exit is one people leave by the
+   browser's back button, which discards the answers they HAD given. */
+.skip {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color 150ms var(--ease);
+}
+.skip:hover { color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  .cards { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 1fr; }
+  .card { padding: var(--s-4); }
+  .body { min-height: 0; }
+}
+
+/* The whole motion layer, removed. Not softened — removed: a student who has
+   asked their OS for no motion has not asked for less of it. */
+@media (prefers-reduced-motion: reduce) {
+  .head, .choice, .option, .field { animation: none; }
+  .choice:hover, .option:hover { transform: none; }
+  .choice, .option, .dot, .choiceMark, .choiceTick, .skip { transition: none; }
+}
