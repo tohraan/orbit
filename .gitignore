@@ -14,3 +14,4 @@ ui/opportunities.json
 # (tests/fixtures/dossier/real-cv.pdf) is a redacted copy with the same layout;
 # the originals carry a real phone number and email and must not be committed.
 tests/fixtures/dossier/*.original.pdf
+.vercel
