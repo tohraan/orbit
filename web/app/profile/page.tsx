@@ -28,6 +28,7 @@ import { CampusEmail, PhoneField, Select, TagPicker } from "@/components/ui/Fiel
 import { BentoSkeleton } from "@/components/feedback/Skeletons";
 import { useToast } from "@/components/feedback/Toast";
 import { useAuth } from "@/lib/auth";
+import { useConsent } from "@/components/consent/Consent";
 import { EMPTY_PROFILE, useProfile, useSaved, useTracker, type Profile } from "@/lib/data";
 import { completeness, nextPhase, phaseStates } from "@/lib/completeness";
 import { RATES_AS_OF } from "@rof/core";
@@ -60,6 +61,7 @@ export default function ProfilePage() {
   const { saved, clear: clearSaved } = useSaved();
   const { entries, clear: clearTracker } = useTracker();
   const { status, user, signOut, configured } = useAuth();
+  const consent = useConsent();
   const toast = useToast();
 
   const [draft, setDraft] = useState<Profile>(EMPTY_PROFILE);
@@ -320,6 +322,24 @@ export default function ProfilePage() {
                 Clear applications
               </Button>
             </div>
+          </div>
+
+          {/* The one consent choice this product actually has, where the
+              banner's "Change later" points. */}
+          <div className={s.card}>
+            <h2 className="t-section">Counting</h2>
+            <p className={s.note}>
+              Opportunity cards show how many students saved each listing. The total never names anyone, and it is
+              only shown once at least three students are interested.
+            </p>
+            <label className={s.consentRow}>
+              <input
+                type="checkbox"
+                checked={consent.counted}
+                onChange={(e) => void consent.set(e.target.checked ? "all" : "essential")}
+              />
+              <span>Include me in that count</span>
+            </label>
           </div>
 
           <div className={s.card}>

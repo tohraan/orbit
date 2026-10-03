@@ -149,3 +149,25 @@
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-6); }
 @media (max-width: 1279px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); } }
 @media (max-width: 767px)  { .grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); } }
+
+/* How many students are interested. Deliberately quiet and in the corner with
+   Save rather than among the three metrics: funding, deadline and fit are
+   facts about the opportunity, this is a fact about other people, and giving
+   it equal weight would say that what everyone else is doing matters as much
+   as whether you can afford it. */
+.topRight { display: flex; align-items: center; gap: var(--s-2); flex: none; }
+
+.interest {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  padding-inline: 6px;
+  border-radius: var(--radius-chip);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
+}

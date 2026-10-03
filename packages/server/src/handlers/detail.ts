@@ -6,8 +6,9 @@
  * whether the row exists but was filtered out -- it isn't in the student
  * finder either way. */
 
-import { fail, json, limited, CACHE_STATIC } from "../api";
+import { CACHE_LIST, fail, json, limited } from "../api";
 import { getIndex } from "../source";
+import { getInterest, withInterest } from "../interest";
 
 
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -20,7 +21,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   }
 
   try {
-    const index = await getIndex();
+    const [index, interest] = await Promise.all([getIndex(), getInterest()]);
     const item = index.byId.get(Number(raw));
     if (!item) return fail(404, "not_found", "That opportunity is no longer in the index.");
 
@@ -32,7 +33,13 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       .slice(0, 3)
       .map((o) => ({ id: o.id, title: o.title, deadline: o.deadline, type: o.type }));
 
-    return json({ item, related, origin: index.origin }, {}, CACHE_STATIC);
+    const [withCount] = withInterest([item], interest);
+    /* CACHE_LIST, not CACHE_STATIC. The prose on this page is static and used
+     * to earn a ten-minute shared cache, but the response now carries the
+     * interest count, which moves whenever anyone saves the listing. A student
+     * who saves something and watches the number sit still for ten minutes
+     * concludes the save did not work. */
+    return json({ item: withCount, related, origin: index.origin }, {}, CACHE_LIST);
   } catch (err) {
     return fail(500, "detail_failed", "This opportunity could not be loaded right now.", err);
   }

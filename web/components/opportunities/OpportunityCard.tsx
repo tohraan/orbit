@@ -66,7 +66,19 @@ export function OpportunityCard({ item }: { item: OpportunitySummary }) {
           </span>
           {item.postedAt ? <span className={s.age}>· {relativeTime(item.postedAt)}</span> : null}
         </span>
-        <SaveButton id={item.id} title={item.title} />
+        <span className={s.topRight}>
+          {/* Social proof, and only when it is real. The server withholds any
+              count below MIN_VISIBLE, so this renders nothing rather than
+              "1 interested" — which on one campus is close to naming them, and
+              reads as nobody caring either way. */}
+          {item.interest ? (
+            <span className={s.interest} title={`${item.interest} students have saved or are tracking this`}>
+              <Icon name="user" size={12} />
+              {item.interest}
+            </span>
+          ) : null}
+          <SaveButton id={item.id} title={item.title} />
+        </span>
       </div>
 
       {/* what it is */}

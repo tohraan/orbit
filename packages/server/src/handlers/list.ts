@@ -11,6 +11,7 @@ import { fail, json, limited } from "../api";
 import { facets, filter, isFiltered, page, parseQuery, sort, toSummary } from "@rof/core";
 import type { ListResponse } from "@rof/core";
 import { getIndex } from "../source";
+import { getInterest, withInterest } from "../interest";
 
 
 export async function GET(req: Request) {
@@ -20,13 +21,16 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const q = parseQuery(url.searchParams);
-    const index = await getIndex();
+    /* Two caches, two lifetimes: the index turns over when a scrape runs, the
+     * counts when anyone saves anything. Fetched together so the page still
+     * costs one round trip. */
+    const [index, interest] = await Promise.all([getIndex(), getInterest()]);
 
     const matched = sort(filter(index.items, q), q);
     const { slice, page: current, pageCount } = page(matched, q);
 
     const body: ListResponse & { query: typeof q; filtered: boolean } = {
-      items: slice.map(toSummary),
+      items: withInterest(slice.map(toSummary), interest),
       total: matched.length,
       page: current,
       pageSize: q.pageSize,

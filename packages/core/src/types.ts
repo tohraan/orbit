@@ -45,6 +45,11 @@ export type OpportunitySummary = {
   summary: string | null;
   fields: string[];
   hasDetail: boolean;
+  /* How many students have shown interest, or null when too few have for the
+   * number to be worth showing. See MIN_VISIBLE in server/interest.ts: on one
+   * campus, "1 student is interested" is close to naming them. Optional
+   * because the offline snapshot carries no counts. */
+  interest?: number | null;
 };
 
 /** Everything on the detail page. */

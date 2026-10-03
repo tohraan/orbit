@@ -23,6 +23,7 @@
 import { CACHE_LIST, fail, json, limited } from "../api";
 import { MAX_PAGE_SIZE, daysUntil, facets, parseQuery, sort, toSummary } from "@rof/core";
 import { getIndex } from "../source";
+import { getInterest, withInterest } from "../interest";
 
 
 export async function GET(req: Request) {
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
     const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(sp.get("limit") ?? "12", 10) || 12));
     const savedIds = base.ids;
 
-    const index = await getIndex();
+    const [index, interest] = await Promise.all([getIndex(), getInterest()]);
 
     const savedSet = new Set(savedIds);
     const saved = savedIds
@@ -80,12 +81,12 @@ export async function GET(req: Request) {
           origin: index.origin,
           freshestAt: index.freshestAt,
         },
-        saved: saved.map(toSummary),
+        saved: withInterest(saved.map(toSummary), interest),
         /* An id can outlive its row — the deadline passed and a sweep removed
          * it. The count is reported so the screen can say so instead of
          * quietly showing fewer cards than the sidebar promised. */
         savedMissing: savedIds.filter((id) => !index.byId.has(id)),
-        items: ordered.slice(0, limit).map(toSummary),
+        items: withInterest(ordered.slice(0, limit).map(toSummary), interest),
         total: ordered.length,
         pageSize: limit,
         pageCount: Math.max(1, Math.ceil(ordered.length / limit)),

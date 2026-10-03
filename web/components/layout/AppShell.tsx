@@ -19,6 +19,7 @@ import { ToastProvider } from "../feedback/Toast";
 import { CommandPalette, useCommandPalette } from "../command/CommandPalette";
 import { AuthProvider } from "@/lib/auth";
 import { GateProvider } from "@/lib/gate";
+import { ConsentBanner } from "../consent/Consent";
 
 export function AppShell({ children }: { children: ReactNode }) {
   /* ⌘K / Ctrl-K lives at the shell, so the shortcut works on every screen and
@@ -43,6 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <CompareTray />
         <MobileNav />
         <CommandPalette open={open} onClose={() => setOpen(false)} />
+        <ConsentBanner />
       </div>
     </ToastProvider>
     </GateProvider>
