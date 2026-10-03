@@ -19,6 +19,11 @@ Non-negotiables:
 - **Supabase writes are idempotent**: `POST …?on_conflict=<cols>` with
   `Prefer: resolution=merge-duplicates`.
 - **Migrations are append-only.** Add `db/004_*.sql`; never edit `001`–`003`.
+- **`supabase/migrations/` is generated, never hand-edited.** `db/` is
+  canonical; run `scripts/sync-supabase-migrations.sh` (`--check` fails on
+  drift) and apply with `supabase db push --linked`. It starts at `016` on
+  purpose: `000`–`015` predate the CLI and are absent from the remote history,
+  so generating them would make `db push` re-run them, `003_seed.sql` included.
 - **Run it before claiming it works.** Structural validation is not execution.
 
 Verify loop:
