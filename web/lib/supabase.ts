@@ -41,12 +41,49 @@ export function supabase(): SupabaseClient | null {
 
 export const AUTH_CONFIGURED = Boolean(url && anon);
 
-/* Sign-up is restricted to the campus. Enforced here for a clear error, and
- * again by the email confirmation Supabase sends — a non-campus address never
- * receives one. It is a product rule, not a security boundary: the security
- * boundary is RLS, which does not care which domain someone signed up from. */
+/* Sign-up is restricted to the campus.
+ *
+ * This check is for the MESSAGE, not the rule. Anyone can post straight to
+ * /auth/v1/signup with the anon key, which ships in this bundle, so a browser
+ * check cannot be the enforcement — and the confirmation email that used to be
+ * the second layer stopped existing when confirmations were turned off so
+ * reviewers could get in. db/019 is the enforcement: a BEFORE INSERT trigger on
+ * auth.users that every path into the table goes through.
+ *
+ * It is still not the security boundary. That is RLS (db/015), which does not
+ * care which domain anyone signed up from. */
 export const CAMPUS_DOMAIN = "dubai.bits-pilani.ac.in";
 
 export function isCampusEmail(email: string): boolean {
   return email.trim().toLowerCase().endsWith(`@${CAMPUS_DOMAIN}`);
 }
+
+/* Turn what was typed into an address, for a field that accepts either a roll
+ * number or a whole email.
+ *
+ * The naive version was `local.includes("@") ? local : local + "@" + DOMAIN`,
+ * which produces "f20240000@@dubai…" from a trailing @, "f2024 0000@dubai…"
+ * from a pasted address with a space in it, and an address with a non-campus
+ * domain whenever someone types their personal email — each of which then
+ * failed at the server with a message about the wrong thing.
+ *
+ * Returns null when there is nothing usable yet, so the caller can keep the
+ * submit button disabled rather than guess. */
+export function campusEmail(typed: string): string | null {
+  const v = typed.trim().toLowerCase().replace(/\s+/g, "");
+  if (!v) return null;
+  const at = v.indexOf("@");
+  /* No @ at all: a roll number, so give it the campus domain. */
+  if (at === -1) return LOCAL_PART.test(v) ? `${v}@${CAMPUS_DOMAIN}` : null;
+  /* Exactly one @, and something on both sides of it. */
+  if (at !== v.lastIndexOf("@") || at === 0 || at === v.length - 1) return null;
+  const [local, domain] = [v.slice(0, at), v.slice(at + 1)];
+  if (!LOCAL_PART.test(local) || !DOMAIN.test(domain)) return null;
+  return `${local}@${domain}`;
+}
+
+/* Deliberately narrower than RFC 5322: campus addresses are roll numbers and
+ * names, and accepting quoted strings or comments here would only widen what
+ * can reach the server without helping a single real student. */
+const LOCAL_PART = /^[a-z0-9](?:[a-z0-9._%+-]*[a-z0-9])?$/;
+const DOMAIN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/;

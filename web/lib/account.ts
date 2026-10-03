@@ -83,6 +83,38 @@ function toRow(p: Profile) {
   };
 }
 
+/* A sign-up that just succeeded, handed from the account screen to the
+ * onboarding overlay across the navigation between them.
+ *
+ * Without it the overlay has to WAIT for the students row before it knows the
+ * student is new, so a first-time student watched the portal render in full and
+ * then get frosted over about two seconds later — which reads as a popup, not
+ * as the last step before the portal.
+ *
+ * sessionStorage, not localStorage: it is true for exactly one navigation, and
+ * a value that outlived the tab would greet a returning student. It is a hint
+ * and never the authority — `onboarded_at` decides, and clears this the moment
+ * the row arrives. */
+const FIRST_RUN = "orbit.firstRun";
+
+export function markFirstRun() {
+  try {
+    window.sessionStorage.setItem(FIRST_RUN, "1");
+  } catch {
+    /* Blocked storage: the overlay still arrives, just at fetch speed. */
+  }
+}
+
+export function takeFirstRun(): boolean {
+  try {
+    const v = window.sessionStorage.getItem(FIRST_RUN) === "1";
+    if (v) window.sessionStorage.removeItem(FIRST_RUN);
+    return v;
+  } catch {
+    return false;
+  }
+}
+
 export function useRemoteProfile() {
   const { user, status } = useAuth();
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);

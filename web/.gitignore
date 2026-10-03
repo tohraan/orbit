@@ -5,3 +5,8 @@ next-env.d.ts
 *.tsbuildinfo
 .vercel
 .env*
+
+# Written by `next dev` on every start (next.config.ts `agentRules`), from the
+# framework's own template — not ours, and regenerated whatever we do to them.
+AGENTS.md
+CLAUDE.md

@@ -15,3 +15,8 @@ ui/opportunities.json
 # the originals carry a real phone number and email and must not be committed.
 tests/fixtures/dossier/*.original.pdf
 .vercel
+
+# Appended by `vercel env pull`, and kept: it is broader than the explicit
+# .env / .env.local above, so a .env.production or .env.audit cannot be
+# committed by accident either. The root .env holds the Supabase SERVICE key.
+.env*

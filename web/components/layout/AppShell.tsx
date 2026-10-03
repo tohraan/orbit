@@ -10,6 +10,7 @@
  * through /api and shows the skeletons while it does. */
 
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import s from "./layout.module.css";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
@@ -23,10 +24,38 @@ import { ConsentBanner, SessionNotice } from "../consent/Consent";
 import { AuthWall } from "../auth/AuthWall";
 import { OnboardingOverlay } from "../auth/Onboarding";
 
+/* Routes that get the page and nothing else — no rail, no header, no trays.
+ *
+ * /account is the sign-in screen, and with the portal behind a gate it is the
+ * first thing a new student sees. Rendering it inside the shell framed the one
+ * thing they had to do with navigation to a portal they could not enter yet,
+ * a theme switch, a notification bell with nothing in it, and an avatar with
+ * no account behind it — every one of which is either a dead end or a way to
+ * leave the only screen that was any use.
+ *
+ * It is a prefix list because /account is one route today and the shape is the
+ * same for any other screen whose whole job is to get you a session. */
+const BARE = ["/account"];
+
 export function AppShell({ children }: { children: ReactNode }) {
   /* ⌘K / Ctrl-K lives at the shell, so the shortcut works on every screen and
    * there is exactly one palette instance regardless of which page is open. */
   const { open, setOpen } = useCommandPalette();
+  const pathname = usePathname();
+
+  /* AuthProvider and ToastProvider still wrap it: the screen reads the session
+   * and announces "Signed in". Everything else is chrome it must not have. */
+  if (BARE.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return (
+      <AuthProvider>
+        <ToastProvider>
+          <main className={s.bare} id="main">
+            {children}
+          </main>
+        </ToastProvider>
+      </AuthProvider>
+    );
+  }
 
   return (
     <AuthProvider>
@@ -37,8 +66,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className={s.shell}>
         <Sidebar />
         <div className={s.main}>
-          <Header onOpenCommand={() => setOpen(true)} />
-          <MobileHeader onOpenCommand={() => setOpen(true)} />
+          <Header />
+          <MobileHeader />
           <main className={s.page} id="main">
             <AuthWall>{children}</AuthWall>
           </main>

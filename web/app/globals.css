@@ -62,7 +62,12 @@
 
   --text-primary: #16161c;
   --text-secondary: #505059;
-  --text-tertiary: #6b6b77;
+  /* #6b6b77 measured 4.46:1 on --surface-sunken — under AA by four
+     hundredths, which is invisible as a bug until it is measured, and the
+     sunken surface is exactly where tertiary text lives (match reasons, the
+     "unsure" score caption, tag captions). One step darker clears it at 4.96
+     and still reads a step below --text-secondary, which is 6.77 there. */
+  --text-tertiary: #64646f;
   --text-disabled: #a0a0ab;
 
   /* The emblem's navy, unchanged — it is the one hue the product has earned. */
@@ -329,7 +334,16 @@
     /* Canonical dark palette. Only tokens are redefined — no component rule
        below this point knows which theme it is in. The accent is lifted
        rather than reused: #282888 on a near-black page is unreadable. */
-    --bg-app: #0e0f12;
+    /* Solid black, asked for by name. It was #0e0f12 here, which is a very
+       dark grey: against a true-black phone bezel or a black terminal it reads
+       as a lifted panel rather than as the page. The surfaces above it
+       (#15161a and up) carry the elevation instead, which is their job.
+
+       This was set once and then lost: the token rewrite that introduced
+       --bg-app replaced the older --background: #000000 and brought the grey
+       back with it. --background is an alias for this now, so the two cannot
+       disagree again. */
+    --bg-app: #000000;
     --surface: #15161a;
     --surface-raised: #1c1d22;
     --surface-sunken: #101114;
@@ -397,7 +411,8 @@
   /* Canonical dark palette. Only tokens are redefined — no component rule
      below this point knows which theme it is in. The accent is lifted
      rather than reused: #282888 on a near-black page is unreadable. */
-  --bg-app: #0e0f12;
+  /* Same values as the media-query block above; see the note there. */
+  --bg-app: #000000;
   --surface: #15161a;
   --surface-raised: #1c1d22;
   --surface-sunken: #101114;

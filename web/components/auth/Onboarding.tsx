@@ -23,6 +23,7 @@
 import { useEffect, useState } from "react";
 import s from "./onboarding-overlay.module.css";
 import { WelcomeFlow } from "@/app/welcome/page";
+import { takeFirstRun } from "@/lib/account";
 import { useProfile } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 
@@ -31,10 +32,23 @@ export function OnboardingOverlay() {
   const { onboardedAt, markOnboarded, ready } = useProfile();
   const [done, setDone] = useState(false);
 
+  /* Set by the account screen when a sign-up has just succeeded, which is the
+   * one case where "new student" is known before the row arrives. Read once,
+   * on mount, and consumed — see lib/account.ts. */
+  const [firstRun, setFirstRun] = useState(false);
+  useEffect(() => {
+    setFirstRun(takeFirstRun());
+  }, []);
+
   /* `undefined` means the row has not arrived yet. Treating that as "never
-   * onboarded" would flash this over every returning student for a frame. */
-  const show =
-    configured && status === "signed-in" && ready && onboardedAt === null && !done;
+   * onboarded" would flash this over every returning student for a frame —
+   * which is why the wait exists at all, and why `firstRun` is the only thing
+   * allowed to skip it: it says this session created the account.
+   *
+   * Once the row lands, it decides. A firstRun hint that turns out to be wrong
+   * closes the overlay rather than outvoting the database. */
+  const known = ready ? onboardedAt === null : firstRun;
+  const show = configured && status === "signed-in" && known && !done;
 
   /* The page behind must not scroll while this is up. */
   useEffect(() => {

@@ -18,8 +18,13 @@
      it. The tint keeps text contrast steady over whatever happens to be
      behind — a blur alone leaves the copy sitting on an unpredictable ground. */
   background: color-mix(in srgb, var(--bg-app) 72%, transparent);
+  /* No hand-written -webkit- twin. Lightning CSS (Next 16's CSS pipeline)
+     reads the pair as "the author has this covered" and emits ONLY the
+     prefixed property for the configured targets — which Chrome and Safari
+     both honour, and Firefox, which implements the standard property and not
+     the alias, does not. So writing the prefix by hand is what removed the
+     blur from Firefox. Left alone, the bundler prefixes it correctly. */
   backdrop-filter: blur(18px) saturate(120%);
-  -webkit-backdrop-filter: blur(18px) saturate(120%);
 
   animation: scrimIn 220ms var(--ease) both;
 }

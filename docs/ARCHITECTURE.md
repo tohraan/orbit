@@ -234,6 +234,33 @@ segment must equal the owner's id:
 the other is consent, and keeping them apart is what makes "we read your CV" an
 offer rather than a surprise.
 
+**Who may have an account at all** is a separate question from what an account
+may read, and it is enforced separately. `db/019` puts a `BEFORE INSERT` trigger
+on `auth.users` that refuses any address outside `@dubai.bits-pilani.ac.in`:
+
+```sql
+create trigger on_auth_user_campus_check before insert on auth.users
+  for each row execute function enforce_campus_email();
+```
+
+It is there because the two checks that came before it did not hold. The
+browser's `isCampusEmail` can be skipped by posting straight to
+`/auth/v1/signup` with the anon key, which ships in the bundle; and the
+confirmation email — the second layer, on the theory that a non-campus address
+never receives one — stopped existing when confirmations were turned off so
+that reviewers could sign up without waiting on mail that Supabase's built-in
+SMTP only delivers to organisation members anyway. The trigger is the version
+every path goes through.
+
+Two things it is *not*. It is not the data-access boundary: RLS above is, and
+it does not care which domain anyone signed up from. And it is not a claim that
+the person is a student — it is a claim that they can receive mail at the
+campus domain, which is as far as an email check can go.
+
+Password length is likewise enforced on both sides: the form asks for 8, and
+`[auth] minimum_password_length = 8` in `supabase/config.toml` makes the server
+agree. It accepted 6 until that was set, so the form's rule was advisory too.
+
 ### 3.3 Interest counts — live
 
 ```
@@ -270,7 +297,8 @@ treat §3.1–3.3 as the system and this section as the roadmap.
 
 ### Migrations
 
-`db/*.sql`, numbered, append-only, each one idempotent. `001`–`003` are never
+`db/*.sql`, numbered, append-only, each one idempotent — `000`–`019` at the
+time of writing. `001`–`003` are never
 edited. From `016` onward they are also mirrored into `supabase/migrations/`
 by `scripts/sync-supabase-migrations.sh` and applied with
 `supabase db push --linked`; the mirror deliberately starts at `016` because

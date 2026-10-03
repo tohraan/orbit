@@ -175,3 +175,16 @@
   cursor: pointer;
 }
 .consentRow input { accent-color: var(--color-action); flex: none; }
+
+/* A preference and its control on one row — label left, control right, so a
+   card can hold several and they line up. */
+.prefRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}

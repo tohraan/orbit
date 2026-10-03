@@ -23,6 +23,8 @@ type AuthValue = {
   session: Session | null;
   configured: boolean;
   signIn: (email: string, password: string) => Promise<string | null>;
+  /* Returns null on success, NEEDS_CONFIRMATION when the account was made but
+   * no session came back, or a student-facing error. */
   signUp: (email: string, password: string, fullName: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<string | null>;
@@ -51,6 +53,18 @@ const Ctx = createContext<AuthValue>({
   expired: false,
   dismissExpired: () => {},
 });
+
+/* signUp's third outcome. Supabase answers a sign-up either with a session
+ * (confirmations off — how this project is configured) or with a user and no
+ * session (confirmations on). Returning null for both would send a student
+ * into the portal with no session, where the gate would bounce them straight
+ * back out with no explanation. So the no-session case says so, and the screen
+ * tells them to check their inbox instead of pretending it worked.
+ *
+ * It is a sentinel rather than a boolean because every other caller of signUp
+ * already branches on `string | null`, and widening that to a result object
+ * would mean touching all of them to gain nothing. */
+export const NEEDS_CONFIRMATION = "__needs_confirmation__";
 
 export const useAuth = () => useContext(Ctx);
 
@@ -135,10 +149,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * nowhere near the screen. */
   const friendly = (message: string): string => {
     const m = message.toLowerCase();
+    /* db/019's trigger raises a message already written for the student, so it
+     * is passed through rather than translated. Checked first: it also contains
+     * the word "email", which later branches would otherwise claim. */
+    if (m.includes("bits pilani dubai")) return message;
     if (m.includes("invalid login")) return "That email and password do not match an account.";
     if (m.includes("already registered")) return "An account already exists for that email. Try signing in.";
     if (m.includes("confirm")) return "Check your inbox and confirm your email first.";
     if (m.includes("password")) return "Passwords need at least 8 characters.";
+    /* A malformed address, which Supabase reports as "Unable to validate email
+     * address: invalid format". Without this it fell through to the generic
+     * message and read as a server fault rather than a typo. */
+    if (m.includes("email address") || m.includes("invalid format"))
+      return "That does not look like a complete email address.";
     if (m.includes("rate") || m.includes("too many")) return "Too many attempts. Wait a minute and try again.";
     /* A request that never left the browser — offline, or blocked before it
      * was sent. This used to fall through to the generic message, so a CSP
@@ -163,14 +186,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const clean = email.trim().toLowerCase();
     if (!isCampusEmail(clean)) return "Use your BITS Pilani Dubai email to sign up.";
     if (password.length < 8) return "Passwords need at least 8 characters.";
-    const { error } = await sb.auth.signUp({
+    const { data, error } = await sb.auth.signUp({
       email: clean,
       password,
       /* Read by the handle_new_student trigger (db/015) so the students row
        * carries a name from the moment it exists. */
       options: { data: { full_name: fullName.trim() } },
     });
-    return error ? friendly(error.message) : null;
+    if (error) return friendly(error.message);
+    /* db/019 can refuse the insert outright, in which case there is no user
+     * either; that arrives as an error above. This is the other shape: the
+     * account exists but nobody is signed in. */
+    return data.session ? null : NEEDS_CONFIRMATION;
   }, []);
 
   const signOut = useCallback(async () => {

@@ -1,22 +1,63 @@
 /* Sign in and sign up. One screen, two modes — a separate /signup route would
    double the surface for a form with one extra field.
 
+   It is a FULL SCREEN, not a panel in the app: AppShell's BARE list renders
+   this route with no rail, no header and no trays, so .shell here owns the
+   viewport rather than sitting in a content column.
+
    Micro-interaction, not animation for its own sake: the panel settles in on
    mount, the mode swap cross-fades the fields that change, and the submit
    button shows real state. Everything is under 200ms and everything is
    disabled under prefers-reduced-motion (§76). */
 
 .shell {
-  max-width: 440px;
-  margin-inline: auto;
-  padding-block: var(--s-10);
+  /* flex rather than place-items, so a panel taller than the viewport scrolls
+     from its own top instead of being centred with its head cut off — which is
+     what a centred grid child does once it overflows. */
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-5);
+  /* A quiet wash behind the card, so the one object on screen reads as lifted
+     off the page rather than floating in a void. Both themes: the tint is
+     derived from the accent, which each theme defines for itself. */
+  background:
+    radial-gradient(
+      120% 90% at 50% -10%,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 62%
+    ),
+    var(--bg-app);
+}
+@media (max-width: 480px) { .shell { padding-inline: var(--space-4); align-items: flex-start; } }
+
+/* The column: brand above, panel below, one width for both. */
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  width: min(420px, 100%);
 }
 
+/* The wordmark. It is here rather than in a header because this route has no
+   header, and a sign-in screen with no name on it could belong to anything. */
+.brand { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); text-align: center; }
+.brandName {
+  font-size: var(--text-page-title, 28px);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.brandSub { font-size: var(--text-meta); color: var(--text-secondary); }
+
 .panel {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
-  padding: var(--s-8) var(--s-6);
+  padding: var(--s-7) var(--s-6);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
@@ -28,7 +69,47 @@
   to { opacity: 1; transform: none; }
 }
 
-.mark { width: 44px; height: 44px; object-fit: contain; }
+.mark { width: 48px; height: 48px; object-fit: contain; }
+
+/* The sign-in / create-account toggle. A segmented control, because the two
+   modes are one choice with two answers — which a pair of links at the bottom
+   of the form never looked like. */
+.modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-full);
+}
+.mode {
+  height: 34px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.mode:hover { color: var(--text-primary); }
+.modeActive {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* The waiting state: a session being checked, or a redirect in flight. Same
+   panel, so the frame does not resize when it resolves. */
+.panelWaiting { align-items: center; gap: var(--space-4); padding-block: var(--s-9); }
+.spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--accent-border);
+  border-top-color: var(--accent);
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .head { display: flex; flex-direction: column; gap: var(--s-2); }
 
@@ -104,4 +185,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .panel, .conditional, .error, .ok { animation: none; }
+  /* The spinner keeps turning: it is the only thing on screen reporting that
+     something is still happening, and a frozen one says the opposite. It is
+     a 22px rotation in the centre of the panel, not motion across the page. */
 }

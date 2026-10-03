@@ -9,7 +9,9 @@
   align-items: center;
   background: var(--surface-sunken);
   border: 0;
-  border-radius: var(--radius-control);
+  /* A pill, because its two segments are circles: a 10px-radius track around
+     two round thumbs leaves a visible sliver of track in each corner. */
+  border-radius: var(--radius-full);
   flex: none;
 }
 
@@ -18,7 +20,9 @@
   place-items: center;
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  /* Every icon target in the chrome is round — the rail's, the header's, the
+     avatar's. These were the last squares in the row. */
+  border-radius: var(--radius-full);
   color: var(--text-secondary);
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
@@ -34,6 +38,7 @@
   .opt { width: var(--control-seg); height: var(--control-seg); }
 }
 
-/* The mobile header is tight, so there it collapses to the two real choices
-   and drops "system" — which is the default anyway and reachable from Profile. */
-.compact .opt:last-child { display: none; }
+/* `compact` no longer has anything to drop — there are two segments and both
+   are real choices — so it only tightens the geometry for the mobile bar. */
+.compact { height: 32px; }
+.compact .opt { width: 26px; height: 26px; }

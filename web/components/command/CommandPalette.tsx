@@ -242,7 +242,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   );
 }
 
-/** The top-bar trigger, and the global shortcut that opens the palette. */
+/** The global shortcut that opens the palette. */
 export function useCommandPalette() {
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -258,14 +258,7 @@ export function useCommandPalette() {
   return { open, setOpen };
 }
 
-export function CommandTrigger({ onOpen }: { onOpen: () => void }) {
-  const [mac, setMac] = useState(true);
-  useEffect(() => setMac(/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)), []);
-  return (
-    <button type="button" className={s.trigger} onClick={onOpen} aria-label="Open the command palette">
-      <Icon name="search" size={16} />
-      <span className={s.triggerLabel}>Search or jump to…</span>
-      <span className={s.triggerKey}>{mac ? "⌘K" : "Ctrl K"}</span>
-    </button>
-  );
-}
+/* The header's trigger button lived here. It is gone with the header's search
+ * cluster: ⌘K (useCommandPalette, above) still opens this from any screen, and
+ * a button that duplicated Explore's own search field is not worth permanent
+ * space in the chrome. The palette itself is untouched. */

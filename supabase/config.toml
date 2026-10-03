@@ -12,6 +12,10 @@
 project_id = "pcctpzvhakdutzzwpmsh"
 
 [auth]
+# The UI asks for 8 and the server accepted 6, so a 6-character password could
+# be set by anything that talked to the endpoint directly while the form said
+# otherwise. One number, in one place.
+minimum_password_length = 8
 site_url = "https://orbit-bits.vercel.app"
 additional_redirect_urls = [
   "https://orbit-bits.vercel.app",
@@ -19,3 +23,11 @@ additional_redirect_urls = [
   "http://localhost:3100",
   "http://localhost:3100/account",
 ]
+
+# Reviewers must be able to create an account and land in the portal in one
+# step. Supabase's built-in SMTP delivers only to organisation members and is
+# rate-limited, so leaving confirmations on would strand everyone else on
+# "check your inbox" for mail that never arrives.
+[auth.email]
+enable_confirmations = false
+max_frequency = "10s"

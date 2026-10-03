@@ -3,6 +3,19 @@
 
 .shell { min-height: 100vh; min-height: 100dvh; }
 
+/* The bare route (/account). No rail to clear and no header to sit under, so
+   it takes the viewport and nothing offsets it — the page inside centres
+   against the whole screen rather than against what is left after the chrome.
+   100dvh, not 100vh: on iOS Safari the address bar makes 100vh taller than the
+   visible area, which would put a vertically centred card slightly high and
+   add a scrollbar to a page that fits. */
+.bare {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  background: var(--bg-app);
+}
+
 /* Collapsed state. The width lives in a custom property so the rail and the
    content margin move from one declaration — before, two rules had to be kept
    in step by hand, which is how a collapse ends up leaving a gap. */
@@ -159,6 +172,31 @@
   flex: none;
 }
 .mark { width: 30px; height: 30px; flex: none; object-fit: contain; }
+
+/* The signed-in name, straight after the mark. One line, truncating rather
+   than wrapping or pushing the breadcrumb off the row — a long name is a long
+   name and the header is a fixed height. */
+.currentUser {
+  display: inline-flex;
+  align-items: center;
+  max-width: 18ch;
+  min-width: 0;
+  margin-left: var(--space-3);
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.currentUser:hover { background: var(--surface-hover); color: var(--text-primary); }
+.currentUserName {
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Below 1280 the breadcrumb and the right cluster need the room more. */
+@media (max-width: 1279px) { .currentUser { display: none; } }
 .brandText { display: flex; flex-direction: column; min-width: 0; }
 .brandName { font-size: var(--text-body-sm); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
 .brandSub { font-size: var(--text-micro); color: var(--color-text-muted); font-weight: 500; }
@@ -236,7 +274,21 @@
 }
 @media (max-width: 1023px) { .mobileHeader { display: flex; } }
 
-.mobileTitle { font-size: var(--text-body); font-weight: 600; letter-spacing: -0.01em; }
+.mobileTitle {
+  font-size: var(--text-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The mark, so the left end of the mobile bar is the brand rather than a
+   control — same reading order as the desktop header. */
+.mobileBrand { display: inline-flex; align-items: center; flex: none; }
+.mobileMark { width: 26px; height: 26px; flex: none; object-fit: contain; }
+.mobileRight { display: flex; align-items: center; gap: var(--space-2); flex: none; }
 
 .bottomNav {
   display: none;
@@ -422,7 +474,10 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-control);
+  /* Round, like every other icon target in the chrome. A 36px square with a
+     10px radius sitting between the theme pill and the circular avatar was the
+     one corner left in the row. */
+  border-radius: var(--radius-full);
   border: 1px solid var(--border-default);
   background: var(--surface-raised);
   color: var(--text-secondary);

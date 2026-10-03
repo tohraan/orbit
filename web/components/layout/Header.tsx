@@ -1,11 +1,24 @@
 "use client";
 
-/* §17: the header stays light. Three things only — the command palette
- * trigger, in-site notifications, and the account menu.
+/* The header is two clusters and nothing in between: identity on the left,
+ * controls on the right.
  *
- * The old inline search field is gone: ⌘K does that job better and across the
- * whole product, and two search inputs on one screen (the header's and
- * Explore's) was a duplicate affordance (§81, §114). */
+ * It got there by subtraction. The right side had grown to six controls — a
+ * search trigger, a source/AED switch, a three-way theme switch, the bell, Sign
+ * in, and the avatar — which is a toolbar, not a header, and the first two had
+ * no business being there at all:
+ *
+ *   - The SEARCH TRIGGER was the third way to reach the same search. ⌘K still
+ *     works from every screen (the palette lives at the shell), and Explore has
+ *     a real search field, which is where someone looking for something goes.
+ *   - The SOURCE/AED SWITCH is a preference, set once and never again. It is a
+ *     row on /profile under "About the figures", next to the sentence that
+ *     explains the conversion it controls.
+ *   - The THEME SWITCH lost its third segment; see ui/ThemeToggle.tsx.
+ *
+ * What the left side gained is the student's name, straight after the mark. The
+ * header is the one piece of chrome on every screen, and "who am I signed in
+ * as" was only answerable by opening a menu. */
 
 import Image from "next/image";
 import Link from "next/link";
@@ -13,8 +26,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import s from "./layout.module.css";
 import { Icon } from "../ui/Icon";
-import { CommandTrigger } from "../command/CommandPalette";
-import { CurrencySwitch } from "../ui/CurrencySwitch";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { TITLES } from "./nav";
 import { APP_NAME, APP_TAGLINE } from "./brand";
@@ -173,6 +184,28 @@ function SignInButton() {
   );
 }
 
+/* Who is signed in, in the chrome rather than behind a menu.
+ *
+ * Absent while the session is resolving and absent when signed out, because the
+ * only thing it could say then is a placeholder, and a placeholder name beside
+ * the product mark reads as a real one. Falls back to the local part of the
+ * email when the profile has no name yet — a new student has an account before
+ * they have been through onboarding. */
+function CurrentUser() {
+  const { status, user } = useAuth();
+  const { profile } = useProfile();
+  if (status !== "signed-in") return null;
+
+  const name = profile.name.trim() || (user?.email ?? "").split("@")[0];
+  if (!name) return null;
+
+  return (
+    <Link href="/profile" className={s.currentUser} title="Your profile">
+      <span className={s.currentUserName}>{name}</span>
+    </Link>
+  );
+}
+
 function AccountMenu() {
   const [open, setOpen] = useState(false);
   const ref = useAway(() => setOpen(false));
@@ -284,7 +317,7 @@ function AccountMenu() {
   );
 }
 
-export function Header({ onOpenCommand }: { onOpenCommand: () => void }) {
+export function Header() {
   const pathname = usePathname();
   const here = pathname.startsWith("/opportunity/") ? "Opportunity" : TITLES[pathname] ?? APP_NAME;
 
@@ -300,6 +333,8 @@ export function Header({ onOpenCommand }: { onOpenCommand: () => void }) {
           <span className={s.brandSub}>{APP_TAGLINE}</span>
         </span>
       </Link>
+
+      <CurrentUser />
 
       <span className={s.headerDivider} aria-hidden="true" />
 
@@ -320,8 +355,6 @@ export function Header({ onOpenCommand }: { onOpenCommand: () => void }) {
       <span className={s.headerSpacer} />
 
       <div className={s.headerRight}>
-        <CommandTrigger onOpen={onOpenCommand} />
-        <CurrencySwitch />
         <ThemeToggle />
         <Notifications />
         <SignInButton />
@@ -332,22 +365,26 @@ export function Header({ onOpenCommand }: { onOpenCommand: () => void }) {
   );
 }
 
-export function MobileHeader({ onOpenCommand }: { onOpenCommand: () => void }) {
+/* The same subtraction on a phone, where there was never room for six controls
+ * anyway. The search button went with the desktop trigger: Explore's own field
+ * is the search on a touch device, and there is no ⌘K to replace. */
+export function MobileHeader() {
   const pathname = usePathname();
   const title = pathname.startsWith("/opportunity/") ? "Opportunity" : TITLES[pathname] ?? APP_NAME;
   return (
     <div className={s.mobileHeader}>
-      <ThemeToggle compact />
+      <Link href="/" className={s.mobileBrand} aria-label={APP_NAME}>
+        <Image className={s.mobileMark} src="/bits-logo-128.png" alt="" width={26} height={26} priority />
+      </Link>
       <span className={s.mobileTitle}>{title}</span>
-      <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
-        <button type="button" className={s.iconBtn} aria-label="Search" onClick={onOpenCommand}>
-          <Icon name="search" size={16} />
-        </button>
+      <div className={s.mobileRight}>
+        <ThemeToggle compact />
         <Notifications />
         {/* The mobile header carried no account control at all, so a signed-out
             visitor on a phone had no way in short of finding Profile in the
             bottom bar. */}
         <SignInButton />
+        <AccountMenu />
       </div>
     </div>
   );

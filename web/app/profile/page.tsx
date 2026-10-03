@@ -22,6 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import s from "./profile.module.css";
 import { PageHead } from "@/components/layout/AppShell";
+import { CurrencySwitch } from "@/components/ui/CurrencySwitch";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { CampusEmail, PhoneField, Select, TagPicker } from "@/components/ui/Field";
@@ -342,12 +343,20 @@ export default function ProfilePage() {
             </label>
           </div>
 
+          {/* The currency preference lives here now, next to the sentence that
+              explains the conversion it controls. It used to be a switch in the
+              header — a once-and-never-again preference occupying permanent
+              space on every screen, beside controls that are actions. */}
           <div className={s.card}>
             <h2 className="t-section">About the figures</h2>
             <p className={s.note}>
               Dirham conversions use the US dollar peg of 3.6725, which is exact, and indicative rates from{" "}
               {RATES_AS_OF} for everything else.
             </p>
+            <div className={s.prefRow}>
+              <span className="t-body-sm">Show amounts in</span>
+              <CurrencySwitch />
+            </div>
           </div>
         </div>
       </div>
