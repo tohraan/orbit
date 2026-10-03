@@ -1,0 +1,152 @@
+/* The desk's frame. Built on the same tokens as the student portal
+   (@rof/styles), so the two look like one product — but laid out as a tool,
+   not a feed: a top bar of sections rather than a rail, and a wide content
+   column, because every screen here is a table or a two-pane editor. */
+
+.shell { min-height: 100vh; min-height: 100dvh; background: var(--bg-app); }
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: 60px;
+  padding-inline: var(--space-6);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.brand { display: flex; align-items: center; gap: var(--space-3); flex: none; }
+.mark {
+  display: grid; place-items: center;
+  width: 30px; height: 30px; border-radius: var(--radius-full);
+  background: var(--accent); color: var(--on-accent); font-size: 15px;
+}
+.markLarge {
+  display: grid; place-items: center;
+  width: 44px; height: 44px; border-radius: var(--radius-full);
+  background: var(--accent); color: var(--on-accent); font-size: 22px; margin-inline: auto;
+}
+.brandText { display: flex; flex-direction: column; min-width: 0; }
+.brandName { font-size: var(--text-body-sm); font-weight: 650; letter-spacing: -0.01em; line-height: 1.2; }
+.brandSub { font-size: var(--text-micro); color: var(--text-tertiary); font-weight: 500; }
+
+.nav { display: flex; align-items: center; gap: 2px; flex: 1 1 auto; min-width: 0; overflow-x: auto; }
+.tab {
+  padding: 7px var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.tab:hover { background: var(--surface-hover); color: var(--text-primary); }
+.tabActive { background: var(--accent-subtle); color: var(--accent-text); font-weight: 600; }
+
+.who { display: flex; align-items: center; gap: var(--space-3); flex: none; }
+.whoEmail {
+  font-size: var(--text-meta); color: var(--text-tertiary);
+  max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.page { padding: var(--space-8) var(--space-6) var(--space-16); max-width: 1500px; margin-inline: auto; }
+
+/* ------------------------------------------------------------- states --- */
+
+.centre {
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-4); padding: var(--space-8) var(--space-5);
+  background: var(--bg-app);
+}
+
+.notice, .door {
+  width: min(420px, 100%);
+  display: flex; flex-direction: column; gap: var(--space-4);
+  padding: var(--space-7) var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+}
+.doorHead { display: flex; flex-direction: column; gap: var(--space-2); text-align: center; }
+.doorTitle { font-size: 24px; line-height: 30px; font-weight: 650; letter-spacing: -0.02em; }
+.doorNote { font-size: var(--text-micro); color: var(--text-tertiary); line-height: 1.5; }
+.noticeRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.linkOut { font-size: var(--text-body-sm); color: var(--accent-text); font-weight: 500; }
+
+.spinner {
+  width: 22px; height: 22px; border-radius: var(--radius-full);
+  border: 2px solid var(--accent-border); border-top-color: var(--accent);
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  /* The spinner keeps turning: it is the only thing reporting that work is
+     still happening, and a frozen one says the opposite. */
+  .spinner { animation-duration: 1400ms; }
+}
+
+/* -------------------------------------------------------------- forms --- */
+
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+.label { font-size: var(--text-body-sm); font-weight: 500; }
+.input, .textarea, .select {
+  width: 100%;
+  padding: 9px var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  font-size: var(--text-body-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+.input:focus, .textarea:focus, .select:focus {
+  outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent);
+}
+.textarea { min-height: 88px; resize: vertical; line-height: 1.5; }
+.hint { font-size: var(--text-micro); color: var(--text-tertiary); }
+
+.primary, .ghost, .danger {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  height: 38px; padding-inline: var(--space-4);
+  border-radius: var(--radius-control);
+  font-size: var(--text-body-sm); font-weight: 600;
+  white-space: nowrap;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.primary { background: var(--accent); color: var(--on-accent); }
+.primary:hover:not(:disabled) { background: var(--accent-hover); }
+.primary:disabled { background: var(--surface-sunken); color: var(--text-disabled); cursor: not-allowed; }
+.ghost { background: transparent; border: 1px solid var(--border-default); color: var(--text-secondary); }
+.ghost:hover:not(:disabled) { background: var(--surface-hover); color: var(--text-primary); border-color: var(--border-strong); }
+.ghost:disabled { color: var(--text-disabled); cursor: not-allowed; }
+.danger { background: transparent; border: 1px solid var(--error-border); color: var(--error-fg); }
+.danger:hover:not(:disabled) { background: var(--error-bg); }
+
+.error {
+  padding: var(--space-3);
+  border-radius: var(--radius-nested);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-fg);
+  font-size: var(--text-body-sm);
+}
+.ok {
+  padding: var(--space-3);
+  border-radius: var(--radius-nested);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success-fg);
+  font-size: var(--text-body-sm);
+}
+
+@media (max-width: 860px) {
+  .bar { height: auto; flex-wrap: wrap; padding-block: var(--space-3); gap: var(--space-3); }
+  .nav { order: 3; width: 100%; }
+  .page { padding-inline: var(--space-4); }
+  .whoEmail { display: none; }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "@rof/styles",
+  "version": "0.1.0",
+  "private": true,
+  "exports": { "./globals.css": "./globals.css" },
+  "comment": "The design system: tokens for both themes, the reset, and the typography and colour utilities. One file, imported by every app, because two copies of a token scale is how two deployments of the same product end up disagreeing about what navy is."
+}

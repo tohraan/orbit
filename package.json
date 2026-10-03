@@ -5,14 +5,16 @@
   "workspaces": [
     "packages/*",
     "web",
-    "api"
+    "api",
+    "admin"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=web",
     "dev:api": "npm run dev --workspace=api",
-    "build": "npm run build --workspace=api && npm run build --workspace=web",
-    "typecheck": "npm run typecheck --workspace=web && npm run typecheck --workspace=api",
-    "check": "npm run typecheck && npm run build"
+    "build": "npm run build --workspace=api && npm run build --workspace=web && npm run build --workspace=orbit-desk",
+    "typecheck": "npm run typecheck --workspace=web && npm run typecheck --workspace=api && npm run typecheck --workspace=orbit-desk",
+    "check": "npm run typecheck && npm run build",
+    "dev:admin": "npm run dev --workspace=orbit-desk"
   },
   "comment": "npm workspaces, so the two deployable apps (web, api) can share packages/core and packages/server without either copying the other's code. Vercel detects this layout: set Root Directory to web/ for the frontend project and api/ for the data service, and it installs from here."
 }

@@ -23,6 +23,9 @@ import { join } from "node:path";
 import {
   daysUntil,
   fromRawItem,
+  applyOverrides,
+  overrideIndex,
+  type OverrideRow,
   fromSnapshot,
   type OpportunityDetail,
   type RawItem,
@@ -170,6 +173,22 @@ async function loadLive(url: string, key: string): Promise<Index> {
   if (!slugs.length) throw new Error("no open_call sources configured");
   const only = `&source_slug=in.(${slugs.map((s) => encodeURIComponent(s)).join(",")})`;
 
+  /* Staff corrections (db/020). Fetched whole rather than joined: there is one
+   * row per CORRECTED listing, not per listing, so this is a few rows against
+   * 432 — and a left join would have made the paged query above, which is
+   * carefully shaped, considerably less obvious. An empty table costs one
+   * request and nothing else.
+   *
+   * It is fetched BEFORE the listings on purpose. If it failed after the pages
+   * were already in hand, the natural thing to write is a catch that carries on
+   * without it — and carrying on without it means serving a listing staff have
+   * suppressed. Failing here fails the whole load, which falls back to the
+   * snapshot, which is the correct outcome: better a slightly stale feed than
+   * one showing something that was taken down. */
+  const overrides = overrideIndex(
+    await get<OverrideRow[]>("opportunity_overrides?select=raw_item_id,suppressed,featured,patch"),
+  );
+
   const items: OpportunityDetail[] = [];
   let after = 0;
   for (;;) {
@@ -180,7 +199,14 @@ async function loadLive(url: string, key: string): Promise<Index> {
     after = page[page.length - 1].id;
   }
   if (!items.length) throw new Error("supabase returned no open calls");
-  return finalise(items, "live");
+
+  /* Corrections applied and suppressed listings dropped before anything else
+   * sees them, so every downstream consumer — the facets, the search index,
+   * the deadline calendar, the matcher — works on the corrected set and cannot
+   * disagree with the cards about what exists. */
+  const corrected = applyOverrides(items, overrides);
+  if (!corrected.length) throw new Error("every open call is suppressed");
+  return finalise(corrected, "live");
 }
 
 /** Drop the cache so the next read refetches.

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Geist } from "next/font/google";
-import "./globals.css";
+import "@rof/styles/globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE } from "@/components/layout/brand";
 

@@ -1,0 +1,89 @@
+/* The live preview pane. Deliberately framed like a window rather than drawn
+   flush into the page: it is a representation of another product, and making
+   that visible stops a staff member reading it as more desk chrome. */
+
+.wrap {
+  position: sticky;
+  top: calc(60px + var(--space-6));
+  display: flex; flex-direction: column;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--bg-app);
+  max-height: calc(100vh - 60px - var(--space-10));
+}
+
+.frameHead {
+  display: flex; align-items: center; gap: 6px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--border-subtle);
+  flex: none;
+}
+.dot { width: 9px; height: 9px; border-radius: var(--radius-full); background: var(--border-strong); }
+.frameLabel { margin-left: var(--space-2); font-size: var(--text-micro); color: var(--text-tertiary); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+
+.canvas { padding: var(--space-5); overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-5); }
+
+.card {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+}
+.cardTop { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.badge {
+  padding: 3px var(--space-2); border-radius: var(--radius-tag);
+  background: var(--accent-subtle); color: var(--accent-text);
+  font-size: var(--text-micro); font-weight: 600;
+}
+.deadline { font-size: var(--text-micro); font-weight: 600; color: var(--text-secondary); }
+.deadlineSoon { color: var(--warning-fg); }
+.deadlineUrgent { color: var(--error-fg); }
+
+.title { font-size: 16px; line-height: 22px; font-weight: 600; letter-spacing: -0.006em; color: var(--text-primary); }
+.meta { font-size: var(--text-meta); color: var(--text-tertiary); }
+.summary { font-size: var(--text-body-sm); color: var(--text-secondary); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.placeholder { color: var(--text-tertiary); font-style: italic; }
+
+.tags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tag {
+  padding: 3px var(--space-2); border-radius: var(--radius-tag);
+  background: var(--surface-sunken); color: var(--text-secondary);
+  font-size: var(--text-micro); font-weight: 500; text-transform: capitalize;
+}
+
+.cardFoot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: var(--space-3); border-top: 1px solid var(--border-subtle);
+}
+.source { font-size: var(--text-micro); color: var(--text-tertiary); }
+.open { font-size: var(--text-micro); color: var(--accent-text); font-weight: 600; }
+
+.detail {
+  display: flex; flex-direction: column; gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}
+.detailHead { font-size: var(--text-micro); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-tertiary); }
+.block { display: flex; flex-direction: column; gap: 4px; }
+.blockLabel { font-size: var(--text-meta); font-weight: 600; color: var(--text-primary); }
+.blockText { font-size: var(--text-meta); color: var(--text-secondary); line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.applyBtn {
+  margin-top: var(--space-1);
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 36px; padding-inline: var(--space-4); border-radius: var(--radius-control);
+  background: var(--accent); color: var(--on-accent);
+  font-size: var(--text-body-sm); font-weight: 600;
+}
+.applyMuted { background: var(--surface-sunken); color: var(--text-tertiary); font-weight: 500; }
+
+@media (max-width: 1100px) {
+  .wrap { position: static; max-height: none; }
+}

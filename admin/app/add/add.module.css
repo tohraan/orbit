@@ -1,0 +1,72 @@
+/* Two panes: the form, and the thing the form is making.
+   They stack below 1100 — at that width the preview would be a column of
+   fragments, which is worse than putting it after the form. */
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(380px, 460px); gap: var(--space-6); align-items: start; }
+@media (max-width: 1100px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+.left { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+.right { min-width: 0; }
+
+.head { display: flex; flex-direction: column; gap: var(--space-2); }
+.head > p { max-width: 62ch; }
+
+.card {
+  display: flex; flex-direction: column; gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}
+
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+@media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+.pair { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: var(--space-2); }
+
+/* The reading sequence. Each line is a thing being attempted, not a share of a
+   known total — the server answers once, at the end, so a percentage would be
+   invented. The last line stays lit rather than completing. */
+.steps { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.step { display: flex; align-items: center; gap: var(--space-3); font-size: var(--text-body-sm); color: var(--text-tertiary); }
+.stepDot { width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--border-strong); flex: none; }
+.stepDone { color: var(--text-secondary); }
+.stepDone .stepDot { background: var(--success-fg); }
+.stepNow { color: var(--text-primary); font-weight: 500; }
+.stepNow .stepDot { background: var(--accent); animation: pulse 1.1s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.72); } }
+@media (prefers-reduced-motion: reduce) { .stepNow .stepDot { animation: none; } }
+
+.report {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: var(--space-4);
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-nested);
+}
+.reportLine { font-size: var(--text-body-sm); color: var(--text-primary); }
+.reportHint { font-size: var(--text-micro); color: var(--text-secondary); }
+
+.warn {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-nested);
+}
+.warnHead { font-size: var(--text-body-sm); font-weight: 600; color: var(--warning-fg); }
+.warnList { margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: 4px; }
+.warnList li { font-size: var(--text-meta); color: var(--text-secondary); }
+
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chip {
+  padding: 6px var(--space-3); border-radius: var(--radius-full);
+  border: 1px solid var(--border-default); background: var(--surface);
+  font-size: var(--text-meta); font-weight: 500; color: var(--text-secondary);
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.chip:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.chipOn { background: var(--accent-subtle); border-color: var(--accent-border); color: var(--accent-text); font-weight: 600; }
+
+.publish { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; }
+.publish > div { display: flex; flex-direction: column; gap: 4px; max-width: 54ch; }
