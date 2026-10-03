@@ -1,261 +1,41 @@
-/* Onboarding.
- *
- * The one place in the product where transform animation is allowed (see the
- * header of page.tsx). Everything here is entry or hover, nothing loops, and
- * the whole file is switched off under prefers-reduced-motion at the bottom.
- *
- * The budget is the product's own: 150ms on hover, matching what the rest of
- * the app spends on a colour change, and a 2px lift — enough to feel like the
- * card answered you, too small to shift what you were aiming at.
- */
+/* The /welcome ROUTE only. Everything the flow looks like lives in
+   components/onboarding/onboarding.module.css — this file is the page that
+   holds it, and nothing more.
 
-.shell { max-width: 720px; margin-inline: auto; }
-.embedded { width: 100%; }
+   The standalone page needs its own ground because there is no scrim behind
+   it: the shell is a raised surface, so the page beneath it has to be a step
+   DOWN, or the two merge and the setup card stops reading as a surface at all.
+   That was the "background is still as is" problem — the page and the card
+   were the same colour. */
 
-/* ------------------------------------------------------------------ card ---
- * One surface holding the whole flow, so the step changes inside a frame that
- * does not move. A card that resized per step made the footer jump, which is
- * the one piece of chrome the student is aiming at.
- */
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-5);
-  padding: var(--s-6);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-}
-.embedded .card { margin: 0; max-width: none; border: 0; padding: var(--s-5); }
-
-/* ------------------------------------------------------------------ rail ---
- * Dots, not named tabs. Four step names across the top competed with the
- * question itself for the eye, and the name of the current step is already the
- * heading directly beneath.
- */
-.rail { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); }
-.dots { display: flex; align-items: center; gap: var(--s-2); }
-
-.dot {
-  width: 28px;
-  height: 5px;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-muted);
-  border: 0;
-  cursor: pointer;
-  transition: background 150ms var(--ease), width 150ms var(--ease);
-}
-.dot:hover { background: var(--color-border-active); }
-.dotDone { background: var(--color-link); opacity: 0.45; }
-.dotOn { width: 44px; background: var(--color-action); }
-
-.count {
-  flex: none;
-  font-size: var(--text-meta);
-  font-weight: 600;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-/* The qualifier matters: 100% here means "everything the ranking reads", not
-   "every field exists". Saying only "100%" would promise a filled profile. */
-.countLabel { font-weight: 400; color: var(--color-text-muted); }
-
-/* ------------------------------------------------------------------ head --- */
-.head { display: flex; flex-direction: column; gap: var(--s-2); animation: rise 260ms var(--ease) both; }
-
-.eyebrow {
+.page {
+  min-height: calc(100vh - var(--header-h, 64px));
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  font-size: var(--text-meta);
-  font-weight: 500;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-/* What this step buys, stated next to the step number. A question with a
-   stated payoff gets answered; one without reads as data collection. */
-.weight {
-  font-style: normal;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--color-link);
-  font-weight: 600;
+  justify-content: center;
+  padding-block: var(--space-10);
+  background: var(--bg-app);
 }
 
-.title { font-size: var(--text-section, 22px); font-weight: 650; line-height: 1.25; letter-spacing: -0.01em; }
-.sub { font-size: var(--text-body-sm); color: var(--color-text-secondary); line-height: 1.55; max-width: 56ch; }
-
-/* ------------------------------------------------------------------ body --- */
-.body { display: flex; flex-direction: column; gap: var(--s-5); min-height: 240px; }
-
-/* ----------------------------------------------------------- choice cards ---
- * The opening question. Two columns on a desktop, one on a phone — the same
- * shape either way, so the thing being chosen does not change between devices.
- */
-.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
-
-.choice {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-3);
-  padding: var(--s-4);
-  text-align: left;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-nested);
-  background: var(--color-surface);
-  cursor: pointer;
-  /* Staggered entry: --i is set per card in the JSX, so they arrive in
-     sequence rather than as one block. 40ms apart reads as deliberate; more
-     reads as slow. */
-  animation: rise 300ms var(--ease) both;
-  animation-delay: calc(var(--i, 0) * 40ms);
-  transition:
-    border-color 150ms var(--ease),
-    background 150ms var(--ease),
-    box-shadow 150ms var(--ease),
-    transform 150ms var(--ease);
-}
-.choice:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-border-active);
-  box-shadow: var(--shadow-raised, 0 6px 20px rgb(0 0 0 / 8%));
-}
-.choice:active { transform: translateY(0); }
-.choice:focus-visible { outline: 2px solid var(--color-action); outline-offset: 2px; }
-
-.choiceOn {
-  border-color: var(--color-action);
-  background: var(--color-action-soft, color-mix(in srgb, var(--color-action) 8%, transparent));
-}
-/* Selection must survive a colourblind reading and a greyscale print, so it is
-   carried by the border, the tint AND the tick — never by hue alone. */
-.choiceOn .choiceMark { background: var(--color-action); color: var(--color-action-text); }
-.choiceOn .choiceTick { opacity: 1; transform: scale(1); }
-
-.choiceMark {
+/* Two controls side by side on the optional last step. One column on a phone,
+   because two dropdowns at 360px leave neither enough room for its label. */
+.row {
   display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-muted);
-  color: var(--color-text-secondary);
-  transition: background 150ms var(--ease), color 150ms var(--ease);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
 }
-
-.choiceText { display: flex; flex-direction: column; gap: var(--s-1); }
-.choiceLabel { font-size: var(--text-body); font-weight: 600; }
-.choiceBlurb { font-size: var(--text-meta); color: var(--color-text-secondary); line-height: 1.5; }
-
-.choiceTick {
-  position: absolute;
-  top: var(--s-3);
-  right: var(--s-3);
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: var(--radius-full);
-  background: var(--color-action);
-  color: var(--color-action-text);
-  opacity: 0;
-  transform: scale(0.6);
-  transition: opacity 150ms var(--ease), transform 150ms var(--ease);
-}
-
-/* ---------------------------------------------------------- option rows ---
- * The funding question. A row rather than a chip, because each answer carries
- * a clarifying line — "Fully funded only" and "Tuition and living costs
- * covered" together are what make the choice unambiguous.
- */
-.options { display: flex; flex-direction: column; gap: var(--s-2); }
-
-.option {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: var(--s-3) var(--s-4);
-  text-align: left;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-nested);
-  background: var(--color-surface);
-  cursor: pointer;
-  animation: rise 260ms var(--ease) both;
-  animation-delay: calc(var(--i, 0) * 35ms);
-  transition:
-    border-color 150ms var(--ease),
-    background 150ms var(--ease),
-    transform 150ms var(--ease);
-}
-.option:hover { transform: translateX(2px); border-color: var(--color-border-active); }
-.option:focus-visible { outline: 2px solid var(--color-action); outline-offset: 2px; }
-.optionOn { border-color: var(--color-action); background: var(--color-action-soft, color-mix(in srgb, var(--color-action) 8%, transparent)); }
-.optionOn .optionLabel { color: var(--color-link); }
-
-.optionLabel { font-size: var(--text-body-sm); font-weight: 600; }
-.optionHint { font-size: var(--text-meta); color: var(--color-text-muted); }
-
-/* ----------------------------------------------------------------- fields --- */
-.row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
-.field { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; animation: rise 260ms var(--ease) both; }
-.label { font-size: var(--text-body-sm); font-weight: 600; }
-.hint { font-size: var(--text-meta); color: var(--color-text-muted); line-height: 1.5; }
 
 .privacy {
-  font-size: var(--text-meta);
-  color: var(--color-text-muted);
+  font-size: 12px;
   line-height: 1.6;
-  padding: var(--s-3);
+  color: var(--text-tertiary, var(--color-text-muted));
+  padding: var(--space-3);
   border-radius: var(--radius-sm);
-  background: var(--color-surface-muted);
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
 }
 
-/* ------------------------------------------------------------------ foot --- */
-.foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--color-border);
-  flex-wrap: wrap;
-}
-/* `margin-left: auto` rather than relying on space-between, so the footer sits
-   correctly whether or not a Back button is rendered to its left. */
-.footRight { display: flex; align-items: center; gap: var(--s-3); margin-left: auto; }
-
-/* Quiet, but never absent. A flow with no exit is one people leave by the
-   browser's back button, which discards the answers they HAD given. */
-.skip {
-  font-size: var(--text-body-sm);
-  color: var(--color-text-muted);
-  background: none;
-  border: 0;
-  cursor: pointer;
-  transition: color 150ms var(--ease);
-}
-.skip:hover { color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
-
-@keyframes rise {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: none; }
-}
-
-@media (max-width: 640px) {
-  .cards { grid-template-columns: 1fr; }
+@media (max-width: 639px) {
+  .page { padding-block: var(--space-5); align-items: flex-start; }
   .row { grid-template-columns: 1fr; }
-  .card { padding: var(--s-4); }
-  .body { min-height: 0; }
-}
-
-/* The whole motion layer, removed. Not softened — removed: a student who has
-   asked their OS for no motion has not asked for less of it. */
-@media (prefers-reduced-motion: reduce) {
-  .head, .choice, .option, .field { animation: none; }
-  .choice:hover, .option:hover { transform: none; }
-  .choice, .option, .dot, .choiceMark, .choiceTick, .skip { transition: none; }
 }

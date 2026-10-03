@@ -70,15 +70,10 @@
   to { opacity: 1; transform: none; }
 }
 
-/* Each question group arrives a beat after the card, so a step reads as a
-   question being asked rather than a form appearing all at once. */
-.body > * > * {
-  animation: stepIn 260ms var(--ease) both;
-}
-@keyframes stepIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
-}
+/* Step entry is owned by components/onboarding, which animates the question,
+   the grid and each card on its own schedule. A blanket rule here animated
+   their CONTAINERS too, so every step played two overlapping entrances and
+   the stagger inside a card grid was lost under a single block fade. */
 
 @media (max-width: 639px) {
   .scrim { padding: var(--space-4) var(--space-3); }
@@ -88,7 +83,7 @@
 /* §77 still holds for anyone who has asked for less: the overlay appears, it
    just does not travel to get there. */
 @media (prefers-reduced-motion: reduce) {
-  .scrim, .sheet, .body > * > * { animation: none !important; }
+  .scrim, .sheet { animation: none !important; }
 }
 
 /* Safari and Firefox without backdrop-filter get a solid ground rather than

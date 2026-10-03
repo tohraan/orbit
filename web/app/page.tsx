@@ -315,7 +315,7 @@ export default function HomePage() {
             </div>
             <div className={o.pager}>
               <ButtonLink href="/explore" variant="secondary" iconAfter="arrow-right">
-                Browse all {data.total} opportunities
+                Browse all
               </ButtonLink>
             </div>
           </>

@@ -707,3 +707,9 @@
 @media (max-width: 1023px) {
   .signIn { padding-inline: var(--space-3); }
 }
+
+/* Full-bleed pages (Explore). The container is a reading measure, and a card
+   grid is not prose — capping it wasted two gutters of width and cost a whole
+   column. The outer padding stays, so content never touches the viewport edge
+   or sits under the floating rail. */
+.pageWide { max-width: none; }

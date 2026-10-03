@@ -56,3 +56,24 @@
   border-bottom: 1px solid var(--color-border);
 }
 .skRowItem:last-child { border-bottom: 0; }
+
+/* ------------------------------------------------------------- skeletons ---
+   `.skCard` was referenced by Skeletons.tsx and never defined, so every card
+   skeleton rendered classless: no padding, no border, no surface, no height.
+   That is why the loading state read as loose bars scattered on the page
+   instead of the grid that was about to arrive — the geometry §103 promises
+   was simply absent.
+
+   These measurements are the real card's (components/opportunities/
+   card.module.css .card), so the shape does not change when the data lands. */
+.skCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: 100%;
+  min-height: var(--card-h, 320px);
+  padding: var(--card-pad);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}
