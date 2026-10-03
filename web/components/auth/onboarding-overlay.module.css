@@ -1,0 +1,93 @@
+/* The first-run overlay. Frosted, so the portal is visibly behind it rather
+   than replaced by it. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  /* Scrolls as a column rather than centring a card taller than the screen,
+     which is what cut the buttons off the bottom. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-8) var(--space-4) var(--space-10);
+  overflow-y: auto;
+
+  /* The blur is the point: the real screen stays legible underneath, so this
+     reads as the last step before the portal rather than a page that replaced
+     it. The tint keeps text contrast steady over whatever happens to be
+     behind — a blur alone leaves the copy sitting on an unpredictable ground. */
+  background: color-mix(in srgb, var(--bg-app) 72%, transparent);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+
+  animation: scrimIn 220ms var(--ease) both;
+}
+
+.sheet {
+  width: min(720px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-block: auto;
+  animation: sheetIn 320ms var(--ease) both;
+}
+
+
+/* The card carries the whole presentation. It is opaque: A translucent card on a blurred ground makes
+   form fields genuinely hard to read, which is the opposite of the point. */
+.body {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-md);
+  padding: var(--card-pad-lg);
+}
+
+.later {
+  align-self: center;
+  min-height: 32px;
+  padding-inline: var(--space-3);
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-control);
+}
+.later:hover { color: var(--text-primary); background: var(--surface-hover); }
+
+/* Entry only. Nothing here loops, and nothing moves once it has settled. */
+@keyframes scrimIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheetIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Each question group arrives a beat after the card, so a step reads as a
+   question being asked rather than a form appearing all at once. */
+.body > * > * {
+  animation: stepIn 260ms var(--ease) both;
+}
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 639px) {
+  .scrim { padding: var(--space-4) var(--space-3); }
+    .body { padding: var(--space-5); }
+}
+
+/* §77 still holds for anyone who has asked for less: the overlay appears, it
+   just does not travel to get there. */
+@media (prefers-reduced-motion: reduce) {
+  .scrim, .sheet, .body > * > * { animation: none !important; }
+}
+
+/* Safari and Firefox without backdrop-filter get a solid ground rather than
+   unreadable text over the live page. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .scrim { background: color-mix(in srgb, var(--bg-app) 97%, transparent); }
+}

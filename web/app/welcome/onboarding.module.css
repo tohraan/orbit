@@ -92,3 +92,8 @@
   line-height: 1.55;
   color: var(--color-text-secondary);
 }
+
+/* Embedded in the first-run overlay: the card is the whole presentation, so
+   it drops the page shell's own width cap and vertical padding. */
+.embedded { width: 100%; }
+.embedded .card { margin: 0; max-width: none; }

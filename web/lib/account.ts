@@ -86,6 +86,11 @@ function toRow(p: Profile) {
 export function useRemoteProfile() {
   const { user, status } = useAuth();
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
+  /* undefined = not yet known, null = never onboarded, string = done.
+   * The three states matter: treating "not yet known" as "never onboarded"
+   * flashes the onboarding overlay at every returning student for the frame
+   * before their row arrives. */
+  const [onboardedAt, setOnboardedAt] = useState<string | null | undefined>(undefined);
   const [isStaff, setIsStaff] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -99,12 +104,16 @@ export function useRemoteProfile() {
       if (data) {
         setProfile(toProfile(data as StudentRow));
         setIsStaff(Boolean((data as StudentRow).is_staff));
+        setOnboardedAt(((data as StudentRow & { onboarded_at?: string | null }).onboarded_at) ?? null);
       } else {
         /* The sign-up trigger should have made this row. If it is missing —
          * an account created before db/015, say — create it rather than
          * leaving the student with a profile that cannot be saved. */
         await sb.from("students").insert({ id: user.id, email: user.email ?? "" });
         setProfile({ ...EMPTY_PROFILE, email: user.email ?? "" });
+        /* No row yet: this is the first login, which is exactly who
+         * onboarding exists for. */
+        setOnboardedAt(null);
       }
       setReady(true);
     })();
@@ -112,6 +121,18 @@ export function useRemoteProfile() {
       alive = false;
     };
   }, [user, status]);
+
+  /* Recorded once, when the student finishes or deliberately leaves the
+   * first-run flow. Stored rather than inferred from the profile's shape:
+   * someone who skipped every question has still been welcomed, and must not
+   * be dragged through it again on the next login. */
+  const markOnboarded = useCallback(async () => {
+    const sb = supabase();
+    if (!sb || !user) return;
+    const now = new Date().toISOString();
+    setOnboardedAt(now);
+    await sb.from("students").update({ onboarded_at: now }).eq("id", user.id);
+  }, [user]);
 
   const save = useCallback(
     async (next: Profile) => {
@@ -129,7 +150,7 @@ export function useRemoteProfile() {
     [user, profile],
   );
 
-  return { profile, isStaff, ready, save };
+  return { profile, isStaff, ready, save, onboardedAt, markOnboarded };
 }
 
 /* --------------------------------------------------------------- saved --- */

@@ -94,6 +94,10 @@ export function useProfile() {
     ready: status === "loading" ? false : signedIn ? remote.ready : local.ready,
     started,
     needsReview: !signedIn && local.needsReview,
+    /* Only meaningful for a signed-in student; the portal is behind a
+     * sign-in, so there is no other case to answer for. */
+    onboardedAt: signedIn ? remote.onboardedAt : undefined,
+    markOnboarded: remote.markOnboarded,
     save: (next: Profile) => {
       if (signedIn) return remote.save(next);
       local.save(next);

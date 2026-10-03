@@ -85,7 +85,10 @@ export default function WelcomePage() {
   );
 }
 
-function WelcomeFlow() {
+/* Exported so the first-run overlay can present the same flow rather than a
+ * second copy of these questions — two onboarding flows is how the questions
+ * drift apart. `embedded` changes only the chrome and where "done" goes. */
+export function WelcomeFlow({ embedded, onDone }: { embedded?: boolean; onDone?: () => void } = {}) {
   const router = useRouter();
   const params = useSearchParams();
   const toast = useToast();
@@ -116,15 +119,19 @@ function WelcomeFlow() {
   const pct = useMemo(() => completeness(draft), [draft]);
   const states = useMemo(() => phaseStates(draft), [draft]);
 
-  function finish() {
-    save(draft);
+  async function finish() {
+    await save(draft);
+    if (onDone) {
+      onDone();
+      return;
+    }
     toast("Saved to your profile");
     router.push("/");
   }
 
   return (
-    <div className={s.shell}>
-      <div className={s.intro}>
+    <div className={embedded ? s.embedded : s.shell}>
+      <div className={s.intro} hidden={embedded}>
         <span className="eyebrow">Welcome</span>
         <h1 className="t-page-title">Set up your profile</h1>
         <p className="t-body c-secondary">
@@ -269,16 +276,20 @@ function WelcomeFlow() {
             </Field>
 
             <p className={s.privacy}>
-              Your answers are stored on this device against your own profile id, so someone else using
-              this browser does not see them. Nothing is sent to a server — which also means they do not
-              follow you to another device. You can change or erase all of it from your profile.
+              Your answers are stored against your account, so they follow you to any device you sign in
+              on and nobody else can read them. You can change or erase all of it from your profile at
+              any time.
             </p>
           </>
         )}
 
         <div className={s.foot}>
-          <Button variant="ghost" onClick={() => (step === 0 ? router.push("/") : setStep(step - 1))}>
-            {step === 0 ? "Skip for now" : "Back"}
+          <Button
+            variant="ghost"
+            disabled={embedded && step === 0}
+            onClick={() => (step === 0 ? (embedded ? undefined : router.push("/")) : setStep(step - 1))}
+          >
+            {step === 0 ? (embedded ? "" : "Skip for now") : "Back"}
           </Button>
           <div className={s.footRight}>
             {step < STEPS.length - 1 ? (

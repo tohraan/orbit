@@ -55,7 +55,10 @@
      glyph it was counting. Both read as clipping. */
   width: 48px;
   height: 48px;
-  border-radius: 14px;
+  /* A circle, matching the avatar at the foot of the rail — the rail is the
+     one pill-shaped thing in the product, so its targets are round rather
+     than squares with the corners taken off. */
+  border-radius: var(--radius-full);
   color: var(--text-tertiary);
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }

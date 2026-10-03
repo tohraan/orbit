@@ -77,12 +77,17 @@
   --success-fg: #1b6b43;
   --success-bg: #e9f5ee;
   --success-border: #bfe0ce;
-  --warning-fg: #7a5200;
-  --warning-bg: #fbf2dd;
-  --warning-border: #ead7a3;
-  --error-fg: #9f2525;
-  --error-bg: #fbecec;
-  --error-border: #f0c5c5;
+  /* Red and yellow come off the emblem, not from a generic palette.
+     --error-fg IS the logo red: 5.5:1 as text and 5.7:1 with white on it, so
+     the same value serves a warning label and a filled destructive button.
+     The logo gold only reaches 3.2:1 as text, so the INK is a darkened gold
+     while the bright yellow stays where it belongs — on the surface. */
+  --warning-fg: #8a6a1e;
+  --warning-bg: #fdf6df;
+  --warning-border: #ecd9a0;
+  --error-fg: #c82020;
+  --error-bg: #fcebeb;
+  --error-border: #f2c7c7;
 
   --shadow-sm: 0 1px 2px rgba(22, 22, 28, 0.06);
   --shadow-md: 0 8px 24px rgba(22, 22, 28, 0.1);
@@ -356,12 +361,14 @@
     --success-fg: #6fd3a0;
     --success-bg: #12261c;
     --success-border: #1f4733;
-    --warning-fg: #e5bc62;
-    --warning-bg: #2a2210;
-    --warning-border: #4a3c18;
-    --error-fg: #f08a8a;
-    --error-bg: #2b1415;
-    --error-border: #512325;
+    /* The logo yellow itself — 13.7:1 on the dark surface — and the logo red
+       lifted just far enough to clear AA at 6.5:1. */
+    --warning-fg: #f8e070;
+    --warning-bg: #2b2412;
+    --warning-border: #4e3f1a;
+    --error-fg: #ef7676;
+    --error-bg: #2d1516;
+    --error-border: #55262a;
 
     --shadow-sm: none;
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
@@ -419,12 +426,14 @@
   --success-fg: #6fd3a0;
   --success-bg: #12261c;
   --success-border: #1f4733;
-  --warning-fg: #e5bc62;
-  --warning-bg: #2a2210;
-  --warning-border: #4a3c18;
-  --error-fg: #f08a8a;
-  --error-bg: #2b1415;
-  --error-border: #512325;
+  /* The logo yellow itself — 13.7:1 on the dark surface — and the logo red
+     lifted just far enough to clear AA at 6.5:1. */
+  --warning-fg: #f8e070;
+  --warning-bg: #2b2412;
+  --warning-border: #4e3f1a;
+  --error-fg: #ef7676;
+  --error-bg: #2d1516;
+  --error-border: #55262a;
 
   --shadow-sm: none;
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);

@@ -158,8 +158,11 @@ function SignInButton() {
   const { status, configured } = useAuth();
   const pathname = usePathname();
 
+  /* With the portal behind a sign-in (components/auth/AuthWall.tsx), the only
+   * route reachable signed out is /account — which is the sign-in screen — so
+   * this never has anything to offer. Kept, rather than deleted, because an
+   * unconfigured build stays open and still wants a way in. */
   if (!configured || status !== "signed-out") return null;
-  /* Already on the way in; a second prompt is noise. */
   if (pathname.startsWith("/account") || pathname.startsWith("/welcome")) return null;
 
   const next = pathname && pathname !== "/" ? `?next=${encodeURIComponent(pathname)}` : "";
