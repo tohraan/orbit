@@ -30,7 +30,10 @@ import { Icon } from "../ui/Icon";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
-const KEY = "rof.v1.consent";
+/* Exported so SignInNudge can wait for this to be answered instead of
+ * stacking a second banner in the same slot. One definition, one key. */
+export const CONSENT_KEY = "rof.v1.consent";
+const KEY = CONSENT_KEY;
 type Choice = "all" | "essential";
 
 function read(): Choice | null {

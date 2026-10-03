@@ -618,3 +618,29 @@
    a character in a path, which is what this stopped being when it became a
    trail of links. */
 .crumbSep { display: inline-flex; align-items: center; color: var(--text-tertiary); flex: none; }
+
+/* The header's sign-in control. Primary, because for a signed-out visitor it
+   IS the primary action on every screen — but 36px like everything else in
+   the cluster, so the row keeps one baseline. */
+.signIn {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex: none;
+}
+.signIn:hover { background: var(--accent-hover); }
+.signIn:active { background: var(--accent-active); }
+
+/* Below 1024 the header cluster is tight and the bottom bar carries Profile,
+   so the label shortens rather than the button disappearing. */
+@media (max-width: 1023px) {
+  .signIn { padding-inline: var(--space-3); }
+}

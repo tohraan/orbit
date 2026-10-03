@@ -20,6 +20,7 @@ import { CommandPalette, useCommandPalette } from "../command/CommandPalette";
 import { AuthProvider } from "@/lib/auth";
 import { GateProvider } from "@/lib/gate";
 import { ConsentBanner, SessionNotice } from "../consent/Consent";
+import { SignInNudge } from "../consent/SignInNudge";
 
 export function AppShell({ children }: { children: ReactNode }) {
   /* ⌘K / Ctrl-K lives at the shell, so the shortcut works on every screen and
@@ -46,6 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <CommandPalette open={open} onClose={() => setOpen(false)} />
         <SessionNotice />
         <ConsentBanner />
+        <SignInNudge />
       </div>
     </ToastProvider>
     </GateProvider>

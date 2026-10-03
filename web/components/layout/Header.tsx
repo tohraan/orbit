@@ -142,6 +142,34 @@ function Notifications() {
  * — is my work safe anywhere but this browser — and one button changes it.
  * Setup is no longer a menu row: it is the primary CTA on /profile, which is
  * where the progress that gives it meaning lives. */
+/* Sign in, in the open.
+ *
+ * Signing in used to live only inside the account menu, behind an avatar that
+ * shows a generic person icon when nobody is signed in — so the one action a
+ * first-time visitor most needs was the one thing they had to go looking for.
+ * It is a button in the top right now, and it is simply absent once there is a
+ * session: a signed-in student has no use for it, and leaving it there would
+ * read as "you are not signed in" to someone who is.
+ *
+ * Rendered only when accounts are configured, and never while the session is
+ * still resolving — a Sign in button that flashes for one frame in front of a
+ * signed-in student is worse than a slightly later one. */
+function SignInButton() {
+  const { status, configured } = useAuth();
+  const pathname = usePathname();
+
+  if (!configured || status !== "signed-out") return null;
+  /* Already on the way in; a second prompt is noise. */
+  if (pathname.startsWith("/account") || pathname.startsWith("/welcome")) return null;
+
+  const next = pathname && pathname !== "/" ? `?next=${encodeURIComponent(pathname)}` : "";
+  return (
+    <Link href={`/account${next}`} className={s.signIn}>
+      Sign in
+    </Link>
+  );
+}
+
 function AccountMenu() {
   const [open, setOpen] = useState(false);
   const ref = useAway(() => setOpen(false));
@@ -293,6 +321,7 @@ export function Header({ onOpenCommand }: { onOpenCommand: () => void }) {
         <CurrencySwitch />
         <ThemeToggle />
         <Notifications />
+        <SignInButton />
         <AccountMenu />
       </div>
       </div>
@@ -307,11 +336,15 @@ export function MobileHeader({ onOpenCommand }: { onOpenCommand: () => void }) {
     <div className={s.mobileHeader}>
       <ThemeToggle compact />
       <span className={s.mobileTitle}>{title}</span>
-      <div style={{ display: "flex", gap: "var(--s-2)" }}>
+      <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
         <button type="button" className={s.iconBtn} aria-label="Search" onClick={onOpenCommand}>
           <Icon name="search" size={16} />
         </button>
         <Notifications />
+        {/* The mobile header carried no account control at all, so a signed-out
+            visitor on a phone had no way in short of finding Profile in the
+            bottom bar. */}
+        <SignInButton />
       </div>
     </div>
   );
