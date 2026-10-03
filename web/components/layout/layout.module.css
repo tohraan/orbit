@@ -31,11 +31,11 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-1);
-  width: 56px;
-  padding: var(--space-2);
+  width: 64px;
+  padding: var(--space-2) var(--space-2) var(--space-3);
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
-  border-radius: 28px;
+  border-radius: 32px;
   box-shadow: var(--shadow-sm);
   z-index: 40;
 }
@@ -50,9 +50,12 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-nested);
+  /* 48, not 40. A 22px glyph inside a 40px tile left 9px of air on each
+     side, and the count badge — anchored outside the box — overlapped the
+     glyph it was counting. Both read as clipping. */
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   color: var(--text-tertiary);
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
@@ -93,9 +96,11 @@
 
 /* Counts ride the icon as a small badge, since there is no row to sit in. */
 .navCount {
+  /* Inside the tile now. Anchored outside a 40px target it sat on the glyph
+     and got cropped by the rail's own rounded edge. */
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: 3px;
+  right: 3px;
   min-width: 16px;
   height: 16px;
   padding-inline: 4px;
@@ -111,7 +116,7 @@
 .navItemActive .navCount { background: var(--color-surface); color: var(--color-action); border-color: var(--color-action); }
 
 .navGroup { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.navRule { width: 24px; height: 1px; background: var(--border-subtle); margin: var(--space-2) auto; }
+.navRule { width: 28px; height: 1px; background: var(--border-subtle); margin: var(--space-2) auto; }
 /* On the filled active item the badge inverts, or an accent chip on an accent
    tile is invisible. */
 .navItemActive .navCount { background: var(--on-accent); color: var(--accent); border-color: var(--accent); }
@@ -123,8 +128,8 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-full);
   transition: background-color var(--dur) var(--ease);
 }
@@ -161,7 +166,7 @@
 /* Clears the floating rail: its left offset + its width + the same gap again,
    so the gutter to the left of the content matches the gutter to the left of
    the rail. */
-.main { margin-left: calc(var(--s-4) * 2 + 60px); min-width: 0; }
+.main { margin-left: calc(var(--space-4) * 2 + 64px); min-width: 0; }
 @media (max-width: 1023px) { .main { margin-left: 0; } }
 
 /* The bar is full-bleed, its content is not.
@@ -175,7 +180,7 @@
   top: 0;
   z-index: 30;
   height: 64px;
-  margin-left: calc(-1 * (var(--space-4) * 2 + 60px));
+  margin-left: calc(-1 * (var(--space-4) * 2 + 64px));
   background: color-mix(in srgb, var(--bg-app) 85%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border-subtle);
@@ -187,9 +192,9 @@
   align-items: center;
   gap: var(--space-4);
   height: 100%;
-  max-width: calc(var(--container) + (var(--space-4) * 2 + 60px));
+  max-width: calc(var(--container) + (var(--space-4) * 2 + 64px));
   margin-inline: auto;
-  padding-inline: calc((var(--space-4) * 2 + 60px) + var(--space-8)) var(--space-8);
+  padding-inline: calc((var(--space-4) * 2 + 64px) + var(--space-8)) var(--space-8);
 }
 @media (max-width: 1023px) { .headerInner { padding-inline: var(--space-8); max-width: var(--container); } }
 @media (max-width: 767px)  { .headerInner { padding-inline: var(--space-4); } }

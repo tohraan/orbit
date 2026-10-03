@@ -79,7 +79,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: sub } = sb.auth.onAuthStateChange((event, next) => {
       setSession(next);
       setStatus(next ? "signed-in" : "signed-out");
-      if (event === "PASSWORD_RECOVERY") setRecovery(true);
+      if (event === "PASSWORD_RECOVERY") {
+        setRecovery(true);
+        /* The recovery link lands wherever Supabase's Site URL points — the
+         * root, in practice — but the "choose a new password" screen lives on
+         * /account. Without this the token is consumed, the student is
+         * silently signed in, and nothing ever asks for the new password, so
+         * the reset appears to do nothing. Taking them there is the whole
+         * point of having clicked the link. */
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/account")) {
+          window.location.replace("/account");
+        }
+      }
       if (event === "SIGNED_OUT") setRecovery(false);
 
       /* A sign-out nobody asked for is the interesting one. `signOut()` sets

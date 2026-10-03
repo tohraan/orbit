@@ -32,7 +32,7 @@ function Row({ item, counts }: { item: NavItem; counts: Record<string, number> }
       aria-current={active ? "page" : undefined}
       aria-label={item.label}
     >
-      <Icon name={active && item.icon === "bookmark" ? "bookmark-filled" : item.icon} size={20} />
+      <Icon name={active && item.icon === "bookmark" ? "bookmark-filled" : item.icon} size={22} />
       {count ? (
         <span className={s.navCount} aria-hidden="true">
           {count > 9 ? "9+" : count}

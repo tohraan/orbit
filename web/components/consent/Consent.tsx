@@ -143,13 +143,17 @@ export function ConsentBanner() {
 
         <div className={c.body}>
           <p className={c.title}>What Orbit keeps</p>
+          {/* One sentence, not three paragraphs. The original said the same
+              thing twice and pushed the buttons into a narrow column beside a
+              wall of text — nobody reads a privacy notice twice as carefully
+              for being longer. The detail that was cut is still true and still
+              on the profile page, where someone who wants it will look. */}
           <p className={c.text}>
-            Your profile, saved list and applications are stored so they are still here next time — in this browser,
-            or in your account once you sign in. No advertising cookies, no third-party analytics.
-          </p>
-          <p className={c.text}>
-            We also count how many students saved each opportunity and show that total on the card. It is a number
-            only, never who. You can say no, and the count will not include you.
+            Your saved list and profile are kept so they are here next time. We also count how many students saved
+            each opportunity — a number only, never who.{" "}
+            <Link href="/profile" className={c.inline}>
+              Change later
+            </Link>
           </p>
         </div>
 
@@ -160,9 +164,6 @@ export function ConsentBanner() {
           <button type="button" className={c.secondary} onClick={() => apply("essential")}>
             Don&rsquo;t count me
           </button>
-          <Link href="/profile" className={c.link}>
-            Change later
-          </Link>
         </div>
       </div>
     </div>

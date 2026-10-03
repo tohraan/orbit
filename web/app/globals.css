@@ -69,8 +69,8 @@
   --accent: var(--bits-navy);
   --accent-hover: color-mix(in srgb, var(--accent) 88%, black);
   --accent-active: color-mix(in srgb, var(--accent) 78%, black);
-  --accent-subtle: color-mix(in srgb, var(--accent) 8%, var(--surface-raised));
-  --accent-border: color-mix(in srgb, var(--accent) 28%, var(--surface-raised));
+  --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
+  --accent-border: color-mix(in srgb, var(--accent) 38%, var(--surface-raised));
   --accent-text: var(--accent);
   --on-accent: #ffffff;
 
@@ -340,12 +340,17 @@
     --text-tertiary: #858592;
     --text-disabled: #5a5a66;
 
-    --accent: #6568e0;
+    /* NOT the navy lifted straight up. The logo's navy sits at hue 240, and
+       lightening that hue for a dark page lands on periwinkle — which reads
+       as purple, not as this institution's blue. This is the navy pulled
+       toward the logo's own sky blue, at hue 216: unmistakably blue, and
+       still the emblem's family. White on it is 5.6:1. */
+    --accent: #2164ca;
     --accent-hover: color-mix(in srgb, var(--accent) 88%, white);
     --accent-active: color-mix(in srgb, var(--accent) 76%, white);
     --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
     --accent-border: color-mix(in srgb, var(--accent) 40%, var(--surface-raised));
-    --accent-text: #a7a9f5;
+    --accent-text: #8cc0f5;
     --on-accent: #ffffff;
 
     --success-fg: #6fd3a0;
@@ -401,12 +406,14 @@
   --text-tertiary: #858592;
   --text-disabled: #5a5a66;
 
-  --accent: #6568e0;
+  /* See the note in the OS-preference block: hue 216, not the navy's 240,
+     because a lifted 240 reads purple on a dark page. */
+  --accent: #2164ca;
   --accent-hover: color-mix(in srgb, var(--accent) 88%, white);
   --accent-active: color-mix(in srgb, var(--accent) 76%, white);
   --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
   --accent-border: color-mix(in srgb, var(--accent) 40%, var(--surface-raised));
-  --accent-text: #a7a9f5;
+  --accent-text: #8cc0f5;
   --on-accent: #ffffff;
 
   --success-fg: #6fd3a0;

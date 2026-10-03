@@ -1,0 +1,21 @@
+# Minimal on purpose.
+#
+# `supabase config push` leaves undeclared properties alone, so this file
+# declares ONLY the auth redirect settings. A full `supabase init` template
+# would also declare storage, realtime and oauth toggles it invented locally,
+# and pushing those would silently overwrite real hosted settings.
+#
+# WHY THIS EXISTS: password recovery on the deployed site was redirecting to
+# http://localhost:3000 — the project's default Site URL — so every student's
+# reset link would have bounced to a dead address.
+
+project_id = "pcctpzvhakdutzzwpmsh"
+
+[auth]
+site_url = "https://orbit-bits.vercel.app"
+additional_redirect_urls = [
+  "https://orbit-bits.vercel.app",
+  "https://orbit-bits.vercel.app/account",
+  "http://localhost:3100",
+  "http://localhost:3100/account",
+]

@@ -18,9 +18,9 @@
 .panel {
   pointer-events: auto;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--s-4);
-  width: min(760px, 100%);
+  width: min(720px, 100%);
   padding: var(--s-5);
   background: var(--color-surface);
   border: 1px solid var(--color-border-hover);
@@ -32,50 +32,52 @@
   flex: none;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-md);
   background: var(--color-surface-secondary);
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
 }
 
-.body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--s-2); }
-.title { font-size: var(--text-body-sm); font-weight: 600; }
-.text { font-size: var(--text-micro); color: var(--color-text-secondary); }
+.body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.title { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text-primary); }
+.text { font-size: 13px; line-height: 19px; color: var(--text-secondary); }
+.inline { color: var(--accent-text); font-weight: 500; white-space: nowrap; }
+.inline:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-.actions { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: var(--s-2); }
+/* Side by side and the same size. Stacked, the refusal sat under the
+   acceptance looking like an afterthought — an option that looks smaller than
+   the other is not a choice being offered. */
+.actions { flex: none; display: flex; align-items: center; gap: var(--space-2); }
 
 .primary,
 .secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--control-md);
-  padding-inline: var(--s-5);
+  height: 36px;
+  padding-inline: var(--space-4);
   border-radius: var(--radius-control);
   font-size: var(--text-body-sm);
   font-weight: 600;
   white-space: nowrap;
 }
-.primary { background: var(--color-action); color: var(--color-action-text); }
-.primary:hover { background: var(--color-action-hover); }
+.primary { background: var(--accent); color: var(--on-accent); }
+.primary:hover { background: var(--accent-hover); }
 
 /* Declining is a real button of the same size, not a faint link underneath.
    A refusal that is harder to click than acceptance is not a choice. */
-.secondary { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-primary); }
-.secondary:hover { border-color: var(--color-border-hover); }
+.secondary { background: var(--surface-raised); border: 1px solid var(--border-default); color: var(--text-primary); }
+.secondary:hover { background: var(--surface-hover); border-color: var(--border-strong); }
 
-.link { font-size: var(--text-micro); color: var(--color-text-muted); text-align: center; }
-.link:hover { color: var(--color-text-primary); text-decoration: underline; text-underline-offset: 2px; }
 
 /* The bottom bar owns that space on a phone, so the notice sits above it. */
 @media (max-width: 767px) {
   .wrap { bottom: 64px; }
-  .panel { flex-direction: column; gap: var(--s-3); }
-  .actions { flex-direction: row; width: 100%; }
+  .panel { flex-direction: column; align-items: stretch; gap: var(--space-3); }
+  .actions { width: 100%; }
   .primary, .secondary { flex: 1 1 auto; }
-  .link { display: none; }
 }
 
 @keyframes consentIn { from { opacity: 0 } to { opacity: 1 } }
