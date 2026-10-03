@@ -225,5 +225,42 @@ ok(L.audienceReject('Fellowship for African Scholars', '') === 'geo:africa', 'ge
 ok(L.audienceReject('DAAD Masters Scholarship 2026 in Germany', 'Open to applicants worldwide.') === null, 'clean row returns null');
 ok(L.audienceReject('Scholarship 2026', 'Restricted to Kenyan nationals.') === 'geo:africa', 'restriction found in the summary, not the title');
 
+console.log('\n# regression: a related-post card must not supply this page\'s sections');
+/* The bug this guards, measured 2026-10-04: an opportunitiescircle listing
+ * carries sixteen <article> cards for OTHER opportunities. sections() ran over
+ * the whole document and pickSection returned the LONGEST match, so the
+ * biggest foreign "How to Apply" won. 78 of 135 stored rows carried the same
+ * Stanford Venture Fellowship instructions on unrelated scholarships.
+ *
+ * Both halves of the fix are asserted: the card is stripped, AND document
+ * order wins so a survivor could still not outrank the page's own section. */
+const CONTAM = `
+  <div class="elementor-widget-container">
+    <h2>Application Process:</h2>
+    <p>Apply for the Central Queensland RTP Scholarship through the official portal.</p>
+  </div>
+  <article class="elementor-post elementor-grid-item post-999">
+    <h2>How to Apply</h2>
+    <p>${'To apply for the Stanford Venture Fellowship, visit the official portal. '.repeat(40)}</p>
+  </article>`;
+const csec = L.sections(CONTAM);
+const chow = L.pickSection(csec, ['how to apply', 'application process']);
+ok(/Central Queensland/.test(chow), 'keeps the page\'s own application section');
+ok(!/Stanford/.test(chow), 'does not leak the related card\'s section');
+ok(!csec.some(x => /how to apply/i.test(x.heading)), 'card heading is not a section of this page');
+
+/* Longest-wins was the other half of the bug: even with the card stripped, a
+ * later duplicate heading must not outrank the first by being bigger. */
+const ORDER = `<h2>Application Process:</h2><p>Short but correct: email the office.</p>
+               <h2>How to Apply</h2><p>${'Long, later, and not this page. '.repeat(50)}</p>`;
+ok(/email the office/.test(L.pickSection(L.sections(ORDER), ['how to apply', 'application process'])),
+   'first matching section wins, not the longest');
+
+/* Elementor names every content block elementor-widget-*, so a denylist that
+ * included "widget" deleted the article itself — an earlier attempt kept 0.2%
+ * of the page and found no sections at all. */
+ok(L.sections('<div class="elementor-widget-container"><h2>Benefits :</h2><p>Full tuition and a stipend.</p></div>')
+     .some(x => /benefits/i.test(x.heading)), 'elementor widget containers are kept, not stripped');
+
 console.log(fail ? `\n${fail} FAILURE(S)` : '\nall assertions passed');
 process.exit(fail ? 1 : 0);
