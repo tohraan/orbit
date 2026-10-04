@@ -468,6 +468,7 @@ node tests/parse.test.mjs          # parser unit + live-fixture tests (21 assert
 node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover.test.mjs
 node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-loop.test.mjs
 node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-textgate.test.mjs
+node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-richtext.test.mjs
 node tests/normalize.test.mjs      # normalisers vs cached API payloads (27 assertions)
 python3 n8n/build.py --check       # workflows match source
 ./scripts/probe-sources.sh         # 15 endpoints, asserts records not just 200

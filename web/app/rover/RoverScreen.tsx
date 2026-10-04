@@ -32,11 +32,14 @@ import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/Button";
 import { OpportunityCard } from "@/components/opportunities/OpportunityCard";
 import { ErrorState } from "@/components/feedback/States";
+import { RichText } from "./RichText";
 import { PageHead } from "@/components/layout/AppShell";
 import { AGENT_NAME, APP_NAME } from "@/components/layout/brand";
 import type { OpportunitySummary } from "@rof/core";
 import { useProfile } from "@/lib/data";
 import { api } from "@/lib/api-base";
+import { useAuth } from "@/lib/auth";
+import { clearSession, nextId, openSession, saveSession, type Message } from "./session";
 
 /* What the server sends, one JSON object per SSE frame. Mirrors RoverEvent in
  * packages/server/src/rover/agent.ts. */
@@ -47,21 +50,6 @@ type Wire =
   | { t: "done" }
   | { t: "error"; message: string };
 
-/* A block of cards Rover put on screen, with the reason it gave for each. */
-type Picks = { items: OpportunitySummary[]; why: Record<string, string> };
-
-type Message = {
-  id: number;
-  role: "student" | "rover";
-  text: string;
-  /* Activity lines — "Searched fully funded masters — 6 found". Kept with the
-   * message rather than thrown away, so the answer still shows its working
-   * after it has finished arriving. */
-  activity: string[];
-  picks: Picks[];
-  error?: string;
-  streaming?: boolean;
-};
 
 /* The openers. Deliberately the awkward ones: each is vague or
  * multi-constraint in a way a keyword search cannot serve, which is the whole
@@ -73,11 +61,14 @@ const OPENERS = [
   "Fully funded master's scholarships closing soon",
 ];
 
-let nextId = 1;
-
 export function RoverScreen() {
   const { profile, started } = useProfile();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { user } = useAuth();
+  /* Who this runtime currently belongs to. Not a key the chat is stored
+   * under — see session.ts — only a value that, when it changes, means the
+   * previous conversation must not be shown to whoever is here now. */
+  const who = user?.id ?? "anonymous";
+  const [messages, setMessages] = useState<Message[]>(() => openSession(who));
   /* The transcript, readable SYNCHRONOUSLY.
    *
    * `send` has to put the whole conversation in the request body at the
@@ -89,9 +80,9 @@ export function RoverScreen() {
    * "That conversation could not be read", from parseTurns rejecting an empty
    * array. Every write goes through `commit` below so this ref and the state
    * can never disagree. */
-  const transcript = useRef<Message[]>([]);
+  const transcript = useRef<Message[]>(messages);
   const commit = useCallback((next: (cur: Message[]) => Message[]) => {
-    transcript.current = next(transcript.current);
+    transcript.current = saveSession(next(transcript.current));
     setMessages(transcript.current);
     return transcript.current;
   }, []);
@@ -140,8 +131,8 @@ export function RoverScreen() {
       setBusy(true);
       pinned.current = true;
 
-      const student: Message = { id: nextId++, role: "student", text, activity: [], picks: [] };
-      const reply: Message = { id: nextId++, role: "rover", text: "", activity: [], picks: [], streaming: true };
+      const student: Message = { id: nextId(), role: "student", text, activity: [], picks: [] };
+      const reply: Message = { id: nextId(), role: "rover", text: "", activity: [], picks: [], streaming: true };
 
       /* The transcript the server will see: what is on screen plus this turn,
        * read back from the ref so it is the real list and not an empty one. */
@@ -197,6 +188,7 @@ export function RoverScreen() {
             ...m,
             streaming: false,
             error: body?.error?.message || `${AGENT_NAME} could not answer that right now.`,
+            retry: text,
           }));
           return;
         }
@@ -231,7 +223,7 @@ export function RoverScreen() {
             } else if (event.t === "cards") {
               patch((m) => ({ ...m, picks: [...m.picks, { items: event.items, why: event.why }] }));
             } else if (event.t === "error") {
-              patch((m) => ({ ...m, error: event.message }));
+              patch((m) => ({ ...m, error: event.message, retry: text }));
             }
             /* A card block changes the height a lot, so it gets an
                unthrottled scroll; text deltas go through the throttle. */
@@ -248,7 +240,8 @@ export function RoverScreen() {
         patch((m) => ({
           ...m,
           streaming: false,
-          error: `The connection to ${AGENT_NAME} dropped. Try again.`,
+          error: `The connection to ${AGENT_NAME} dropped.`,
+          retry: text,
         }));
       } finally {
         if (abort.current === ac) {
@@ -260,10 +253,28 @@ export function RoverScreen() {
     [profile, started, toBottom, commit],
   );
 
+  /* Run a failed turn again.
+   *
+   * The failed answer AND the question that produced it come off the
+   * transcript first. Without that the question would be sent twice — once in
+   * the replayed history and once as the new turn — and the model would see a
+   * student who asked the same thing immediately after being ignored. */
+  const retry = useCallback(
+    (failedId: number, text: string) => {
+      commit((cur) => {
+        const i = cur.findIndex((m) => m.id === failedId);
+        return i <= 0 ? [] : cur.slice(0, i - 1);
+      });
+      void send(text);
+    },
+    [commit, send],
+  );
+
   const reset = () => {
     abort.current?.abort();
     abort.current = null;
     setBusy(false);
+    clearSession();
     commit(() => []);
     setDraft("");
     input.current?.focus();
@@ -341,7 +352,7 @@ export function RoverScreen() {
             ) : null}
           </div>
         ) : (
-          messages.map((m) => <Bubble key={m.id} message={m} />)
+          messages.map((m) => <Bubble key={m.id} message={m} onRetry={retry} />)
         )}
         <div ref={foot} className={s.foot} />
       </div>
@@ -398,7 +409,13 @@ export function RoverScreen() {
 
 /* ------------------------------------------------------------- one turn --- */
 
-function Bubble({ message }: { message: Message }) {
+function Bubble({
+  message,
+  onRetry,
+}: {
+  message: Message;
+  onRetry: (failedId: number, text: string) => void;
+}) {
   if (message.role === "student") {
     return (
       <div className={s.student}>
@@ -442,9 +459,7 @@ function Bubble({ message }: { message: Message }) {
 
         {message.text ? (
           <div className={s.prose}>
-            {message.text.split(/\n{2,}/).map((para, i) => (
-              <p key={i}>{bold(para)}</p>
-            ))}
+            <RichText text={message.text} />
             {message.streaming ? <span className={s.caret} aria-hidden="true" /> : null}
           </div>
         ) : null}
@@ -468,25 +483,31 @@ function Bubble({ message }: { message: Message }) {
         ))}
 
         {message.error ? (
-          <ErrorState compact title="That answer stopped" body={message.error} />
+          <ErrorState
+            compact
+            title="That answer stopped"
+            body={message.error}
+            /* Offered whenever the turn recorded what to re-send, which is
+               every failure except an abort — an abort is the student sending
+               something else and is not shown as an error at all. Retrying a
+               day's-budget failure is harmless: the server refuses it before
+               spending anything, and by tomorrow the same button works. */
+            actions={
+              message.retry ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="refresh"
+                  onClick={() => onRetry(message.id, message.retry as string)}
+                >
+                  Try again
+                </Button>
+              ) : undefined
+            }
+          />
         ) : null}
       </div>
     </div>
   );
 }
 
-/* The only markdown Rover is told it may use, rendered by hand.
- *
- * A full markdown renderer is a dependency, a bundle and an injection surface
- * for the sake of one emphasis span — and the prompt asks for plain prose with
- * the occasional bold phrase, so this is the whole of what can arrive. Anything
- * else stays literal text, which is the safe failure. */
-function bold(text: string) {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
-      <strong key={i}>{part.slice(2, -2)}</strong>
-    ) : (
-      part
-    ),
-  );
-}

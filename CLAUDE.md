@@ -57,4 +57,5 @@ python3 n8n/build.py --check   # generated JSON matches source
 node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover.test.mjs
 node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-loop.test.mjs
 node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-textgate.test.mjs
+node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-richtext.test.mjs
 ```

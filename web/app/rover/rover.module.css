@@ -112,7 +112,11 @@
 }
 .activityLine svg { color: var(--text-disabled); }
 
-.prose { max-width: 68ch; display: flex; flex-direction: column; gap: var(--s-3); }
+/* `min-width: 0` is load-bearing, not tidiness: a flex child defaults to
+   min-width:auto, so a wide code block or an unbreakable URL inside the
+   prose column would widen the column, then the transcript, then give the
+   whole page a horizontal scrollbar. */
+.prose { max-width: 68ch; min-width: 0; display: flex; flex-direction: column; gap: var(--s-3); }
 .prose p { font-size: 15px; line-height: 24px; color: var(--text-primary); overflow-wrap: anywhere; }
 .prose strong { font-weight: 600; }
 

@@ -1,0 +1,90 @@
+/* Markdown inside a chat bubble, in the portal's own tokens.
+ *
+ * Every value here is a token already used elsewhere in Orbit — no new scale,
+ * no new palette. The one rule that is load-bearing rather than cosmetic is
+ * `min-width: 0` on the bubble column (in rover.module.css) together with the
+ * overflow rules below: without them a long URL or a wide line of code widens
+ * the flex column, which widens the transcript, which gives the whole page a
+ * horizontal scrollbar. Chat content must be allowed to wrap or to scroll
+ * inside itself, never to push the layout wider. */
+
+/* --- links --------------------------------------------------------------
+   Underlined rather than coloured alone, so it is not carried by hue. Every
+   anchor in the chat opens in a new tab; that is enforced in RichText.tsx, in
+   the one component that builds them. */
+.link {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  /* A URL has no spaces to break at, so it has to be allowed to break
+     anywhere or it runs out of the bubble. */
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-tag);
+}
+.link:hover {
+  text-decoration-thickness: 2px;
+}
+.link:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
+/* --- lists --------------------------------------------------------------
+   Rover is told to show opportunities as cards, never as a list, so a list
+   that arrives is usually a model slip. It still has to read properly. */
+.list {
+  margin: 0;
+  padding-left: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--text-primary);
+}
+.list li {
+  overflow-wrap: anywhere;
+}
+
+/* --- headings -----------------------------------------------------------
+   One level only. A chat answer is two or three sentences; anything claiming
+   a document outline is flattened to the same size rather than given a scale
+   of its own. */
+.heading {
+  margin: 0;
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* --- code --------------------------------------------------------------- */
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  padding: 1px 5px;
+  border-radius: var(--radius-tag);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  overflow-wrap: anywhere;
+}
+
+/* The block scrolls itself. `max-width: 100%` plus `min-width: 0` on the
+   parent is what stops a 200-character line widening the page instead. */
+.pre {
+  margin: 0;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--radius-nested);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+}
+.pre code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-primary);
+  white-space: pre;
+}
