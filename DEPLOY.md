@@ -91,39 +91,46 @@ one when `NEXT_PUBLIC_API_BASE` is set, because the browser then sends every
 data request — Rover's included — straight here. In a single-deployment setup
 it goes on the frontend instead. It is never prefixed `NEXT_PUBLIC_`.
 
-**`vercel --prod` does not move the alias the frontend actually calls.** This
-cost a whole deploy cycle. There are four hostnames per project, and only some
-of them follow a production deploy:
+**A manual alias does not follow a production deploy. A project domain does.**
+This cost two deploy cycles before anyone worked out which of those two things
+each hostname was.
 
-| Host | Follows `--prod`? |
-|---|---|
-| `orbit-api-psi.vercel.app` | yes — the project's generated domain |
-| `orbit-bits-api.vercel.app` | **no** — pinned by `vercel alias set` |
-| `orbit-ruby-five-16.vercel.app` | yes |
-| `orbit-bits.vercel.app` | **no** — pinned |
+`vercel alias set <url> <host>` pins a hostname to **one specific deployment**,
+for good. It is a pointer at a build, not at an environment, so the next
+`--prod` leaves it exactly where it was. That is what `orbit-bits.vercel.app`
+and `orbit-bits-api.vercel.app` were, and it is why the ritual of re-pointing
+them after every deploy existed.
 
-`NEXT_PUBLIC_API_BASE` on the `orbit` project is `https://orbit-bits-api.vercel.app`,
-the pinned one. So Rover was deployed, healthy and reachable on
-`orbit-api-psi` while the browser got a 404 from `orbit-bits-api`, which was
-still serving a deployment from before Rover existed. The symptom in the
-console is the giveaway:
+A hostname attached to the project instead — Settings → Domains, or
+`POST /v10/projects/<id>/domains` — points at whatever the project's current
+production deployment is, and keeps doing so. `orbit-ruby-five-16.vercel.app`
+and `orbit-api-psi.vercel.app` always worked without the ritual for exactly
+this reason: a project's generated domain is a project domain.
 
-```
-orbit-bits-api.vercel.app/api/rover:1  Failed to load resource: 404
-```
+Both custom hostnames are project domains now:
 
-After any production deploy, re-point both pinned aliases at the deployment
-you just made:
+| Host | Kind | Follows `--prod`? |
+|---|---|---|
+| `orbit-bits.vercel.app` | project domain on `orbit` | yes |
+| `orbit-bits-api.vercel.app` | project domain on `orbit-api` | yes |
+| `orbit-ruby-five-16.vercel.app` | generated | yes |
+| `orbit-api-psi.vercel.app` | generated | yes |
+| `orbit-desk-delta.vercel.app` | generated | yes |
+
+So **there is nothing to run after a deploy.** If a hostname ever goes stale
+again, the question to ask is not "did I forget the alias" but "is this a
+project domain or did someone pin it with `vercel alias set`":
 
 ```bash
-vercel ls orbit-api | grep Production | head -1    # copy the deployment URL
-vercel alias set <that-url> orbit-bits-api.vercel.app
-vercel ls orbit | grep Production | head -1
-vercel alias set <that-url> orbit-bits.vercel.app
+# lists project domains — a pinned alias will NOT appear here
+curl -s "https://api.vercel.com/v9/projects/orbit/domains?teamId=$TEAM" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-Then smoke-test against `orbit-bits-api`, never `orbit-api-psi` — the second
-one can be perfectly healthy while students see a 404.
+Smoke-test against the hostname the browser actually calls — the one in
+`NEXT_PUBLIC_API_BASE` — and never only against the generated domain. The
+generated one can be perfectly healthy while students see a 404, which is the
+shape the Rover outage took.
 
 `OPENROUTER_API_KEY` is set on `orbit-api` as a Secret, in Production and Preview. Preview also
 needs it because `ALLOWED_ORIGINS`, `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`
