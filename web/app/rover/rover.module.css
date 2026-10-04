@@ -51,6 +51,9 @@
      a question is not that long. */
   --page-w: 920px;
   --composer-w: 640px;
+  /* The conversation's own two measurements. */
+  --bar-h: 50px;
+  --found-w: 272px;
 
   --m-micro: 140ms;
   --m-standard: 200ms;
@@ -136,17 +139,200 @@
   justify-content: center;
   text-align: center;
 }
-/* A conversation claims the screen even when it is one short turn long. Without
-   this the column ended where the answer ended, which put the composer in the
-   middle of the page with nothing under it — the same dead space the cold state
-   was fixed for, arriving one message later. The transcript stays at the top
-   and the composer is pushed to the bottom of the column by the auto margin
-   below, where a chat's input belongs. */
+/* A CONVERSATION IS A WORKSPACE, so it is laid out as one: a bar across the
+   top, the thread on the left, what has been found on the right, the composer
+   under the thread it belongs to.
+   
+   Before this it was a single column that scrolled, and three things went
+   wrong in it. "New conversation" scrolled away with the first answer. The
+   question scrolled away from its own answer, so two screens into a grid of
+   cards nothing said what was asked. And every opportunity Rover found went
+   into the scrollback, which is the one part of the session a student actually
+   wants to keep.
+   
+   The grid answers all three. It also keeps the viewport's height, so a
+   one-turn conversation does not leave the composer stranded mid-page. */
 .live .body {
-  gap: var(--s-5);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--found-w);
+  grid-template-areas:
+    "bar   found"
+    "thread found"
+    "composer found"
+    "note  found";
+  column-gap: var(--s-6);
+  row-gap: var(--s-5);
+  align-items: start;
   min-height: calc(100dvh - var(--header-h) - var(--space-8) - var(--space-16));
 }
-.live .composer { margin-top: auto; }
+.live .bar { grid-area: bar; }
+.live .thread { grid-area: thread; }
+.live .found { grid-area: found; }
+.live .composer { grid-area: composer; margin-top: auto; }
+.live .disclaimer { grid-area: note; }
+
+/* --- the conversation bar -------------------------------------------------
+   Sticky directly under the app header, which is where the student's eye goes
+   for "where am I and how do I start over". Opaque, because a transcript
+   scrolling under a translucent bar is unreadable at exactly the moment it is
+   passing behind it. */
+.bar {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--bar-h);
+  padding-block: var(--s-2);
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.barMark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: var(--radius-full);
+  color: var(--badge-ink);
+  background: color-mix(in srgb, var(--accent-yellow) 15%, transparent);
+}
+.barName { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.barMeta {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* While a turn is running the counts would be mid-change, so the bar says the
+   one thing that is true instead. */
+.barWorking { display: inline-flex; align-items: center; gap: var(--s-2); color: var(--badge-ink); }
+.barDot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  animation: pulse 1.4s var(--m-layout-ease) infinite;
+}
+
+/* --- the thread ------------------------------------------------------------ */
+.thread { display: flex; flex-direction: column; gap: var(--s-7); min-width: 0; width: 100%; }
+
+/* The exchange is the scroll unit, and `relative` is what scopes the sticky
+   question to it: the header travels down with its own answer and stops at the
+   end of it rather than stacking up with the next one. */
+.turn { position: relative; display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; }
+
+.ask {
+  position: sticky;
+  top: calc(var(--header-h) + var(--bar-h));
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-4) 0 var(--s-3);
+  background: var(--bg-app);
+  /* A rule under the heading. Without it, a card passing behind the sticky
+     question butts straight against the text and reads as crowding rather
+     than as something scrolling underneath. */
+  box-shadow: 0 1px 0 var(--border-subtle);
+}
+.askLabel {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.askText {
+  font-size: 17px;
+  line-height: 25px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* --- what the session has turned up ---------------------------------------
+   A second view of the transcript, never a second opinion about it: these are
+   the rows Rover already sent, deduplicated and in the order they arrived.
+   Sticky under the bar and scrolls inside itself, so a long list never makes
+   the page taller than the conversation does. */
+.found {
+  position: sticky;
+  top: calc(var(--header-h) + var(--bar-h) + var(--s-4));
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - var(--header-h) - var(--bar-h) - var(--s-8));
+  padding: var(--s-3);
+  background: var(--frost-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--frost-border);
+  border-radius: 18px;
+  box-shadow: var(--frost-shadow), var(--frost-top);
+}
+.foundHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: 2px var(--s-2) var(--s-3);
+}
+.foundTitle {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.foundCount {
+  min-width: 22px;
+  padding-inline: 6px;
+  border-radius: var(--radius-full);
+  font-size: 11.5px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--badge-ink);
+  background: color-mix(in srgb, var(--accent-yellow) 18%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+.foundList { list-style: none; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.foundRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: var(--s-2);
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-tag);
+  cursor: pointer;
+  transition: background-color var(--m-micro) var(--m-out);
+}
+.foundRow:hover { background: var(--surface-hover); }
+.foundRow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.foundName {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.foundMeta { font-size: 11.5px; line-height: 16px; color: var(--text-tertiary); }
+.foundSoon { color: var(--error-text, #c0392b); font-weight: 500; }
 
 /* --- the greeting --------------------------------------------------------- */
 .greetWrap {
@@ -267,23 +453,27 @@
    A frosted pill on the same tokens as the cards. In the cold state it sits in
    the group; in a conversation it pins to the bottom of the viewport with a
    fade above it, so a card scrolling under it does not turn to mush. */
-.composer {
-  width: 100%;
-  max-width: var(--composer-w);
-  margin-inline: auto;
-}
+/* The form spans its column; the FIELD inside it is the 640. The two used to
+   be the same element, so the fade that keeps the transcript from running into
+   the composer was only 640 wide — and in a 824px thread the cards either side
+   of the field scrolled past it with nothing over them. */
+.composer { width: 100%; }
 
 .live .composer {
   position: sticky;
   bottom: 0;
   z-index: 10;
-  padding-block: var(--s-4);
-  /* The fade is the page colour, not a translucent bar. */
-  background: linear-gradient(to bottom, transparent, var(--bg-app) 38%);
+  padding-block: var(--s-7) var(--s-4);
+  /* The fade is the page colour, not a translucent bar, and it reaches full
+     opacity above the field so no card edge arrives behind the glass. */
+  background: linear-gradient(to bottom, transparent 0%, var(--bg-app) 32%);
 }
 
 .field {
   display: flex;
+  width: 100%;
+  max-width: var(--composer-w);
+  margin-inline: auto;
   align-items: center;
   gap: var(--s-2);
   min-height: 60px;
@@ -316,6 +506,17 @@
   padding: 8px 0;
   max-height: 120px;
 }
+/* FROSTED ONLY WHERE THERE IS SOMETHING TO FROST. On the cold screen the field
+   is glass over wallpaper, which is the effect. Over a scrolling transcript it
+   is glass over the student's own answer: the prose behind it shows straight
+   through the pill, and in light mode it is unreadable. Anywhere the composer
+   is pinned, the field is opaque. */
+.live .field {
+  background: var(--surface-raised);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .input::placeholder { color: var(--text-disabled); }
 
 /* The send control is a target, not a label: 40px, round, and the one piece of
@@ -369,32 +570,8 @@
 .live .disclaimer { text-align: center; }
 
 /* --- the transcript ------------------------------------------------------- */
-.transcript { display: flex; flex-direction: column; gap: var(--s-5); min-width: 0; }
 .foot { height: 1px; flex: none; }
 .head > * { margin-bottom: 0; }
-
-/* --- the student's turn ---------------------------------------------------
-   Right-aligned, which is the one convention worth keeping from every other
-   chat interface: it is how you find your own last question when scrolling
-   back. A frosted card rather than a filled accent block — the alignment
-   already says whose turn it is. */
-.student { display: flex; justify-content: flex-end; }
-.studentText {
-  max-width: min(58ch, 78%);
-  padding: var(--s-3) var(--s-4);
-  color: var(--text-primary);
-  background: var(--frost-bg);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid var(--frost-border);
-  border-radius: 18px;
-  border-end-end-radius: var(--radius-tag);
-  box-shadow: var(--frost-shadow), var(--frost-top);
-  font-size: 15px;
-  line-height: 23px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
 
 /* --- Rover's turn ---------------------------------------------------------
    No avatar column. The identity is a byline above the response, which is both
@@ -402,15 +579,6 @@
    bubbles is a messaging app, and this one answers in cards. */
 .rover { display: flex; min-width: 0; }
 .said { display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; width: 100%; }
-.who {
-  font-size: 11px;
-  line-height: 16px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
 /* --- the process indicator ------------------------------------------------
    Its working, in the student's language: evidence that a search ran, not
    something to read. Finished steps tick and recede; the step in flight carries
@@ -530,7 +698,16 @@
 /* --- the recommendations --------------------------------------------------
    The one part allowed the full column: a grid of real cards is what this
    screen answers with. */
+/* TWO CARDS A ROW IN A CONVERSATION, not the three Explore uses. Explore's
+   grid keys its column count off the VIEWPORT, which is right for a page whose
+   content is the grid; here the grid lives in a column that has a dossier
+   panel beside it, so a "wide" viewport can still be an 824px thread — and
+   three cards in 824px is a cramped card with its action row breaking. The
+   full set is never out of reach: it is the panel on the right. */
 .picks { min-width: 0; padding-top: var(--s-1); }
+@media (min-width: 1360px) {
+  .picks > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .pick { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
 .pickEnter { animation: cardUp var(--m-standard) var(--m-out) both; }
 .pickEnter:nth-child(2) { animation-delay: 60ms; }
@@ -631,8 +808,24 @@
   .greeting { font-size: 25px; line-height: 32px; }
 }
 
+/* Below 1360 there is no room for a second column — and nothing is lost by
+   dropping it, since every row in the dossier is a card in the thread. 1360 is
+   where --page-w steps up to 1120, which is the width at which the thread can
+   give up 272px and still hold two cards side by side. */
+@media (max-width: 1359px) {
+  .live .body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "bar" "thread" "composer" "note";
+  }
+  .found { display: none; }
+}
+
 /* --- below 1024 ----------------------------------------------------------- */
 @media (max-width: 1023px) {
+  /* The slim mobile header replaces the desktop one, so everything sticky
+     below it moves up by the difference. */
+  .bar { top: var(--mobile-header-h); }
+  .ask { top: calc(var(--mobile-header-h) + var(--bar-h)); }
   .cold .body,
   .live .body { min-height: calc(100dvh - var(--mobile-header-h) - var(--space-6) - 88px); }
   .live .composer { bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px)); }
@@ -646,14 +839,20 @@
   .cards { grid-template-columns: 1fr; }
   .greeting { font-size: 23px; line-height: 30px; }
   .cold .body { min-height: 0; justify-content: flex-start; gap: var(--s-5); }
+  .field { background: var(--surface-raised); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .cold .composer {
     position: sticky;
     bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px));
     z-index: 10;
-    padding-block: var(--s-3);
-    background: linear-gradient(to bottom, transparent, var(--bg-app) 38%);
+    padding-block: var(--s-5) var(--s-3);
+    background: linear-gradient(to bottom, transparent 0%, var(--bg-app) 40%);
   }
-  .studentText { max-width: 92%; }
+  .askText { font-size: 15.5px; line-height: 22px; }
+  /* The counts take their own line rather than being truncated to "6 …" by a
+     button that needs the room more than they do. */
+  .bar { flex-wrap: wrap; }
+  .barMeta { flex-basis: 100%; order: 3; }
+  .thread { gap: var(--s-6); }
   .chips { justify-content: flex-start; }
   .cold .body { text-align: left; }
   .greetWrap { align-items: flex-start; text-align: left; }

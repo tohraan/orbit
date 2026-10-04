@@ -50,6 +50,7 @@ import { RichText } from "./RichText";
 import { PageHead } from "@/components/layout/AppShell";
 import { AGENT_NAME, APP_NAME } from "@/components/layout/brand";
 import type { IconName } from "@/components/ui/Icon";
+import { daysUntil } from "@rof/core";
 import type { OpportunitySummary } from "@rof/core";
 import { useProfile } from "@/lib/data";
 import { api } from "@/lib/api-base";
@@ -408,6 +409,44 @@ export function RoverScreen() {
                 : `${AGENT_NAME} answered.`;
             })();
 
+  /* The conversation, grouped.
+   *
+   * The wire is a flat list of turns and stays that way — this is a reading of
+   * it, built at render. An exchange is a question and the answer it produced,
+   * which is the unit a student scrolls by and the unit the sticky question
+   * header needs to be scoped to. A reply with no question before it (only
+   * possible if a transcript is ever restored half-written) still gets its own
+   * exchange rather than being dropped. */
+  const exchanges: { student?: Message; rover?: Message }[] = [];
+  for (const m of messages) {
+    if (m.role === "student") exchanges.push({ student: m });
+    else {
+      const open = exchanges[exchanges.length - 1];
+      if (open && !open.rover) open.rover = m;
+      else exchanges.push({ rover: m });
+    }
+  }
+
+  /* What this conversation has turned up, in one place.
+   *
+   * Everything here was already on the screen — these are the rows Rover sent
+   * as `cards`, deduplicated by id and kept in the order they first appeared.
+   * Nothing is invented and nothing is re-ranked; the panel is a second view
+   * of the transcript, not a second opinion about it. It exists because the
+   * answers scroll away and the opportunities are the part worth keeping. */
+  const found: { item: OpportunitySummary; why?: string }[] = [];
+  const seen = new Set<number>();
+  for (const m of messages) {
+    for (const pick of m.picks) {
+      for (const item of pick.items) {
+        if (seen.has(item.id)) continue;
+        seen.add(item.id);
+        found.push({ item, why: pick.why[item.id] });
+      }
+    }
+  }
+  const asked = messages.filter((m) => m.role === "student").length;
+
   /* The greeting is addressed when there is a name to address. The profile's
    * own name first, the account's local part second, and when neither exists
    * the question stands on its own — a greeting to "there" is worse than no
@@ -437,19 +476,35 @@ export function RoverScreen() {
             </p>
           </div>
         ) : (
-          /* In a conversation the portal's own head comes back, for the page's
-             one action. The greeting has done its job by then. */
-          <div className={s.head}>
-            <PageHead
-              compact
-              eyebrow="Ask"
-              title={AGENT_NAME}
-              actions={
-                <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
-                  New conversation
-                </Button>
-              }
-            />
+          /* The conversation's own bar, sticky under the app header.
+           *
+           * The page head it replaces scrolled away with the first answer,
+           * taking "New conversation" with it — the one control a student
+           * reaches for when a thread has gone the wrong way, available only
+           * by scrolling back to the top. This stays, and it carries the two
+           * counts that say how far the session has got. Both are read off the
+           * transcript; neither is a guess. */
+          <div className={s.bar}>
+            <span className={s.barMark} aria-hidden="true">
+              <Icon name="rover" size={17} />
+            </span>
+            <span className={s.barName}>{AGENT_NAME}</span>
+            <span className={s.barMeta}>
+              {busy ? (
+                <span className={s.barWorking}>
+                  <span className={s.barDot} aria-hidden="true" />
+                  Working
+                </span>
+              ) : (
+                <>
+                  {asked} {asked === 1 ? "question" : "questions"}
+                  {found.length ? ` · ${found.length} found` : ""}
+                </>
+              )}
+            </span>
+            <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
+              New conversation
+            </Button>
           </div>
         )}
 
@@ -492,29 +547,82 @@ export function RoverScreen() {
             ))}
           </div>
         ) : (
-          <div className={s.transcript} aria-busy={busy}>
-            {messages.map((m) => (
-              <Bubble key={m.id} message={m} onRetry={retry} fresh={!restored.current.has(m.id)} />
+          <div className={s.thread} aria-busy={busy}>
+            {exchanges.map((x, i) => (
+              <Exchange
+                key={x.student?.id ?? x.rover?.id ?? i}
+                exchange={x}
+                onRetry={retry}
+                fresh={!restored.current.has(x.rover?.id ?? -1)}
+              />
             ))}
             <div ref={foot} className={s.foot} />
+
+            {/* Inside the thread, so it sits above the composer in the same
+                column rather than being auto-placed into a cell of the grid
+                that nothing asked for. */}
+            {behind ? (
+              <div className={s.behind}>
+                <button
+                  type="button"
+                  className={s.behindButton}
+                  onClick={() => {
+                    pinned.current = true;
+                    setBehind(false);
+                    foot.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+                  }}
+                >
+                  <Icon name="arrow-down" size={14} />
+                  New response
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
 
-        {behind ? (
-          <div className={s.behind}>
-            <button
-              type="button"
-              className={s.behindButton}
-              onClick={() => {
-                pinned.current = true;
-                setBehind(false);
-                foot.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-              }}
-            >
-              <Icon name="arrow-down" size={14} />
-              New response
-            </button>
-          </div>
+        {/* The session's dossier. Hidden below 1200, where there is no column
+            to put it in and the cards in the thread are the whole of it. */}
+        {!empty && found.length ? (
+          <aside className={s.found} aria-label="Found in this conversation">
+            <div className={s.foundHead}>
+              <span className={s.foundTitle}>Found so far</span>
+              <span className={s.foundCount}>{found.length}</span>
+            </div>
+            <ol className={s.foundList}>
+              {found.map(({ item, why }) => {
+                const left = daysUntil(item.deadline);
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      className={s.foundRow}
+                      title={why ?? item.title}
+                      onClick={() => {
+                        /* Back to the card in the thread, where the save,
+                           compare, .ics and apply controls are. The panel is a
+                           way of finding an answer again, not a second set of
+                           actions to keep in step with the first. */
+                        document
+                          .getElementById(`pick-${item.id}`)
+                          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }}
+                    >
+                      <span className={s.foundName}>{item.title}</span>
+                      <span className={s.foundMeta}>
+                        {item.country ?? item.host ?? item.sourceName}
+                        {left != null ? (
+                          <span className={left <= 7 ? s.foundSoon : undefined}>
+                            {" · "}
+                            {left < 0 ? "closed" : left === 0 ? "closes today" : `${left}d left`}
+                          </span>
+                        ) : null}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </aside>
         ) : null}
 
         <form
@@ -590,30 +698,58 @@ export function RoverScreen() {
 }
 
 
-/* ------------------------------------------------------------- one turn --- */
+/* --------------------------------------------------------- one exchange --- */
 
-function Bubble({
+/* A question and the answer it produced, as one block.
+ *
+ * WHY THEY ARE ONE BLOCK NOW. The question used to be a bubble floating off to
+ * the right, on the reasoning that an alignment flip is how you find your own
+ * words when scrolling back. In a transcript that answers in grids of cards
+ * that stopped being true: three screens below the question, nothing on the
+ * page says what was asked. So the question is the HEADER of its exchange and
+ * it sticks to the top of the reading area for exactly as long as its answer is
+ * on screen, then hands over to the next one. Scrolling a long answer, the
+ * thing you are reading always says what it is answering.
+ *
+ * That is also why the exchange is a <section>: it is a part of a document, and
+ * the question is its heading. */
+function Exchange({
+  exchange,
+  onRetry,
+  fresh,
+}: {
+  exchange: { student?: Message; rover?: Message };
+  onRetry: (failedId: number, text: string) => void;
+  fresh: boolean;
+}) {
+  const { student, rover } = exchange;
+  return (
+    <section className={s.turn}>
+      {student ? (
+        <h2 className={s.ask}>
+          <span className={s.askLabel}>You asked</span>
+          <span className={s.askText}>{student.text}</span>
+        </h2>
+      ) : null}
+      {rover ? <Answer message={rover} onRetry={onRetry} fresh={fresh} /> : null}
+    </section>
+  );
+}
+
+function Answer({
   message,
   onRetry,
   fresh,
 }: {
   message: Message;
   onRetry: (failedId: number, text: string) => void;
-  /* False for a conversation restored on re-mount: render settled, do not
-     replay entrances the student already watched. */
+  /* False for a conversation restored on re-mount or on reload: render
+     settled, do not replay entrances the student already watched. */
   fresh: boolean;
 }) {
   /* Whether this turn's working is expanded after it has finished. Collapsed
    * by default once there is an answer to read — see below. */
   const [showWork, setShowWork] = useState(false);
-
-  if (message.role === "student") {
-    return (
-      <div className={s.student}>
-        <p className={s.studentText}>{message.text}</p>
-      </div>
-    );
-  }
 
   /* Is this turn still working, and has it said anything yet?
    *
@@ -646,15 +782,10 @@ function Bubble({
   return (
     <div className={s.rover}>
       <div className={s.said}>
-        {/* The identity marker, once, at the top of the response — not a round
-            avatar beside every block. An avatar repeated down the transcript
-            is 42px of every line spent saying something the reader worked out
-            at the first one, and on a 320px phone that is the margin the
-            cards need. A quiet label reads as a byline instead. */}
-        <p className={s.who}>
-          <span aria-hidden="true">{AGENT_NAME}</span>
-          <span className="sr-only">{AGENT_NAME} said:</span>
-        </p>
+        {/* No byline and no avatar. The exchange above says who is answering,
+            and a label repeated under every question is a line of the screen
+            spent telling the reader what they worked out at the first one. */}
+        <span className="sr-only">{AGENT_NAME} answered:</span>
 
         {/* The process indicator.
             Each finished step is a tick and quiets down; the one in flight
@@ -722,7 +853,14 @@ function Bubble({
           <div key={i} className={s.picks}>
             <div className={card.grid}>
               {pick.items.map((item) => (
-                <div key={item.id} className={[s.pick, fresh ? s.pickEnter : null].filter(Boolean).join(" ")}>
+                /* The id is the dossier panel's target: a row there scrolls
+                   the card itself back into view rather than carrying a second
+                   copy of its actions. */
+                <div
+                  key={item.id}
+                  id={`pick-${item.id}`}
+                  className={[s.pick, fresh ? s.pickEnter : null].filter(Boolean).join(" ")}
+                >
                   <OpportunityCard item={item} />
                   {pick.why[item.id] ? (
                     /* The title carries the whole sentence; the box shows two
