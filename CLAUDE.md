@@ -24,6 +24,13 @@ Non-negotiables:
   drift) and apply with `supabase db push --linked`. It starts at `016` on
   purpose: `000`–`015` predate the CLI and are absent from the remote history,
   so generating them would make `db push` re-run them, `003_seed.sql` included.
+- **`docs/design-ieee.md` is the UI rulebook, and the code cites it by
+  section.** `§14` is the application shell, `§67` one navigation at a time,
+  `§101` table rules, `§105` the data-integrity rules, `§115` implementation.
+  Read the cited section before changing anything that carries one. It lived
+  outside the repo until now, which is exactly how the desk ended up with a top
+  tab bar, a 1500px container and `font-weight: 650` — all defensible guesses by
+  someone who could not read the rules they were being judged against.
 - **Shared UI lives in `packages/ui` (`@rof/ui`), imported by both apps.** The
   rail, buttons, fields, pills, banners, the icon set and the theme toggle are
   one implementation. A second copy in an app is how the two deployments stop

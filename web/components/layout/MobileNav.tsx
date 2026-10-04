@@ -1,14 +1,16 @@
 "use client";
 
-import Link from "next/link";
+/* The portal's bottom bar.
+ *
+ * The bar itself is @rof/ui now, beside the rail it replaces — §67 says never
+ * both at once, and that rule is only reliable if one file owns both
+ * breakpoints. What stays here is the portal's own counts.
+ */
+
 import { usePathname } from "next/navigation";
-import s from "./layout.module.css";
-import { Icon } from "../ui/Icon";
+import { BottomNav, type RailItem } from "@rof/ui";
 import { MOBILE_NAV } from "./nav";
 import { useCompare, useSaved, useTracker } from "@/lib/data";
-
-/* §19: the desktop sidebar becomes this. §67: never both at once — the CSS in
- * layout.module.css makes them mutually exclusive at 1024px. */
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -21,24 +23,13 @@ export function MobileNav() {
     tracker: entries.length,
   };
 
-  return (
-    <nav className={s.bottomNav} aria-label="Main">
-      {MOBILE_NAV.map((item) => {
-        const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-        const count = item.count ? counts[item.count] : 0;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={[s.bottomItem, active ? s.bottomItemActive : null].filter(Boolean).join(" ")}
-            aria-current={active ? "page" : undefined}
-          >
-            <Icon name={active && item.icon === "bookmark" ? "bookmark-filled" : item.icon} size={20} />
-            <span>{item.label}</span>
-            {count ? <span className={s.bottomBadge}>{count > 99 ? "99+" : count}</span> : null}
-          </Link>
-        );
-      })}
-    </nav>
-  );
+  const items: RailItem[] = MOBILE_NAV.map((item) => ({
+    href: item.href,
+    label: item.label,
+    icon: item.icon,
+    count: item.count ? counts[item.count] : undefined,
+    activeIcon: item.icon === "bookmark" ? "bookmark-filled" : undefined,
+  }));
+
+  return <BottomNav items={items} pathname={pathname} />;
 }

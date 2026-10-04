@@ -13,7 +13,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Rail, ThemeToggle, Spinner, Button, initialsOf } from "@rof/ui";
+import { Rail, BottomNav, ThemeToggle, Spinner, Button, initialsOf } from "@rof/ui";
 import rail from "@rof/ui/rail.module.css";
 import s from "./shell.module.css";
 import { useSession } from "@/lib/session";
@@ -67,6 +67,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
           label: name || user?.email || "Your account",
         }}
       />
+
+      {/* §19/§67: below 1024px the rail hides and this takes over. Without it
+          the desk had no navigation at all on a phone — the top tab bar it
+          replaced used to wrap and stay usable, so the rail was a regression
+          until this landed. */}
+      <BottomNav items={DESK_NAV} pathname={pathname} />
 
       <div className={rail.main}>
         <header className={s.bar}>

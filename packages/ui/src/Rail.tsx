@@ -132,3 +132,40 @@ export function initialsOf(...candidates: (string | null | undefined)[]): string
       .join("") || "·"
   );
 }
+
+/* The mobile counterpart. §19: the desktop rail becomes this. §67: never both
+ * at once, which rail.module.css enforces — each is hidden at the breakpoint
+ * where the other appears, so no caller can show two navigations by mistake.
+ *
+ * It takes the same RailItem list the rail does, usually filtered: a bottom bar
+ * holds about five targets before they stop being tappable. */
+export function BottomNav({
+  items,
+  pathname,
+  label = "Main",
+}: {
+  items: RailItem[];
+  pathname: string;
+  label?: string;
+}) {
+  return (
+    <nav className={s.bottomNav} aria-label={label}>
+      {items.map((item) => {
+        const active = isActive(pathname, item.href);
+        const count = item.count ?? 0;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={[s.bottomItem, active ? s.bottomItemActive : null].filter(Boolean).join(" ")}
+            aria-current={active ? "page" : undefined}
+          >
+            <Icon name={active && item.activeIcon ? item.activeIcon : item.icon} size={20} />
+            <span>{item.label}</span>
+            {count ? <span className={s.bottomBadge}>{count > 99 ? "99+" : count}</span> : null}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

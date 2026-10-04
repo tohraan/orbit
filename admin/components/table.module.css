@@ -1,4 +1,11 @@
-/* One table style for every list screen here. */
+/* One table style for every list screen here.
+
+   design-ieee.md §101: header 12px/600, rows 52-60px, light horizontal
+   separators, no vertical borders between every column. The row height was
+   the one of those four this file was missing — 12px of padding either side
+   of a 13px line computes to about 42px, which is a denser table than the
+   spec allows and denser than the portal's own rows, which set 56px
+   explicitly (web/app/rows.module.css). */
 .head { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-6); }
 .head > p { max-width: 70ch; }
 
@@ -24,7 +31,15 @@
   padding: var(--space-3) var(--space-4); background: var(--surface-sunken);
   border-bottom: 1px solid var(--border-subtle); white-space: nowrap;
 }
-.table td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); vertical-align: top; }
+/* 56px, the middle of §101's range and the same number the portal's rows
+   use. border-box is set globally, so `height` on a cell is a minimum that
+   already accounts for the padding — a two-line cell still grows. */
+.table td {
+  height: 56px;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
 .table tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover { background: var(--surface-hover); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }

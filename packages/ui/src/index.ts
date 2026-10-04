@@ -7,7 +7,7 @@
  */
 
 export { Icon, type IconName } from "./Icon";
-export { Rail, isActive, initialsOf, type RailItem, type RailFoot } from "./Rail";
+export { Rail, BottomNav, isActive, initialsOf, type RailItem, type RailFoot } from "./Rail";
 export {
   Button,
   buttonClass,
