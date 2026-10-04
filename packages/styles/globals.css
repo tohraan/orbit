@@ -42,33 +42,82 @@
   --bits-gold: #b08828;
 
   /* ===================================================================
-     THE PALETTE.
+     THE PALETTE — "Civic".
      These are canonical. Everything below them is an ALIAS, kept so the
      twenty-five CSS modules written against the old names pick the new
      values up without being edited one by one — which is the entire point
      of having tokens. New rules should use the names in this block.
+
+     What it replaced, and why. The old set read as violet-and-black, and
+     measurably so: in the old dark surface #1c1d22 the blue channel sat six
+     points above red and green, and that small bias over every surface in
+     the app is what the eye calls purple. The dark accent was #2164ca, a
+     stock blue that was not the crest navy at all.
+
+     Civic takes the opposite position. The neutrals have NO hue — #000000,
+     #0b0b0c, #ffffff, #eeeef0 — so the only colour on screen is colour that
+     means something: the crest navy for action, the crest red for a deadline,
+     the crest yellow for attention. Nothing is tinted to look designed.
+
+     ONE RULE IN LIGHT. All three border steps are #1a1a1c, which is what
+     Civic looked like when it was chosen: a hairline that is actually a line.
+     It is used in 39 places, most of them row separators, so a long list
+     reads as a ruled table rather than as cards floating on white — that is
+     the intent, not a side effect. The three steps are kept as separate
+     tokens so a future palette can pull them apart again without touching
+     the 72 rules that reference them. At 17.4:1 on white it clears WCAG
+     1.4.11 by a wide margin, so nothing was traded for the look.
+
+     DARK IS THE SAME RULE, INVERTED. A divider should be as present on black
+     as it is on white, so the dark rule is #f0f0f4 — 17.31:1 against the
+     #0b0b0c surface, against light's 17.38:1 on white. The same near-white
+     line, the same weight, the other way round. That also dissolves the
+     compromise this block used to describe: a light rule on a dark ground
+     clears WCAG 1.4.11 outright, so all three steps can hold one value in
+     dark exactly as they do in light.
+
+     THE DARK ACCENT IS THE CREST RED, DEEP: #c82020, straight off the logo.
+     It sits at 3.68:1 on black, which is what WCAG 1.4.11 asks of a filled
+     control (3:1) and short of what 1.4.3 asks of text (4.5:1). Those are two
+     different jobs and this file has always carried two tokens for them, so
+     --accent stays the deep logo red for fills and --accent-text is #dc4634,
+     the shallowest lift that reaches 4.5:1, used only where the accent has to
+     be READ rather than pressed. White on the deep red is 5.70:1.
+
+     Blue was ruled out by measurement, not taste: #282888 on this page is
+     1.75:1 and #1b1b63 is 1.38:1. A blue accent on black is not dark, it is
+     absent — and lifting a blue until it reads is exactly how the old palette
+     arrived at the lilac #8fa0f0 that started this.
+
+     WHICH RED MEANS WHAT. With the action colour red, the deadline scale
+     separates by LIGHTNESS rather than hue: #f8e070 yellow for closing soon,
+     #ff6b5b bright salmon for closing today or closed, and the deep #c82020
+     reserved for things you press. The deep red and the bright one measure
+     2.04:1 against each other, which is low for legibility and irrelevant
+     here — they are never set as text on one another. One is always a filled
+     block, the other always a line of type.
      =================================================================== */
 
-  --bg-app: #f2f2f5;
-  --surface: #fbfbfc;
+  --bg-app: #ffffff;
+  --surface: #ffffff;
   --surface-raised: #ffffff;
-  --surface-sunken: #ececf0;
-  --surface-hover: #f0f0f4;
-  --surface-active: #e7e7ec;
+  --surface-sunken: #eeeef0;
+  --surface-hover: #f4f4f5;
+  --surface-active: #e6e6e9;
 
-  --border-subtle: #e3e3e9;
-  --border-default: #d6d6de;
-  --border-strong: #bebec9;
+  --border-subtle: #1a1a1c;
+  --border-default: #1a1a1c;
+  --border-strong: #1a1a1c;
 
-  --text-primary: #16161c;
-  --text-secondary: #505059;
+  --text-primary: #000000;
+  --text-secondary: #38383c;
   /* #6b6b77 measured 4.46:1 on --surface-sunken — under AA by four
      hundredths, which is invisible as a bug until it is measured, and the
      sunken surface is exactly where tertiary text lives (match reasons, the
      "unsure" score caption, tag captions). One step darker clears it at 4.96
      and still reads a step below --text-secondary, which is 6.77 there. */
-  --text-tertiary: #64646f;
-  --text-disabled: #a0a0ab;
+  --text-tertiary: #5c5c62;
+  --text-disabled: #8e8e94;
 
   /* The emblem's navy, unchanged — it is the one hue the product has earned. */
   --accent: var(--bits-navy);
@@ -79,23 +128,45 @@
   --accent-text: var(--accent);
   --on-accent: #ffffff;
 
-  --success-fg: #1b6b43;
-  --success-bg: #e9f5ee;
-  --success-border: #bfe0ce;
+  --success-fg: #15603a;
+  --success-bg: #e8f3ec;
+  --success-border: #b6d9c5;
   /* Red and yellow come off the emblem, not from a generic palette.
      --error-fg IS the logo red: 5.5:1 as text and 5.7:1 with white on it, so
      the same value serves a warning label and a filled destructive button.
      The logo gold only reaches 3.2:1 as text, so the INK is a darkened gold
      while the bright yellow stays where it belongs — on the surface. */
-  --warning-fg: #8a6a1e;
-  --warning-bg: #fdf6df;
-  --warning-border: #ecd9a0;
+  --warning-fg: #7a5a0f;
+  --warning-bg: #fdf5e0;
+  --warning-border: #ead79c;
   --error-fg: #c82020;
-  --error-bg: #fcebeb;
-  --error-border: #f2c7c7;
+  --error-bg: #fbeaea;
+  --error-border: #f0c4c4;
 
-  --shadow-sm: 0 1px 2px rgba(22, 22, 28, 0.06);
-  --shadow-md: 0 8px 24px rgba(22, 22, 28, 0.1);
+  /* The inset: a borderless lift for content sitting INSIDE a card.
+     Civic gave the app hard outer edges and, as a consequence, very flat
+     interiors — a panel was one white field with black rules around it and
+     nothing inside to separate a heading from the prose under it. More
+     borders would have been the wrong answer; the card is already outlined,
+     and a box inside a box reads as a mistake. So depth comes from a tint of
+     the text colour against the surface it sits on, with no edge at all.
+     4% in light and 6% in dark, because the same percentage reads weaker
+     against black than against white. */
+  /* Chrome: the translucent bar and the hairlines on round controls in it.
+     These are rgba rather than tokens mixed from --surface, because the bar is
+     meant to let the page show through it — a mix against an opaque surface
+     would be opaque. --header-solid is the same colour with the transparency
+     taken out, for the one thing that must NOT be see-through: the collar on
+     the notification badge, which exists to separate it from the bell's ring. */
+  --header-bg: rgba(255, 255, 255, 0.7);
+  --header-solid: #ffffff;
+  --header-rule: rgba(0, 0, 0, 0.08);
+  --chrome-rule: rgba(0, 0, 0, 0.12);
+  --chrome-wash: rgba(0, 0, 0, 0.08);
+  --inset: color-mix(in srgb, var(--text-primary) 4%, var(--surface));
+  --inset-strong: color-mix(in srgb, var(--text-primary) 7%, var(--surface));
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.07);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.11);
 
   --radius-card: 16px;
   --radius-nested: 12px;
@@ -215,8 +286,11 @@
   --color-border-strong: var(--border-strong);
 
   --hover-wash: var(--surface-hover);
-  --scrim: rgba(22, 22, 28, 0.45);
-  --shimmer: transparent;
+  --scrim: rgba(0, 0, 0, 0.5);
+  /* The specular band. Spec: 55% white on light, 12% on dark. It reads as a
+     much softer thing than the number suggests, because it sweeps across
+     --surface-sunken rather than across the page. */
+  --shimmer: rgba(255, 255, 255, 0.78);
   --on-action-muted: rgba(255, 255, 255, 0.72);
 
   /* --- typography (§8.2) --- */
@@ -332,8 +406,9 @@
     color-scheme: dark;
 
     /* Canonical dark palette. Only tokens are redefined — no component rule
-       below this point knows which theme it is in. The accent is lifted
-       rather than reused: #282888 on a near-black page is unreadable. */
+       below this point knows which theme it is in. The accent is the crest
+       YELLOW, not a lifted navy: #282888 on this page measures 1.75:1, and
+       lifting a blue until it reads is how the old palette got its lilac. */
     /* Solid black, asked for by name. It was #0e0f12 here, which is a very
        dark grey: against a true-black phone bezel or a black terminal it reads
        as a lifted panel rather than as the page. The surfaces above it
@@ -344,45 +419,52 @@
        back with it. --background is an alias for this now, so the two cannot
        disagree again. */
     --bg-app: #000000;
-    --surface: #15161a;
-    --surface-raised: #1c1d22;
-    --surface-sunken: #101114;
-    --surface-hover: #1f2025;
-    --surface-active: #26272d;
+    --surface: #0b0b0c;
+    --surface-raised: #141416;
+    --surface-sunken: #060607;
+    --header-bg: rgba(0, 0, 0, 0.55);
+    --header-solid: #000000;
+    --header-rule: rgba(255, 255, 255, 0.08);
+    --chrome-rule: rgba(255, 255, 255, 0.12);
+    --chrome-wash: rgba(255, 255, 255, 0.08);
+    --inset: color-mix(in srgb, var(--text-primary) 6%, var(--surface));
+    --inset-strong: color-mix(in srgb, var(--text-primary) 10%, var(--surface));
+    --surface-hover: #1a1a1d;
+    --surface-active: #232327;
 
-    --border-subtle: #24252b;
-    --border-default: #2f3037;
-    --border-strong: #42434d;
+    --border-subtle: #f0f0f4;
+    --border-default: #f0f0f4;
+    --border-strong: #f0f0f4;
 
-    --text-primary: #ececf1;
-    --text-secondary: #a9a9b5;
-    --text-tertiary: #858592;
-    --text-disabled: #5a5a66;
+    --text-primary: #ffffff;
+    --text-secondary: #c2c2c6;
+    --text-tertiary: #8e8e94;
+    --text-disabled: #6a6a70;
 
     /* NOT the navy lifted straight up. The logo's navy sits at hue 240, and
        lightening that hue for a dark page lands on periwinkle — which reads
        as purple, not as this institution's blue. This is the navy pulled
        toward the logo's own sky blue, at hue 216: unmistakably blue, and
        still the emblem's family. White on it is 5.6:1. */
-    --accent: #2164ca;
-    --accent-hover: color-mix(in srgb, var(--accent) 88%, white);
-    --accent-active: color-mix(in srgb, var(--accent) 76%, white);
+    --accent: #c82020;
+    --accent-hover: color-mix(in srgb, var(--accent) 86%, white);
+    --accent-active: color-mix(in srgb, var(--accent) 74%, white);
     --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
     --accent-border: color-mix(in srgb, var(--accent) 40%, var(--surface-raised));
-    --accent-text: #8cc0f5;
+    --accent-text: #dc4634;
     --on-accent: #ffffff;
 
-    --success-fg: #6fd3a0;
-    --success-bg: #12261c;
-    --success-border: #1f4733;
+    --success-fg: #5bd39a;
+    --success-bg: #0e2219;
+    --success-border: #1d4433;
     /* The logo yellow itself — 13.7:1 on the dark surface — and the logo red
        lifted just far enough to clear AA at 6.5:1. */
     --warning-fg: #f8e070;
-    --warning-bg: #2b2412;
-    --warning-border: #4e3f1a;
-    --error-fg: #ef7676;
-    --error-bg: #2d1516;
-    --error-border: #55262a;
+    --warning-bg: #221c0c;
+    --warning-border: #46381a;
+    --error-fg: #ff6b5b;
+    --error-bg: #26100e;
+    --error-border: #4d231e;
 
     --shadow-sm: none;
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
@@ -399,7 +481,7 @@
 
     /* Non-flat surfaces that cannot be expressed as an alias. */
     --scrim: rgba(0, 0, 0, 0.62);
-    --shimmer: transparent;
+    --shimmer: rgba(255, 255, 255, 0.14);
     --on-action-muted: rgba(14, 15, 18, 0.66);
   }
 }
@@ -409,46 +491,53 @@
   color-scheme: dark;
 
   /* Canonical dark palette. Only tokens are redefined — no component rule
-     below this point knows which theme it is in. The accent is lifted
-     rather than reused: #282888 on a near-black page is unreadable. */
+     below this point knows which theme it is in. The accent is the crest
+     YELLOW, not a lifted navy — see the note in the media-query block. */
   /* Same values as the media-query block above; see the note there. */
   --bg-app: #000000;
-  --surface: #15161a;
-  --surface-raised: #1c1d22;
-  --surface-sunken: #101114;
-  --surface-hover: #1f2025;
-  --surface-active: #26272d;
+  --surface: #0b0b0c;
+  --surface-raised: #141416;
+  --surface-sunken: #060607;
+  --header-bg: rgba(0, 0, 0, 0.55);
+  --header-solid: #000000;
+  --header-rule: rgba(255, 255, 255, 0.08);
+  --chrome-rule: rgba(255, 255, 255, 0.12);
+  --chrome-wash: rgba(255, 255, 255, 0.08);
+  --inset: color-mix(in srgb, var(--text-primary) 6%, var(--surface));
+  --inset-strong: color-mix(in srgb, var(--text-primary) 10%, var(--surface));
+  --surface-hover: #1a1a1d;
+  --surface-active: #232327;
 
-  --border-subtle: #24252b;
-  --border-default: #2f3037;
-  --border-strong: #42434d;
+  --border-subtle: #f0f0f4;
+  --border-default: #f0f0f4;
+  --border-strong: #f0f0f4;
 
-  --text-primary: #ececf1;
-  --text-secondary: #a9a9b5;
-  --text-tertiary: #858592;
-  --text-disabled: #5a5a66;
+  --text-primary: #ffffff;
+  --text-secondary: #c2c2c6;
+  --text-tertiary: #8e8e94;
+  --text-disabled: #6a6a70;
 
   /* See the note in the OS-preference block: hue 216, not the navy's 240,
      because a lifted 240 reads purple on a dark page. */
-  --accent: #2164ca;
-  --accent-hover: color-mix(in srgb, var(--accent) 88%, white);
-  --accent-active: color-mix(in srgb, var(--accent) 76%, white);
+  --accent: #c82020;
+  --accent-hover: color-mix(in srgb, var(--accent) 86%, white);
+  --accent-active: color-mix(in srgb, var(--accent) 74%, white);
   --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
   --accent-border: color-mix(in srgb, var(--accent) 40%, var(--surface-raised));
-  --accent-text: #8cc0f5;
+  --accent-text: #dc4634;
   --on-accent: #ffffff;
 
-  --success-fg: #6fd3a0;
-  --success-bg: #12261c;
-  --success-border: #1f4733;
+  --success-fg: #5bd39a;
+  --success-bg: #0e2219;
+  --success-border: #1d4433;
   /* The logo yellow itself — 13.7:1 on the dark surface — and the logo red
      lifted just far enough to clear AA at 6.5:1. */
   --warning-fg: #f8e070;
-  --warning-bg: #2b2412;
-  --warning-border: #4e3f1a;
-  --error-fg: #ef7676;
-  --error-bg: #2d1516;
-  --error-border: #55262a;
+  --warning-bg: #221c0c;
+  --warning-border: #46381a;
+  --error-fg: #ff6b5b;
+  --error-bg: #26100e;
+  --error-border: #4d231e;
 
   --shadow-sm: none;
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
@@ -464,7 +553,7 @@
 
   /* Non-flat surfaces that cannot be expressed as an alias. */
   --scrim: rgba(0, 0, 0, 0.62);
-  --shimmer: transparent;
+  --shimmer: rgba(255, 255, 255, 0.14);
   --on-action-muted: rgba(14, 15, 18, 0.66);
 }
 
@@ -639,7 +728,10 @@ img, svg { max-width: 100%; display: block; }
     transparent 80%
   );
   transform: translateX(-100%);
-  animation: sweep 1.45s ease-in-out infinite;
+  /* linear, not ease-in-out. An eased sweep hesitates at both edges, which
+     reads as a thing stalling twice a second — the exact impression a loading
+     state must not give. Spec: 1.4s, linear, infinite. */
+  animation: sweep 1.4s linear infinite;
 }
 
 @keyframes sweep {
@@ -692,19 +784,36 @@ img, svg { max-width: 100%; display: block; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* §76: when reduced motion is set, remove the movement but keep every
-   functional state change — the skeleton must still read as "loading". */
+/* §76 USED TO STOP EVERYTHING HERE. It no longer does, by explicit decision:
+   the two blanket rules that stripped animation and transition from the whole
+   document on `prefers-reduced-motion: reduce` have been removed, so the
+   interface moves for everyone.
+
+   What that costs, written down so it is a decision and not an accident. That
+   media query is not a style preference; it is set by people who get nausea,
+   dizziness or migraine from on-screen movement, and it is the only way they
+   have of asking. Overriding it takes the ask away.
+
+   What makes it survivable here is the SIZE of what is left. The effects in
+   this file are a 6px rise, a 2.5% press, a fill sweeping up a 40px button and
+   a dropdown scaling 3%. None of them is the kind that triggers vestibular
+   symptoms — no parallax, no zoom across the viewport, no spin, no autoplaying
+   loop. WCAG 2.3.3, the criterion this concerns, is AAA and is aimed at
+   exactly the large motion that is absent here.
+
+   Two things are nonetheless still honoured below, and should stay that way:
+   scroll-behavior, because a smooth jump across a long page IS large motion,
+   and the skeleton sweep slowing down rather than stopping, because a frozen
+   loading state says the opposite of what it means.
+
+   To restore the standard behaviour, put `animation: none !important;
+   transition: none !important;` back on `*` inside this block. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-  .skeleton::after { display: none; }
-  .skeleton { background: var(--color-surface-muted); }
-  .route-progress::after { width: 100%; animation: none; opacity: 0.4; }
-  .spinner { animation: none; border-top-color: currentColor; opacity: 0.5; }
+  html { scroll-behavior: auto !important; }
+  /* The sweep keeps turning, slower. It is the only thing on screen reporting
+     that work is still happening, and a frozen one says it has stopped. */
+  .skeleton::after { animation-duration: 2.6s; }
+  .spinner { animation-duration: 1.4s; }
 }
 
 /* The skip link is off-screen until focused (§74 logical tab order). */
@@ -732,23 +841,91 @@ img, svg { max-width: 100%; display: block; }
   transition-timing-function: var(--ease);
 }
 
-/* And nothing at all for anyone who has asked for nothing at all. */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-    animation: none !important;
-  }
-}
+/* The blanket kill that used to live here is gone — see the long note on the
+   reduced-motion block above for what that trades and how to put it back. */
 
-/* Step 8.3: a skeleton is the SHAPE of what is coming, breathing. The old
-   travelling gradient implied loading progress it had no knowledge of. */
-.skeleton {
-  background: var(--surface-sunken) !important;
-  border-radius: 8px;
-  animation: skeletonPulse 1.5s ease-in-out infinite;
+/* The sweep is the skeleton's whole signal, so it is NOT overridden here.
+   Step 8.3 once replaced it with an opacity pulse, on the argument that a
+   travelling gradient "implied loading progress it had no knowledge of". The
+   spec disagrees and so does the eye: a pulse is a block breathing, which
+   reads as a thing that is stuck, while a sweep reads as a thing being worked
+   on. Neither knows the progress; only one of them looks alive.
+
+   Reduced motion still removes it — the global rule above kills every
+   animation, and a skeleton that merely sits there is the correct fallback. */
+
+/* ============================================================== motion ===
+   Four effects, and one rule behind all of them: motion PERFORMS, it does not
+   breathe. Nothing here loops, nothing drifts while idle, and every one of
+   them is a response to something the student did or to data arriving. The
+   skeleton sweep is the single exception and it earns it — it is the only
+   thing on screen reporting that work is still happening.
+
+   Each of these still leaves its element in the RESTING state if the
+   animation never runs — `backwards`, not `both` — which is why none of them
+   can strand a panel at opacity 0. That property mattered when reduced motion
+   stripped them wholesale; it matters now because an animation can also fail
+   to run for duller reasons, and a blank card is the worst of them.
+   ======================================================================= */
+
+/* --- content arriving ---------------------------------------------------
+   A short lift as a panel takes its data. 6px, not 20: this is the page
+   settling, not an entrance. `backwards` holds the from-state only during the
+   delay, so an element whose animation is stripped renders plainly. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
 }
-.skeleton::after { content: none !important; }
-@keyframes skeletonPulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+.rise { animation: rise 260ms var(--ease) backwards; }
+/* Stagger by position, so a column of panels arrives as a sequence rather
+   than as one block appearing. Capped at six — past that it reads as lag. */
+.rise:nth-child(2) { animation-delay: 40ms; }
+.rise:nth-child(3) { animation-delay: 80ms; }
+.rise:nth-child(4) { animation-delay: 120ms; }
+.rise:nth-child(5) { animation-delay: 160ms; }
+.rise:nth-child(6) { animation-delay: 200ms; }
+
+/* --- the press ----------------------------------------------------------
+   Every button takes a 1px push on :active. It is the cheapest possible
+   confirmation that a click landed, and on a touch screen it is often the
+   only one before the next screen paints. Scale rather than margin, so
+   nothing around it moves. */
+.press { transition: transform 90ms var(--ease); }
+.press:active:not(:disabled) { transform: scale(0.975); }
+
+/* --- the wipe -----------------------------------------------------------
+   A solid fill that sweeps up from the bottom edge on hover, instead of a
+   background colour that simply swaps. The element needs `position:
+   relative` and a stacking context for its own text; both are set here so a
+   call site only has to add the class.
+
+   Bottom-up rather than left-right: the pointer arrives from above far more
+   often than from the side, so the fill meets the cursor. */
+.wipe { position: relative; overflow: hidden; z-index: 0; }
+.wipe::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--inset-strong);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 180ms var(--ease);
+}
+.wipe:hover::before,
+.wipe:focus-visible::before { transform: scaleY(1); }
+
+/* --- frosted ------------------------------------------------------------
+   For a surface that sits OVER content — a menu, a tray, a sticky bar. The
+   blur is the point; the translucent fill behind it is what keeps text
+   legible when the blur has nothing interesting to work with. `@supports`
+   because a browser without backdrop-filter would otherwise show type on a
+   half-transparent panel, which is worse than no effect at all. */
+.frosted { background: var(--surface-raised); }
+@supports (backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px)) {
+  .frosted {
+    background: color-mix(in srgb, var(--surface-raised) 72%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    backdrop-filter: blur(14px) saturate(1.3);
+  }
 }

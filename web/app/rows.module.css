@@ -161,7 +161,17 @@
 
 .dLayout {
   display: grid;
-  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  /* Was minmax(320px, 380px). The calendar is a 7-column grid of tap targets
+     carrying two lines each — a date and a count — and at 380 the cells were
+     the tightest thing on the screen while the list beside them had room to
+     spare. §24: bento sizing follows content importance, and on a screen
+     called "Upcoming deadlines" the month IS the reference.
+
+     The floor rises with the ceiling: 400, not 320. The old floor was the
+     width the cells were cramped at, so leaving it there would have kept the
+     problem on every viewport narrow enough to hit it. Below 1024 the rule
+     is replaced outright by a single column, so nothing is squeezed. */
+  grid-template-columns: minmax(400px, 460px) minmax(0, 1fr);
   gap: var(--space-6);
   align-items: start;
 }

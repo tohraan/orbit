@@ -43,6 +43,11 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
+  /* A short lift as the detail arrives, staggered down the column so the page
+     settles rather than snapping into place all at once. `backwards` holds the
+     from-state only while the delay runs, so a panel whose animation is
+     stripped by reduced-motion renders plainly and immediately. */
+  animation: panelRise 260ms var(--ease) backwards;
 }
 @media (max-width: 639px) { .panel { padding: var(--s-5); } }
 
@@ -53,7 +58,20 @@
 /* The prose blocks (eligibility, benefits, how to apply) come from scraped
    page text, so they are a single run of sentences rather than markup. 65ch
    and a comfortable line height is what makes them readable anyway. */
-.prose { font-size: var(--text-body); line-height: 23px; color: var(--color-text-secondary); max-width: 65ch; }
+/* The prose sits on an inset rather than directly on the card. The panel is
+   already outlined, so another border here would be a box inside a box; the
+   depth comes from a tint with no edge. It also does something the border
+   never did — it shows where a scraped section ENDS, which on a run of
+   sentences with no markup was previously impossible to see. */
+.prose {
+  font-size: var(--text-body);
+  line-height: 23px;
+  color: var(--color-text-secondary);
+  max-width: 65ch;
+  padding: var(--s-4) var(--s-5);
+  background: var(--inset);
+  border-radius: var(--radius-nested);
+}
 
 /* §48: Key information as a definition list beside the overview. */
 .facts { display: flex; flex-direction: column; }
@@ -112,3 +130,16 @@
   font-size: var(--text-body-sm);
   color: var(--color-text-muted);
 }
+
+
+@keyframes panelRise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+/* Capped at six. Past that the last panel waits long enough to read as lag
+   rather than as sequence. */
+.panel:nth-of-type(2) { animation-delay: 40ms; }
+.panel:nth-of-type(3) { animation-delay: 80ms; }
+.panel:nth-of-type(4) { animation-delay: 120ms; }
+.panel:nth-of-type(5) { animation-delay: 160ms; }
+.panel:nth-of-type(6) { animation-delay: 200ms; }

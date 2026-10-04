@@ -732,8 +732,14 @@
   font-size: 13px;
   line-height: 18px;
   color: var(--text-secondary);
-  background: var(--accent-subtle);
-  border: 1px solid var(--accent-border);
+  /* NEUTRAL, not accent-tinted. This was a panel in --accent-subtle, which was
+     fine while the accent was navy and became a red box the moment the dark
+     accent changed to the crest red — a red panel directly under a red
+     "Closes today" chip reads as a warning about the opportunity, when it is
+     the reason the opportunity was chosen. The mark carries the accent; the
+     panel stays out of the way. */
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-tag);
 }
 .why svg { color: var(--accent-text); margin-top: 2px; margin-right: 2px; float: left; }

@@ -38,15 +38,13 @@ import { OnboardingOverlay } from "../auth/Onboarding";
  * same for any other screen whose whole job is to get you a session. */
 const BARE = ["/account"];
 
-/* Routes that take the whole width the rail leaves, rather than the reading
- * container.
- *
- * The container exists for PROSE: a measure that stays readable. Explore is a
- * grid of cards, and a grid does not get harder to read when it is wider — it
- * gets more cards per row, which is the entire job of that screen. Capping it
- * left two columns of empty gutter on a desktop and pushed the fourth card to
- * a second scroll. Everything else keeps the container. */
-const WIDE = ["/explore"];
+/* Every route takes the whole width the rail leaves. There used to be a WIDE
+ * list here with /explore as its only member, back when the rest of the app
+ * sat in a 920px measure — which left a grid of cards with two columns of
+ * empty gutter beside it on any real monitor. Explore was right and everything
+ * else was following a reading measure it did not need, so the exception
+ * became the rule and the list went away. A screen that genuinely needs a
+ * measure sets one on its own prose. */
 
 export function AppShell({ children }: { children: ReactNode }) {
   /* ⌘K / Ctrl-K lives at the shell, so the shortcut works on every screen and
@@ -79,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className={s.main}>
           <Header />
           <MobileHeader />
-          <main className={[s.page, WIDE.some((p) => pathname === p) ? s.pageWide : null].filter(Boolean).join(" ")} id="main">
+          <main className={s.page} id="main">
             <AuthWall>{children}</AuthWall>
           </main>
         </div>

@@ -18,8 +18,14 @@
   white-space: nowrap;
   border: 1px solid transparent;
   transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
-    color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), opacity var(--dur) var(--ease);
+    color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), opacity var(--dur) var(--ease),
+    transform 90ms var(--ease);
 }
+
+/* The press. 2.5% and 90ms — enough to feel, not enough to see as movement.
+   On a touch screen this is often the only confirmation a tap landed before
+   the next screen paints. Scale, so nothing beside it shifts. */
+.btn:active:not(:disabled) { transform: scale(0.975); }
 
 .sm { height: 32px; padding-inline: var(--space-3); font-size: 13px; line-height: 20px; }
 /* .lg is retained as an alias of md: callers still pass size="lg", and a third
@@ -48,12 +54,32 @@
 .primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 .primary:active:not(:disabled) { background: var(--accent-active); border-color: var(--accent-active); }
 
+/* Secondary fills from the bottom edge on hover rather than swapping its
+   background, which gives the one non-destructive action on most screens a
+   little life without adding a colour. The fill is --inset-strong, the same
+   tint used inside cards, so hovering a button and reading a panel feel like
+   the same material. */
 .secondary {
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
   background: var(--surface-raised);
   color: var(--text-primary);
   border-color: var(--border-default);
 }
-.secondary:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--border-strong); }
+.secondary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--inset-strong);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 180ms var(--ease);
+}
+.secondary:hover:not(:disabled)::before,
+.secondary:focus-visible:not(:disabled)::before { transform: scaleY(1); }
+.secondary:hover:not(:disabled) { border-color: var(--border-strong); }
 .secondary:active:not(:disabled) { background: var(--surface-active); }
 
 .ghost {

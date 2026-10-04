@@ -91,25 +91,41 @@ one when `NEXT_PUBLIC_API_BASE` is set, because the browser then sends every
 data request — Rover's included — straight here. In a single-deployment setup
 it goes on the frontend instead. It is never prefixed `NEXT_PUBLIC_`.
 
-**`vercel --prod` does not move the alias the frontend actually calls.** This
-cost a whole deploy cycle. There are four hostnames per project, and only some
-of them follow a production deploy:
+**A manual alias does not follow a production deploy. A project domain does.**
+This cost two deploy cycles before anyone worked out which of those two things
+each hostname was.
 
-| Host | Follows `--prod`? |
-|---|---|
-| `orbit-api-psi.vercel.app` | yes — the project's generated domain |
-| `orbit-bits-api.vercel.app` | **no** — pinned by `vercel alias set` |
-| `orbit-ruby-five-16.vercel.app` | yes |
-| `orbit-bits.vercel.app` | **no** — pinned |
+`vercel alias set <url> <host>` pins a hostname to **one specific deployment**,
+for good. It is a pointer at a build, not at an environment, so the next
+`--prod` leaves it exactly where it was. That is what `orbit-bits.vercel.app`
+and `orbit-bits-api.vercel.app` were, and it is why the ritual of re-pointing
+them after every deploy existed.
 
-`NEXT_PUBLIC_API_BASE` on the `orbit` project is `https://orbit-bits-api.vercel.app`,
-the pinned one. So Rover was deployed, healthy and reachable on
-`orbit-api-psi` while the browser got a 404 from `orbit-bits-api`, which was
-still serving a deployment from before Rover existed. The symptom in the
-console is the giveaway:
+A hostname attached to the project instead — Settings → Domains, or
+`POST /v10/projects/<id>/domains` — points at whatever the project's current
+production deployment is, and keeps doing so. `orbit-ruby-five-16.vercel.app`
+and `orbit-api-psi.vercel.app` always worked without the ritual for exactly
+this reason: a project's generated domain is a project domain.
 
-```
-orbit-bits-api.vercel.app/api/rover:1  Failed to load resource: 404
+Both custom hostnames are project domains now:
+
+| Host | Kind | Follows `--prod`? |
+|---|---|---|
+| `orbit-bits.vercel.app` | project domain on `orbit` | yes |
+| `orbit-bits-api.vercel.app` | project domain on `orbit-api` | yes |
+| `orbit-ruby-five-16.vercel.app` | generated | yes |
+| `orbit-api-psi.vercel.app` | generated | yes |
+| `orbit-desk-delta.vercel.app` | generated | yes |
+
+So **there is nothing to run after a deploy.** If a hostname ever goes stale
+again, the question to ask is not "did I forget the alias" but "is this a
+project domain or did someone pin it with `vercel alias set`":
+
+
+```bash
+# lists project domains — a pinned alias will NOT appear here
+curl -s "https://api.vercel.com/v9/projects/orbit/domains?teamId=$TEAM" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ## Deploy the portal from the repo ROOT, with the root linked to `orbit`
@@ -136,18 +152,10 @@ vercel link --yes --project orbit     # at the repo root, NOT in web/
 vercel --prod --yes                   # builds web/ per the project settings
 ```
 
-After any production deploy, re-point both pinned aliases at the deployment
-you just made:
-
-```bash
-vercel ls orbit-api | grep Production | head -1    # copy the deployment URL
-vercel alias set <that-url> orbit-bits-api.vercel.app
-vercel ls orbit | grep Production | head -1
-vercel alias set <that-url> orbit-bits.vercel.app
-```
-
-Then smoke-test against `orbit-bits-api`, never `orbit-api-psi` — the second
-one can be perfectly healthy while students see a 404.
+Smoke-test against the hostname the browser actually calls — the one in
+`NEXT_PUBLIC_API_BASE` — and never only against the generated domain. The
+generated one can be perfectly healthy while students see a 404, which is the
+shape the Rover outage took.
 
 `OPENROUTER_API_KEY` is set on `orbit-api` as a Secret, in Production and Preview. Preview also
 needs it because `ALLOWED_ORIGINS`, `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`
@@ -239,8 +247,24 @@ cp ui/opportunities.json api/data/      # -> the API's fallback
 
 ## 6 · The desk project
 
+**Deployed: https://orbit-desk-delta.vercel.app** (project `orbit-desk`).
+
 A third Vercel project from the same repository. Add it the way the other two
 were added: New Project, same repo, then change the root directory.
+
+Two things cost time the first time and will again:
+
+- **`orbit-desk.vercel.app` is not ours.** That name belongs to an unrelated
+  Vite app — the `*.vercel.app` namespace is global, not per-account. Vercel
+  assigned `orbit-desk-delta.vercel.app` instead, the same way `orbit-api`
+  ended up on `orbit-api-psi`. Read the project's domain back after creating
+  it rather than assuming the name; `curl`ing the one you expected returns
+  somebody else's 200.
+- **A new project starts with SSO protection ON.** `ssoProtection` defaults to
+  `all_except_custom_domains`, so every deployment URL 302s to a Vercel login
+  and staff cannot reach the desk at all. `orbit` and `orbit-api` both run with
+  it off. Turning it off is correct here and is not what keeps students out —
+  see "Access is an account check" below.
 
 | Setting | Value |
 |---|---|
@@ -293,10 +317,19 @@ it is not what keeps people out.
 ### After deploying the desk
 
 ```bash
-curl -I https://<desk>.vercel.app/ | grep -i content-security-policy
+U=https://orbit-desk-delta.vercel.app
+BODY=$(curl -s -D /tmp/h.txt "$U/?cb=$RANDOM")
+NONCE=$(grep -i '^content-security-policy' /tmp/h.txt | grep -oE 'nonce-[A-Za-z0-9+/=]+' | cut -d- -f2-)
+echo "$BODY" | grep -c "nonce=\"$NONCE\""     # must be > 0
 ```
 
-Same check as the portal, and the same failure if it is missing: the HTML
+**Fetch the header and the body in ONE request.** Two curls get two responses
+with two different nonces, which reports 0 of 13 stamped and looks exactly
+like the failure below — it is the measurement that is broken, not the app.
+A cached response (`x-vercel-cache: HIT`) does the same thing for the same
+reason, which is what the `?cb=` is for.
+
+Same check as the portal, and the same failure if it is genuinely missing: the HTML
 paints, `strict-dynamic` blocks every script, and the desk sits on "Checking
 your session…" forever while looking like a backend problem. `admin/proxy.ts`
 sets the policy on the request headers and `admin/app/layout.tsx` has

@@ -119,11 +119,11 @@ export function ThemeToggle({ compact }: { compact?: boolean }) {
           type="button"
           className={[s.opt, ready && choice === o.value ? s.optActive : null].filter(Boolean).join(" ")}
           aria-pressed={ready && choice === o.value}
+          aria-label={`Toggle ${o.label.toLowerCase()} theme`}
           title={`${o.label} theme`}
           onClick={() => pick(o.value)}
         >
           <Icon name={o.icon} size={16} />
-          <span className="sr-only">{o.label} theme</span>
         </button>
       ))}
     </div>
