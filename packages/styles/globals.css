@@ -59,20 +59,23 @@
      means something: the crest navy for action, the crest red for a deadline,
      the crest yellow for attention. Nothing is tinted to look designed.
 
-     TWO JUDGEMENT CALLS, both worth knowing before changing them:
+     ONE RULE IN LIGHT. All three border steps are #1a1a1c, which is what
+     Civic looked like when it was chosen: a hairline that is actually a line.
+     It is used in 39 places, most of them row separators, so a long list
+     reads as a ruled table rather than as cards floating on white — that is
+     the intent, not a side effect. The three steps are kept as separate
+     tokens so a future palette can pull them apart again without touching
+     the 72 rules that reference them. At 17.4:1 on white it clears WCAG
+     1.4.11 by a wide margin, so nothing was traded for the look.
 
-     1. --border-strong is near-black (#1a1a1c) and --border-subtle is not.
-        Civic's character is a visible rule, but --border-subtle is used in 39
-        places, most of them row separators; at near-black that is a page of
-        black grid lines rather than a list. So the severity lives in
-        --border-strong, for card outlines and emphasis, and the dividers stay
-        a clean neutral grey. Swapping --border-subtle to #1a1a1c is the
-        one-line change if the full brutalist version is wanted.
-
-     2. --border-default is #949498 light / #5d5d61 dark because it outlines
-        inputs and buttons, and WCAG 1.4.11 holds those to 3:1 against their
-        surface. The previous value (#d6d6de) was 1.3:1 — it had always been
-        failing, and Civic is the wrong palette to keep a soft edge on.
+     DARK KEEPS TWO STEPS, for one reason. The dark rule is #303034, as
+     previewed, and against #0b0b0c that is 1.5:1 — fine for a divider, which
+     1.4.11 exempts as decoration, and not fine for the outline of an input
+     or a button, which it does not. So --border-subtle is the previewed
+     #303034 and --border-default stays #5d5d61, the point at which a control
+     edge reaches 3:1. On a near-black ground the two are nearly
+     indistinguishable; on a form they are the difference between a visible
+     field and a guessed one.
      =================================================================== */
 
   --bg-app: #ffffff;
@@ -82,8 +85,8 @@
   --surface-hover: #f4f4f5;
   --surface-active: #e6e6e9;
 
-  --border-subtle: #d8d8da;
-  --border-default: #949498;
+  --border-subtle: #1a1a1c;
+  --border-default: #1a1a1c;
   --border-strong: #1a1a1c;
 
   --text-primary: #000000;
