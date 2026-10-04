@@ -763,19 +763,36 @@ img, svg { max-width: 100%; display: block; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* §76: when reduced motion is set, remove the movement but keep every
-   functional state change — the skeleton must still read as "loading". */
+/* §76 USED TO STOP EVERYTHING HERE. It no longer does, by explicit decision:
+   the two blanket rules that stripped animation and transition from the whole
+   document on `prefers-reduced-motion: reduce` have been removed, so the
+   interface moves for everyone.
+
+   What that costs, written down so it is a decision and not an accident. That
+   media query is not a style preference; it is set by people who get nausea,
+   dizziness or migraine from on-screen movement, and it is the only way they
+   have of asking. Overriding it takes the ask away.
+
+   What makes it survivable here is the SIZE of what is left. The effects in
+   this file are a 6px rise, a 2.5% press, a fill sweeping up a 40px button and
+   a dropdown scaling 3%. None of them is the kind that triggers vestibular
+   symptoms — no parallax, no zoom across the viewport, no spin, no autoplaying
+   loop. WCAG 2.3.3, the criterion this concerns, is AAA and is aimed at
+   exactly the large motion that is absent here.
+
+   Two things are nonetheless still honoured below, and should stay that way:
+   scroll-behavior, because a smooth jump across a long page IS large motion,
+   and the skeleton sweep slowing down rather than stopping, because a frozen
+   loading state says the opposite of what it means.
+
+   To restore the standard behaviour, put `animation: none !important;
+   transition: none !important;` back on `*` inside this block. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-  .skeleton::after { display: none; }
-  .skeleton { background: var(--color-surface-muted); }
-  .route-progress::after { width: 100%; animation: none; opacity: 0.4; }
-  .spinner { animation: none; border-top-color: currentColor; opacity: 0.5; }
+  html { scroll-behavior: auto !important; }
+  /* The sweep keeps turning, slower. It is the only thing on screen reporting
+     that work is still happening, and a frozen one says it has stopped. */
+  .skeleton::after { animation-duration: 2.6s; }
+  .spinner { animation-duration: 1.4s; }
 }
 
 /* The skip link is off-screen until focused (§74 logical tab order). */
@@ -803,13 +820,8 @@ img, svg { max-width: 100%; display: block; }
   transition-timing-function: var(--ease);
 }
 
-/* And nothing at all for anyone who has asked for nothing at all. */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-    animation: none !important;
-  }
-}
+/* The blanket kill that used to live here is gone — see the long note on the
+   reduced-motion block above for what that trades and how to put it back. */
 
 /* The sweep is the skeleton's whole signal, so it is NOT overridden here.
    Step 8.3 once replaced it with an opacity pulse, on the argument that a
@@ -828,11 +840,11 @@ img, svg { max-width: 100%; display: block; }
    skeleton sweep is the single exception and it earns it — it is the only
    thing on screen reporting that work is still happening.
 
-   The blanket `prefers-reduced-motion` rule further up kills every animation
-   and transition in the document, so each of these is written to leave the
-   element in its RESTING state when the animation never runs. That is why
-   `rise` uses `backwards` and not `both`, and why no effect here is the only
-   carrier of information.
+   Each of these still leaves its element in the RESTING state if the
+   animation never runs — `backwards`, not `both` — which is why none of them
+   can strand a panel at opacity 0. That property mattered when reduced motion
+   stripped them wholesale; it matters now because an animation can also fail
+   to run for duller reasons, and a blank card is the worst of them.
    ======================================================================= */
 
 /* --- content arriving ---------------------------------------------------
