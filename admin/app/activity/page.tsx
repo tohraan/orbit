@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react";
 import t from "@/components/table.module.css";
-import shell from "@/components/shell.module.css";
+import { Banner } from "@rof/ui";
 import { desk } from "@/lib/desk";
 
 type Entry = { id: number; actor_email: string | null; action: string; target: string | null; detail: Record<string, unknown>; at: string };
@@ -37,7 +37,7 @@ export default function ActivityPage() {
         <p className="t-body-sm c-secondary">The last 200 actions taken at the desk, newest first.</p>
       </header>
 
-      {error ? <p className={shell.error} role="alert">{error}</p> : null}
+      {error ? <Banner tone="error">{error}</Banner> : null}
 
       <div className={t.wrap}>
         <div className={t.scroll}>

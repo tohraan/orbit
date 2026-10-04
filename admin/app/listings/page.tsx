@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import t from "@/components/table.module.css";
-import shell from "@/components/shell.module.css";
+import { Banner, Button, Input, Pill } from "@rof/ui";
 import { desk } from "@/lib/desk";
 
 type Row = {
@@ -72,15 +72,15 @@ export default function ListingsPage() {
         </p>
       </header>
 
-      {error ? <p className={shell.error} role="alert">{error}</p> : null}
+      {error ? <Banner tone="error">{error}</Banner> : null}
 
       <div className={t.toolbar}>
-        <input className={`${shell.input} ${t.search}`} value={q} onChange={(e) => setQ(e.target.value)}
+        <Input className={t.search} value={q} onChange={(e) => setQ(e.target.value)}
                placeholder="Search by title, source or host" />
         {([["all", "All"], ["manual", "Ours"], ["featured", "Pinned"], ["hidden", "Hidden"], ["saved", "Saved by students"]] as const)
           .map(([k, label]) => (
-            <button key={k} type="button" className={filter === k ? shell.primary : shell.ghost}
-                    onClick={() => setFilter(k)}>{label}</button>
+            <Button key={k} size="sm" tone={filter === k ? "primary" : "secondary"}
+                    onClick={() => setFilter(k)}>{label}</Button>
           ))}
       </div>
 
@@ -107,10 +107,10 @@ export default function ListingsPage() {
                   </td>
                   <td>
                     <div className={t.rowActions} style={{ justifyContent: "flex-start" }}>
-                      {r.manual ? <span className={`${t.pill} ${t.pillManual}`}>Ours</span> : null}
-                      {r.featured ? <span className={`${t.pill} ${t.pillFeatured}`}>Pinned</span> : null}
-                      {r.edited ? <span className={`${t.pill} ${t.pillEdited}`}>Edited</span> : null}
-                      {r.suppressed ? <span className={`${t.pill} ${t.pillHidden}`}>Hidden</span> : null}
+                      {r.manual ? <Pill tone="accent">Ours</Pill> : null}
+                      {r.featured ? <Pill tone="warning">Pinned</Pill> : null}
+                      {r.edited ? <Pill tone="neutral">Edited</Pill> : null}
+                      {r.suppressed ? <Pill tone="error">Hidden</Pill> : null}
                       {!r.manual && !r.featured && !r.edited && !r.suppressed
                         ? <span className={t.dim}>Live</span> : null}
                     </div>
@@ -120,15 +120,15 @@ export default function ListingsPage() {
                   <td className={t.dim}>{r.deadline ?? "—"}</td>
                   <td>
                     <div className={t.rowActions}>
-                      <button type="button" className={shell.ghost} disabled={busyId === r.id}
+                      <Button size="sm" tone="ghost" disabled={busyId === r.id}
                               onClick={() => void change(r.id, { featured: !r.featured })}>
                         {r.featured ? "Unpin" : "Pin"}
-                      </button>
-                      <button type="button" className={r.suppressed ? shell.ghost : shell.danger}
+                      </Button>
+                      <Button size="sm" tone={r.suppressed ? "ghost" : "danger"}
                               disabled={busyId === r.id}
                               onClick={() => void change(r.id, { suppressed: !r.suppressed })}>
                         {r.suppressed ? "Restore" : "Remove"}
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

@@ -18,7 +18,7 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import s from "./add.module.css";
-import shell from "@/components/shell.module.css";
+import { Banner, Button, Field, Input, Textarea, Select } from "@rof/ui";
 import { StudentPreview } from "@/components/StudentPreview";
 import { desk } from "@/lib/desk";
 import { BLANK, FUNDING, LEVELS, TYPES, type Draft } from "@/lib/draft";
@@ -189,46 +189,40 @@ export default function AddPage() {
         </header>
 
         {published ? (
-          <p className={shell.ok} role="status">
+          <Banner tone="success">
             “{published}” is live. Students will see it on the next load, tagged “Added by college”.
-          </p>
+          </Banner>
         ) : null}
 
         {/* ---------------------------------------------------------- step 1 */}
         <section className={s.card}>
           <h2 className="t-section">1 · The link</h2>
-          <label className={shell.field}>
-            <span className={shell.label}>Link to the opportunity page</span>
-            <input className={shell.input} value={url} onChange={(e) => setUrl(e.target.value)}
+          <Field label="Link to the opportunity page"
+                 hint="The official page for this opportunity. We read it once; we do not crawl the site.">
+            <Input value={url} onChange={(e) => setUrl(e.target.value)}
                    placeholder="https://…" inputMode="url" disabled={phase === "reading"}
                    onKeyDown={(e) => { if (e.key === "Enter") void read(); }} />
-            <span className={shell.hint}>
-              The official page for this opportunity. We read it once; we do not crawl the site.
-            </span>
-          </label>
+          </Field>
 
-          <label className={shell.field}>
-            <span className={shell.label}>What should it be called?</span>
-            <input className={shell.input} value={name} onChange={(e) => setName(e.target.value)}
+          <Field label="What should it be called?"
+                 hint="Your wording wins over the page’s own title, which is often “Home | Some Foundation”.">
+            <Input value={name} onChange={(e) => setName(e.target.value)}
                    maxLength={240} disabled={phase === "reading"}
                    placeholder="e.g. DAAD WISE Summer Research Internship 2027" />
-            <span className={shell.hint}>
-              Your wording wins over the page’s own title, which is often “Home | Some Foundation”.
-            </span>
-          </label>
+          </Field>
 
-          {error ? <p className={shell.error} role="alert">{error}</p> : null}
+          {error ? <Banner tone="error">{error}</Banner> : null}
 
           <div className={s.actions}>
-            <button type="button" className={shell.primary} onClick={() => void read()}
+            <Button tone="primary" onClick={() => void read()}
                     disabled={phase === "reading" || !url.trim()}>
               {phase === "reading" ? "Reading…" : phase === "editing" ? "Read again" : "Read the page"}
-            </button>
+            </Button>
             {phase === "idle" && !published ? (
-              <button type="button" className={shell.ghost}
+              <Button tone="secondary"
                       onClick={() => { setDraft(BLANK); setPhase("editing"); setMissing([]); setFilled([]); }}>
                 Skip — type it myself
-              </button>
+              </Button>
             ) : null}
           </div>
 
@@ -268,52 +262,52 @@ export default function AddPage() {
               <h2 className="t-section">2 · Check and edit</h2>
 
               <Field label="Title" hint="What a student sees first.">
-                <input className={shell.input} value={draft.title} maxLength={240}
+                <Input value={draft.title} maxLength={240}
                        onChange={(e) => set("title", e.target.value)} />
               </Field>
 
               <Field label="Link" hint="Where “Open” takes them.">
-                <input className={shell.input} value={draft.url} onChange={(e) => set("url", e.target.value)} />
+                <Input value={draft.url} onChange={(e) => set("url", e.target.value)} />
               </Field>
 
               <Field label="Description" hint="Four lines on the card. Say what it is and who it is for.">
-                <textarea className={shell.textarea} value={draft.summary} maxLength={600}
+                <Textarea value={draft.summary} maxLength={600}
                           onChange={(e) => set("summary", e.target.value)} />
               </Field>
 
               <div className={s.row}>
                 <Field label="Deadline" hint={draft.deadlineKind && draft.deadlineKind !== "fixed"
                   ? `The page suggested “${draft.deadlineKind}”.` : "YYYY-MM-DD."}>
-                  <input className={shell.input} type="date" value={draft.deadline}
+                  <Input type="date" value={draft.deadline}
                          onChange={(e) => set("deadline", e.target.value)} />
                 </Field>
                 <Field label="Type">
-                  <select className={shell.select} value={draft.type} onChange={(e) => set("type", e.target.value)}>
+                  <Select value={draft.type} onChange={(e) => set("type", e.target.value)}>
                     <option value="">Not set</option>
                     {TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
-                  </select>
+                  </Select>
                 </Field>
               </div>
 
               <div className={s.row}>
-                <Field label="Country"><input className={shell.input} value={draft.country}
+                <Field label="Country"><Input value={draft.country}
                        onChange={(e) => set("country", e.target.value)} /></Field>
-                <Field label="Duration"><input className={shell.input} value={draft.duration} maxLength={60}
+                <Field label="Duration"><Input value={draft.duration} maxLength={60}
                        onChange={(e) => set("duration", e.target.value)} /></Field>
               </div>
 
               <div className={s.row}>
                 <Field label="Funding">
-                  <select className={shell.select} value={draft.funding} onChange={(e) => set("funding", e.target.value)}>
+                  <Select value={draft.funding} onChange={(e) => set("funding", e.target.value)}>
                     <option value="">Not set</option>
                     {FUNDING.map((f) => <option key={f} value={f}>{f.replace(/_/g, " ")}</option>)}
-                  </select>
+                  </Select>
                 </Field>
                 <Field label="Amount" hint="Currency and value, if there is one.">
                   <div className={s.pair}>
-                    <input className={shell.input} value={draft.amountCurrency} maxLength={3} placeholder="EUR"
+                    <Input value={draft.amountCurrency} maxLength={3} placeholder="EUR"
                            onChange={(e) => set("amountCurrency", e.target.value.toUpperCase())} />
-                    <input className={shell.input} value={draft.amountValue} inputMode="numeric" placeholder="2500"
+                    <Input value={draft.amountValue} inputMode="numeric" placeholder="2500"
                            onChange={(e) => set("amountValue", e.target.value.replace(/[^\d.]/g, ""))} />
                   </div>
                 </Field>
@@ -335,16 +329,16 @@ export default function AddPage() {
                 </div>
               </Field>
 
-              <Field label="Eligibility"><textarea className={shell.textarea} value={draft.eligibility}
+              <Field label="Eligibility"><Textarea value={draft.eligibility}
                      maxLength={4000} onChange={(e) => set("eligibility", e.target.value)} /></Field>
-              <Field label="What it covers"><textarea className={shell.textarea} value={draft.benefits}
+              <Field label="What it covers"><Textarea value={draft.benefits}
                      maxLength={4000} onChange={(e) => set("benefits", e.target.value)} /></Field>
-              <Field label="How to apply"><textarea className={shell.textarea} value={draft.howToApply}
+              <Field label="How to apply"><Textarea value={draft.howToApply}
                      maxLength={4000} onChange={(e) => set("howToApply", e.target.value)} /></Field>
-              <Field label="Documents needed"><textarea className={shell.textarea} value={draft.documents}
+              <Field label="Documents needed"><Textarea value={draft.documents}
                      maxLength={2000} onChange={(e) => set("documents", e.target.value)} /></Field>
               <Field label="Apply link" hint="If applications open somewhere other than the main page.">
-                <input className={shell.input} value={draft.applyLink} onChange={(e) => set("applyLink", e.target.value)} />
+                <Input value={draft.applyLink} onChange={(e) => set("applyLink", e.target.value)} />
               </Field>
             </section>
 
@@ -356,9 +350,9 @@ export default function AddPage() {
                   it afterwards from Listings.
                 </p>
               </div>
-              <button type="button" className={shell.primary} disabled={!canPublish} onClick={() => void publish()}>
+              <Button tone="primary" disabled={!canPublish} onClick={() => void publish()}>
                 Publish to the portal
-              </button>
+              </Button>
             </section>
           </>
         ) : null}
@@ -368,15 +362,5 @@ export default function AddPage() {
         <StudentPreview draft={draft} />
       </aside>
     </div>
-  );
-}
-
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <label className={shell.field}>
-      <span className={shell.label}>{label}</span>
-      {children}
-      {hint ? <span className={shell.hint}>{hint}</span> : null}
-    </label>
   );
 }

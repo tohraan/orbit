@@ -1,33 +1,27 @@
 "use client";
 
-/* The desk's frame, and its gate.
+/* The shell every desk route renders inside.
  *
- * THREE STATES, NOT TWO. Signed out, signed in but not staff, and staff. The
- * middle one is the one that is usually got wrong: a student who follows a link
- * here has a perfectly valid session, so treating "not staff" as "not signed
- * in" would show them a sign-in form they are already past, and they would try
- * their password again and again. It says what is actually true instead.
+ * The rail, the controls and the theme toggle are @rof/ui — the same
+ * components the portal draws, not a second set that happens to use the same
+ * tokens. What stays here is the part that is the desk's own: three states
+ * before the application, and a header that names who is at it.
  *
- * This is presentation. Every route re-checks server-side against the database;
- * hiding a button has never stopped anyone from calling an endpoint.
+ * §67, one navigation at a time: the rail is the navigation. The header is two
+ * clusters and nothing in between — identity left, controls right.
  */
 
-import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { Rail, ThemeToggle, Spinner, Button, initialsOf } from "@rof/ui";
+import rail from "@rof/ui/rail.module.css";
 import s from "./shell.module.css";
 import { useSession } from "@/lib/session";
 import { SignIn } from "./SignIn";
-
-const NAV = [
-  { href: "/", label: "Overview" },
-  { href: "/listings", label: "Listings" },
-  { href: "/add", label: "Add opportunity" },
-  { href: "/students", label: "Students" },
-  { href: "/activity", label: "Activity" },
-];
+import { DESK_NAV, TITLES, WIDE } from "./nav";
 
 export function Shell({ children }: { children: React.ReactNode }) {
-  const { status, isStaff, user, configured, signOut } = useSession();
+  const { status, isStaff, user, configured, name } = useSession();
   const pathname = usePathname();
 
   if (!configured) {
@@ -46,70 +40,82 @@ export function Shell({ children }: { children: React.ReactNode }) {
   if (status === "loading") {
     return (
       <main className={s.centre}>
-        <span className={s.spinner} aria-hidden="true" />
-        <p className="t-body-sm c-secondary" role="status">Checking your session…</p>
+        <Spinner label="Checking your session" />
+        <p className="t-body-sm c-secondary">Checking your session…</p>
       </main>
     );
   }
 
   if (status === "out") return <SignIn />;
 
-  /* Signed in; waiting on the server's verdict. Deliberately not optimistic:
-   * flashing the desk and then removing it would be worse than a short wait. */
-  if (isStaff === null) {
-    return (
-      <main className={s.centre}>
-        <span className={s.spinner} aria-hidden="true" />
-        <p className="t-body-sm c-secondary" role="status">Checking your access…</p>
-      </main>
-    );
-  }
+  /* Signed in, but a student. A real state with its own screen: saying "access
+     denied" to someone whose account simply has not been granted the desk is
+     both unhelpful and, to them, indistinguishable from a broken password. */
+  if (isStaff === false) return <NotStaff />;
 
-  if (isStaff === false) {
-    return (
-      <main className={s.centre}>
-        <div className={s.notice}>
-          <h1 className="t-section">This area is for department staff</h1>
-          <p className="t-body-sm c-secondary">
-            You are signed in as {user?.email}. That account does not have desk access. If it should, ask
-            whoever administers the portal to grant it.
-          </p>
-          <div className={s.noticeRow}>
-            <a className={s.linkOut} href="https://orbit-bits.vercel.app">Go to the student portal</a>
-            <button type="button" className={s.ghost} onClick={() => void signOut()}>Sign out</button>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  const title = TITLES[pathname] ?? "Desk";
+  const wide = WIDE.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   return (
     <div className={s.shell}>
-      <header className={s.bar}>
-        <div className={s.brand}>
-          <span className={s.mark} aria-hidden="true">◎</span>
-          <span className={s.brandText}>
-            <span className={s.brandName}>Orbit Desk</span>
-            <span className={s.brandSub}>BITS Pilani Dubai</span>
-          </span>
-        </div>
-        <nav className={s.nav} aria-label="Sections">
-          {NAV.map((n) => {
-            const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
-            return (
-              <Link key={n.href} href={n.href} className={active ? `${s.tab} ${s.tabActive}` : s.tab}
-                    aria-current={active ? "page" : undefined}>
-                {n.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className={s.who}>
-          <span className={s.whoEmail} title={user?.email ?? ""}>{user?.email}</span>
-          <button type="button" className={s.ghost} onClick={() => void signOut()}>Sign out</button>
-        </div>
-      </header>
-      <main className={s.page} id="main">{children}</main>
+      <Rail
+        items={DESK_NAV}
+        pathname={pathname}
+        foot={{
+          href: "/account",
+          initials: initialsOf(name, user?.email),
+          label: name || user?.email || "Your account",
+        }}
+      />
+
+      <div className={rail.main}>
+        <header className={s.bar}>
+          <div className={s.brand}>
+            <Image className={s.mark} src="/bits-logo-64.png" alt="" width={30} height={30} priority />
+            <span className={s.brandText}>
+              <span className={s.brandName}>Orbit Desk</span>
+              <span className={s.brandSub}>BITS Pilani Dubai</span>
+            </span>
+            <span className={s.where}>{title}</span>
+          </div>
+
+          <div className={s.controls}>
+            <span className={s.whoEmail} title={user?.email ?? ""}>
+              {user?.email}
+            </span>
+            <ThemeToggle />
+          </div>
+        </header>
+
+        <main className={wide ? `${s.page} ${s.wide}` : s.page} id="main">
+          {children}
+        </main>
+      </div>
     </div>
+  );
+}
+
+function NotStaff() {
+  const { user, signOut } = useSession();
+  return (
+    <main className={s.centre}>
+      <div className={s.notice}>
+        <h1 className="t-section">This account is not on the desk</h1>
+        <p className="t-body-sm c-secondary">
+          {user?.email} is signed in, but does not have department access. Ask whoever runs the portal to
+          grant it — nothing about your student account has changed.
+        </p>
+        <div className={s.noticeRow}>
+          <a className={s.linkOut} href="https://orbit-bits.vercel.app">
+            Go to the student portal
+          </a>
+          {/* A button, not a link with href="#": signing out is an action, and
+              a link that goes nowhere is a trap for anyone on a keyboard. */}
+          <Button tone="ghost" size="sm" onClick={() => void signOut()}>
+            Sign out
+          </Button>
+        </div>
+      </div>
+    </main>
   );
 }

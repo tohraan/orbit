@@ -12,7 +12,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import t from "@/components/table.module.css";
-import shell from "@/components/shell.module.css";
+import { Banner, Input, Pill } from "@rof/ui";
 import { desk } from "@/lib/desk";
 
 type Student = {
@@ -53,7 +53,7 @@ export default function StudentsPage() {
         </p>
       </header>
 
-      {error ? <p className={shell.error} role="alert">{error}</p> : null}
+      {error ? <Banner tone="error">{error}</Banner> : null}
 
       <div className={t.stats}>
         <div className={t.stat}>
@@ -73,7 +73,7 @@ export default function StudentsPage() {
       </div>
 
       <div className={t.toolbar}>
-        <input className={`${shell.input} ${t.search}`} value={q} onChange={(e) => setQ(e.target.value)}
+        <Input className={t.search} value={q} onChange={(e) => setQ(e.target.value)}
                placeholder="Search by name, ID or branch" />
       </div>
 
@@ -101,8 +101,8 @@ export default function StudentsPage() {
                   <td>{s.level ?? <span className={t.dim}>Not set</span>}</td>
                   <td>
                     {s.onboarded
-                      ? <span className={`${t.pill} ${t.pillOk}`}>Done</span>
-                      : <span className={`${t.pill} ${t.pillEdited}`}>Not finished</span>}
+                      ? <Pill tone="success">Done</Pill>
+                      : <Pill tone="neutral">Not finished</Pill>}
                   </td>
                   <td className={t.dim}>{s.joinedAt ? s.joinedAt.slice(0, 10) : "—"}</td>
                 </tr>

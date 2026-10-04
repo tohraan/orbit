@@ -1,22 +1,32 @@
 # Deploying
 
-Two Vercel projects from one repository, plus the hosted Supabase that already
-exists. npm workspaces at the repo root is what lets both share
-`packages/core` and `packages/server`, so the two deployments can never serve
-different shapes of the same record.
+Three Vercel projects from one repository, plus the hosted Supabase that
+already exists. npm workspaces at the repo root is what lets all three share
+`packages/core`, `packages/server`, `packages/styles` and `packages/ui`, so the
+deployments can never serve different shapes of the same record — or, since the
+desk landed, different shapes of the same button.
 
 ```
                      ┌──────────────────────────┐
-  browser ──────────▶│  web   (Vercel project)  │  pages, no credentials
+  student ──────────▶│  web   (Vercel project)  │  pages, no credentials
+                     └────────────┬─────────────┘
+                                  │  NEXT_PUBLIC_API_BASE
+                                  ▼
+                     ┌──────────────────────────┐     ┌──────────────────┐
+                     │  api   (Vercel project)  │────▶│  Supabase        │
+                     │  SUPABASE_SERVICE_KEY    │     │  (already hosted)│
+                     └──────────────────────────┘     └──────────────────┘
+                                                               ▲
+                     ┌──────────────────────────┐              │
+  staff ────────────▶│  admin (Vercel project)  │──────────────┘
+                     │  SUPABASE_SERVICE_KEY    │   reads AND writes
                      └──────────────────────────┘
-       │
-       │  NEXT_PUBLIC_API_BASE
-       ▼
-  ┌──────────────────────────┐        ┌──────────────────┐
-  │  api   (Vercel project)  │───────▶│  Supabase        │
-  │  SUPABASE_SERVICE_KEY    │        │  (already hosted)│
-  └──────────────────────────┘        └──────────────────┘
 ```
+
+The desk talks to Supabase directly rather than through the API, because it is
+the only thing that writes and the API is a read cache. It is also the only
+deployment a student should never reach — §6 covers how that is enforced, and
+it is an account check, not an unlisted URL.
 
 ## A note on what the split does and does not buy
 
@@ -137,3 +147,71 @@ node scripts/build-ui-data.mjs          # Supabase -> ui/opportunities.json
 cd web && npm run sync-data             # -> web/data/opportunities.json
 cp ui/opportunities.json api/data/      # -> the API's fallback
 ```
+
+## 6 · The desk project
+
+A third Vercel project from the same repository. Add it the way the other two
+were added: New Project, same repo, then change the root directory.
+
+| Setting | Value |
+|---|---|
+| Root Directory | `admin` |
+| Framework | Next.js (detected) |
+| Install Command | `npm install --workspaces --include-workspace-root` |
+
+Environment variables:
+
+| Name | Value | Reaches the browser |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://<project>.supabase.co` | yes |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the anon key | yes |
+| `SUPABASE_URL` | the same URL | no |
+| `SUPABASE_SERVICE_KEY` | the **service** key | no — and it must stay that way |
+| `NEXT_PUBLIC_API_BASE` | `https://<api>.vercel.app` | yes |
+
+Both halves are needed and they are not interchangeable. The two
+`NEXT_PUBLIC_` Supabase values are what the browser signs in with: Supabase
+Auth is a browser-side SDK, so the anon key and the project URL have to be
+public, and the anon key is safe to publish because RLS is what actually
+decides what it can read. The two unprefixed values are what the desk's own
+`/api/desk/*` routes use to read the roster and write overrides, where RLS is
+deliberately bypassed and every route re-checks `students.is_staff` itself.
+
+**Never give the service key a `NEXT_PUBLIC_` prefix.** That prefix is not a
+label, it is an instruction to inline the value into the JavaScript bundle. A
+service key in a public bundle is full read and write on every table in the
+project, roster included, for anyone who opens devtools.
+
+### Access is an account check, not a secret URL
+
+The desk is public on the internet and is supposed to be. What keeps students
+out is `students.is_staff`, verified server-side on every route — 401 signed
+out, 403 as a student, 200 as staff. Granting it is one statement:
+
+```sql
+update students set is_staff = true where email = 'someone@dubai.bits-pilani.ac.in';
+```
+
+Revoking it is the same statement with `false`, and it revokes for that one
+person. That was the whole reason the shared `ADMIN_TOKEN` had to go: it could
+not be taken away from one person without changing it for everyone, and it
+recorded that "staff" did something, never who.
+
+`X-Robots-Tag: noindex, nofollow, noarchive` is set in `admin/next.config.ts`
+because this deployment lists students. It keeps the URL out of search results;
+it is not what keeps people out.
+
+### After deploying the desk
+
+```bash
+curl -I https://<desk>.vercel.app/ | grep -i content-security-policy
+```
+
+Same check as the portal, and the same failure if it is missing: the HTML
+paints, `strict-dynamic` blocks every script, and the desk sits on "Checking
+your session…" forever while looking like a backend problem. `admin/proxy.ts`
+sets the policy on the request headers and `admin/app/layout.tsx` has
+`export const dynamic = "force-dynamic"`; both are load-bearing.
+
+Then sign in with a campus account that has `is_staff = true` and confirm the
+rail, the Overview counts and one listing edit surviving on the portal.

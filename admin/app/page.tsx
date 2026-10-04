@@ -10,7 +10,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import t from "@/components/table.module.css";
-import shell from "@/components/shell.module.css";
+import { Banner, Pill, buttonClass } from "@rof/ui";
 import { desk } from "@/lib/desk";
 import { todayInDubai } from "@/lib/draft";
 
@@ -59,7 +59,7 @@ export default function Overview() {
         </p>
       </header>
 
-      {error ? <p className={shell.error} role="alert">{error}</p> : null}
+      {error ? <Banner tone="error">{error}</Banner> : null}
 
       <div className={t.stats}>
         <div className={t.stat}>
@@ -85,8 +85,8 @@ export default function Overview() {
       </div>
 
       <div className={t.toolbar}>
-        <Link href="/add" className={shell.primary}>Add an opportunity</Link>
-        <Link href="/listings" className={shell.ghost}>Manage listings</Link>
+        <Link href="/add" className={buttonClass("primary")}>Add an opportunity</Link>
+        <Link href="/listings" className={buttonClass("secondary")}>Manage listings</Link>
       </div>
 
       <h2 className="t-section" style={{ marginBottom: "var(--space-3)" }}>What students are saving</h2>
@@ -132,8 +132,8 @@ export default function Overview() {
                   <td className={t.dim}>{s.last_item_at ? String(s.last_item_at).slice(0, 10) : "—"}</td>
                   <td>
                     {s.enabled === false
-                      ? <span className={`${t.pill} ${t.pillEdited}`}>Manual</span>
-                      : <span className={`${t.pill} ${t.pillOk}`}>Scraping</span>}
+                      ? <Pill tone="neutral">Manual</Pill>
+                      : <Pill tone="success">Scraping</Pill>}
                   </td>
                 </tr>
               ))}

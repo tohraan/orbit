@@ -8,7 +8,7 @@
   padding: var(--space-4) var(--space-5);
   background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-card);
 }
-.statVal { font-size: 26px; line-height: 32px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.statVal { font-size: 26px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .statKey { font-size: var(--text-meta); color: var(--text-tertiary); }
 .statNote { font-size: var(--text-micro); color: var(--text-tertiary); margin-top: 2px; }
 
@@ -33,17 +33,35 @@
 .dim { color: var(--text-tertiary); }
 .rowActions { display: flex; gap: var(--space-2); flex-wrap: wrap; justify-content: flex-end; }
 
-.pill {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px var(--space-2); border-radius: var(--radius-tag);
-  font-size: var(--text-micro); font-weight: 600; white-space: nowrap;
-}
-.pillManual { background: var(--accent-subtle); color: var(--accent-text); }
-.pillHidden { background: var(--error-bg); color: var(--error-fg); }
-.pillFeatured { background: var(--warning-bg); color: var(--warning-fg); }
-.pillEdited { background: var(--surface-sunken); color: var(--text-secondary); }
-.pillOk { background: var(--success-bg); color: var(--success-fg); }
+/* Pills moved to @rof/ui: the desk and the portal label state the same way,
+   and five tone classes in a local file is how they stop matching. */
 
 .empty { padding: var(--space-10) var(--space-6); text-align: center; color: var(--text-tertiary); font-size: var(--text-body-sm); }
 .rowSuppressed td { opacity: 0.55; }
 .note { font-size: var(--text-micro); color: var(--text-tertiary); margin-top: var(--space-3); }
+
+/* ---------------------------------------------------------- key/value ---
+   For a screen that states facts rather than listing rows (/account). A
+   definition list, because that is what it is. */
+.pairs {
+  display: grid;
+  gap: 1px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  max-width: 560px;
+}
+.pair {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+}
+@media (max-width: 599px) {
+  .pair { grid-template-columns: 1fr; gap: var(--space-1); }
+}
+.pairKey { font-size: var(--text-meta); color: var(--text-tertiary); }
+.pairVal { font-size: var(--text-body-sm); color: var(--text-primary); min-width: 0; overflow-wrap: anywhere; }

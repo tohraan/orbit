@@ -1,9 +1,18 @@
 "use client";
 
 /* The desk's door. A full screen, like the portal's — there is nothing else to
- * show someone who is not signed in. */
+ * show someone who is not signed in.
+ *
+ * The card used to render with no padding at all: it asked for
+ * `var(--space-7)`, which the scale does not define (it steps 24 → 32), so the
+ * whole padding shorthand was invalid and reset to zero. The first screen
+ * anyone sees here was the broken one, which is the argument for the controls
+ * living in @rof/ui rather than being re-typed per app.
+ */
 
+import Image from "next/image";
 import { useRef, useState } from "react";
+import { Button, Field, Input, Banner } from "@rof/ui";
 import s from "./shell.module.css";
 import { useSession } from "@/lib/session";
 import { CAMPUS_DOMAIN } from "@/lib/desk";
@@ -34,31 +43,40 @@ export function SignIn() {
     <main className={s.centre}>
       <div className={s.door}>
         <div className={s.doorHead}>
-          <span className={s.markLarge} aria-hidden="true">◎</span>
+          <Image className={s.markLarge} src="/bits-logo-256.png" alt="" width={44} height={44} priority />
           <h1 className={s.doorTitle}>Orbit Desk</h1>
           <p className="t-body-sm c-secondary">
             Department access to the opportunity portal. Sign in with your BITS Pilani Dubai account.
           </p>
         </div>
 
-        <label className={s.field}>
-          <span className={s.label}>Campus email</span>
-          <input className={s.input} value={typed} onChange={(e) => setTyped(e.target.value)}
-                 autoComplete="username" inputMode="email" placeholder={`you@${CAMPUS_DOMAIN}`} />
-        </label>
+        <Field label="Campus email">
+          <Input
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            autoComplete="username"
+            inputMode="email"
+            placeholder={`you@${CAMPUS_DOMAIN}`}
+          />
+        </Field>
 
-        <label className={s.field}>
-          <span className={s.label}>Password</span>
-          <input className={s.input} type="password" value={password} autoComplete="current-password"
-                 onChange={(e) => setPassword(e.target.value)}
-                 onKeyDown={(e) => { if (e.key === "Enter") void submit(); }} />
-        </label>
+        <Field label="Password">
+          <Input
+            type="password"
+            value={password}
+            autoComplete="current-password"
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void submit();
+            }}
+          />
+        </Field>
 
-        {error ? <p className={s.error} role="alert">{error}</p> : null}
+        {error ? <Banner tone="error">{error}</Banner> : null}
 
-        <button type="button" className={s.primary} disabled={!can || busy} onClick={() => void submit()}>
+        <Button tone="primary" disabled={!can || busy} onClick={() => void submit()}>
           {busy ? "Signing in…" : "Sign in"}
-        </button>
+        </Button>
 
         <p className={s.doorNote}>
           Desk access is granted per account. Signing in with a student account will say so rather than

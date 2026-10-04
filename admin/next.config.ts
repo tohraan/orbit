@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
    * this app, so a change in packages/core cannot go stale behind a build
    * artefact. Tracing starts at the repo root because they live above this
    * directory. */
-  transpilePackages: ["@rof/core", "@rof/server", "@rof/styles"],
+  transpilePackages: ["@rof/core", "@rof/server", "@rof/styles", "@rof/ui"],
   /* Both must point at the repo root, and Next requires them to agree: the
    * workspace packages this app compiles live above its own directory, and the
    * root also holds the lockfile Turbopack looks for. */
