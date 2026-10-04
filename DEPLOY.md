@@ -112,6 +112,30 @@ console is the giveaway:
 orbit-bits-api.vercel.app/api/rover:1  Failed to load resource: 404
 ```
 
+## Deploy the portal from the repo ROOT, with the root linked to `orbit`
+
+The `orbit` project's Root Directory is `web`, so Vercel applies that itself.
+Two ways to get this wrong, both of which stop the deploy dead:
+
+```bash
+vercel --prod --cwd web
+# Error: The specified Root Directory "web" does not exist.   (web/web)
+
+cd /Users/…/IEEE-hackathon && vercel --prod        # with no .vercel here
+# Error: Project names … must be lowercase.                  (it tried to
+#   CREATE a project named after the folder, and the folder has capitals)
+```
+
+The second one is the trap: the CLI does not say "this directory is not
+linked", it says the name is invalid, which reads like a Vercel-side problem.
+Link the root once and both go away — `.vercel/` is gitignored, so a fresh
+clone has to do it again:
+
+```bash
+vercel link --yes --project orbit     # at the repo root, NOT in web/
+vercel --prod --yes                   # builds web/ per the project settings
+```
+
 After any production deploy, re-point both pinned aliases at the deployment
 you just made:
 
