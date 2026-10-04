@@ -215,8 +215,24 @@ cp ui/opportunities.json api/data/      # -> the API's fallback
 
 ## 6 · The desk project
 
+**Deployed: https://orbit-desk-delta.vercel.app** (project `orbit-desk`).
+
 A third Vercel project from the same repository. Add it the way the other two
 were added: New Project, same repo, then change the root directory.
+
+Two things cost time the first time and will again:
+
+- **`orbit-desk.vercel.app` is not ours.** That name belongs to an unrelated
+  Vite app — the `*.vercel.app` namespace is global, not per-account. Vercel
+  assigned `orbit-desk-delta.vercel.app` instead, the same way `orbit-api`
+  ended up on `orbit-api-psi`. Read the project's domain back after creating
+  it rather than assuming the name; `curl`ing the one you expected returns
+  somebody else's 200.
+- **A new project starts with SSO protection ON.** `ssoProtection` defaults to
+  `all_except_custom_domains`, so every deployment URL 302s to a Vercel login
+  and staff cannot reach the desk at all. `orbit` and `orbit-api` both run with
+  it off. Turning it off is correct here and is not what keeps students out —
+  see "Access is an account check" below.
 
 | Setting | Value |
 |---|---|
@@ -269,10 +285,19 @@ it is not what keeps people out.
 ### After deploying the desk
 
 ```bash
-curl -I https://<desk>.vercel.app/ | grep -i content-security-policy
+U=https://orbit-desk-delta.vercel.app
+BODY=$(curl -s -D /tmp/h.txt "$U/?cb=$RANDOM")
+NONCE=$(grep -i '^content-security-policy' /tmp/h.txt | grep -oE 'nonce-[A-Za-z0-9+/=]+' | cut -d- -f2-)
+echo "$BODY" | grep -c "nonce=\"$NONCE\""     # must be > 0
 ```
 
-Same check as the portal, and the same failure if it is missing: the HTML
+**Fetch the header and the body in ONE request.** Two curls get two responses
+with two different nonces, which reports 0 of 13 stamped and looks exactly
+like the failure below — it is the measurement that is broken, not the app.
+A cached response (`x-vercel-cache: HIT`) does the same thing for the same
+reason, which is what the `?cb=` is for.
+
+Same check as the portal, and the same failure if it is genuinely missing: the HTML
 paints, `strict-dynamic` blocks every script, and the desk sits on "Checking
 your session…" forever while looking like a backend problem. `admin/proxy.ts`
 sets the policy on the request headers and `admin/app/layout.tsx` has

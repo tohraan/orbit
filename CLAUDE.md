@@ -48,6 +48,9 @@ Verify loop:
 
 ```bash
 node tests/parse.test.mjs      # parser unit + live-fixture tests
+# Rover's two need BOTH flags, or `server-only` throws before the first assert:
+node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover.test.mjs
+node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-loop.test.mjs
 node tests/tokens.test.mjs     # every var() in web/, admin/ and @rof/ui resolves
 python3 n8n/build.py --check   # generated JSON matches source
 ./scripts/probe-sources.sh     # all 15 source endpoints reachable
