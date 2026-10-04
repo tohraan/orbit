@@ -501,6 +501,26 @@ export function runTool(name: string, raw: unknown, index: Index): ToolOutcome {
           "covers — tuition, stipend, travel, insurance, accommodation — is not in the index and " +
           "must not appear in your answer. Say the bucket (\"fully funded\") and nothing more. If " +
           "the student asks what one covers, call get_opportunity for that id.",
+        /* The rule the prompt could not hold on its own.
+         *
+         * Watched live: a search returned 35 rows and the model answered with
+         * a markdown list of three of them — title, deadline and amount typed
+         * out in prose — without ever calling `recommend`. The student saw NO
+         * cards, so nothing was savable, comparable or applyable, and every
+         * fact in that list was retyped by a model rather than rendered from
+         * the row. Saying "never write a list" in the system prompt did not
+         * stop it; saying it here, in the result it is reading at the moment
+         * it decides, is the same move that fixed funding_covers. */
+        ...(matched.length
+          ? {
+              next_step:
+                "You have rows. Your next call is `recommend` with the ids you want to show — it " +
+                "is the ONLY way a student sees an opportunity. Writing them out as a list in " +
+                "your reply shows the student nothing: no card, no deadline, no save or apply " +
+                "button. Do not retype any title, deadline, amount or link from these rows into " +
+                "prose. Call `recommend`, then write two or three sentences about why those.",
+            }
+          : {}),
         items: shown.map(brief),
       },
     };
