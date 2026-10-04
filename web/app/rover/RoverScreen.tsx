@@ -69,6 +69,14 @@ export function RoverScreen() {
    * previous conversation must not be shown to whoever is here now. */
   const who = user?.id ?? "anonymous";
   const [messages, setMessages] = useState<Message[]>(() => openSession(who));
+  /* Everything the session already held when this screen mounted.
+   *
+   * Entrance animations are for content the student watches arrive. Coming
+   * back to Rover from Explore re-mounts the screen with the whole
+   * conversation already in hand, and replaying every card's entrance would
+   * announce old news as if it were new. Only ids absent from this set get
+   * the animation classes; the rest render in their settled state. */
+  const restored = useRef<Set<number>>(new Set(messages.map((m) => m.id)));
   /* The transcript, readable SYNCHRONOUSLY.
    *
    * `send` has to put the whole conversation in the request body at the
@@ -96,10 +104,15 @@ export function RoverScreen() {
    * scroll up to read a card, the page stops chasing the bottom until they
    * come back down. */
   const pinned = useRef(true);
+  /* New content arrived while the student was scrolled up. */
+  const [behind, setBehind] = useState(false);
   useEffect(() => {
     const onScroll = () => {
       const slack = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
       pinned.current = slack < 160;
+      /* Coming back down dismisses the notice; there is nothing below to go
+         to any more. */
+      if (pinned.current) setBehind(false);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -110,7 +123,13 @@ export function RoverScreen() {
    * judders; one jump every 120ms keeps up with the text without it. */
   const lastScroll = useRef(0);
   const toBottom = useCallback((force = false) => {
-    if (!pinned.current) return;
+    if (!pinned.current) {
+      /* The student is reading something further up. Their scroll position is
+         theirs — say there is something new and let them choose, rather than
+         yanking the page down mid-sentence. */
+      setBehind(true);
+      return;
+    }
     const now = Date.now();
     if (!force && now - lastScroll.current < 120) return;
     lastScroll.current = now;
@@ -352,10 +371,29 @@ export function RoverScreen() {
             ) : null}
           </div>
         ) : (
-          messages.map((m) => <Bubble key={m.id} message={m} onRetry={retry} />)
+          messages.map((m) => (
+            <Bubble key={m.id} message={m} onRetry={retry} fresh={!restored.current.has(m.id)} />
+          ))
         )}
         <div ref={foot} className={s.foot} />
       </div>
+
+      {behind ? (
+        <div className={s.behind}>
+          <button
+            type="button"
+            className={s.behindButton}
+            onClick={() => {
+              pinned.current = true;
+              setBehind(false);
+              foot.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+            }}
+          >
+            <Icon name="arrow-down" size={14} />
+            New response
+          </button>
+        </div>
+      ) : null}
 
       <form
         className={s.composer}
@@ -412,9 +450,13 @@ export function RoverScreen() {
 function Bubble({
   message,
   onRetry,
+  fresh,
 }: {
   message: Message;
   onRetry: (failedId: number, text: string) => void;
+  /* False for a conversation restored on re-mount: render settled, do not
+     replay entrances the student already watched. */
+  fresh: boolean;
 }) {
   if (message.role === "student") {
     return (
@@ -424,37 +466,64 @@ function Bubble({
     );
   }
 
-  /* Nothing yet and no activity: the request is out but the first token has
-     not landed. One pulsing line, not a spinner — it is replaced by the
-     answer, so it sits where the answer will be. */
-  const thinking = message.streaming && !message.text && !message.activity.length && !message.picks.length;
+  /* Is this turn still working, and has it said anything yet?
+   *
+   * The process indicator is the activity list itself rather than a separate
+   * widget: the lines Rover already reports ("Searched fully funded masters —
+   * 22 found") are both truer and more useful than an invented sequence of
+   * "Comparing options", and inventing one would be exactly the AI theatre
+   * worth avoiding. The only generic line is the first, before any tool has
+   * reported, because at that point there is genuinely nothing to say yet. */
+  const working = Boolean(message.streaming);
+  const answering = Boolean(message.text || message.picks.length);
+  const steps = message.activity;
 
   return (
     <div className={s.rover}>
-      <span className={s.avatar} aria-hidden="true">
-        <Icon name="rover" size={17} />
-      </span>
       <div className={s.said}>
-        <span className="sr-only">{AGENT_NAME} said:</span>
+        {/* The identity marker, once, at the top of the response — not a round
+            avatar beside every block. An avatar repeated down the transcript
+            is 42px of every line spent saying something the reader worked out
+            at the first one, and on a 320px phone that is the margin the
+            cards need. A quiet label reads as a byline instead. */}
+        <p className={s.who}>
+          <span aria-hidden="true">{AGENT_NAME}</span>
+          <span className="sr-only">{AGENT_NAME} said:</span>
+        </p>
 
-        {message.activity.length ? (
-          <ul className={s.activity}>
-            {message.activity.map((line, i) => (
-              <li key={`${line}-${i}`} className={s.activityLine}>
-                <Icon name="search" size={13} />
-                {line}
+        {/* The process indicator.
+            Each finished step is a tick and quiets down; the one in flight
+            carries the marker and the only motion on screen. Once the answer
+            starts arriving the whole block settles into its completed state
+            (see .done) rather than disappearing, so the response does not jump
+            up into the space the steps were using. */}
+        {steps.length || working ? (
+          <ul className={[s.activity, answering ? s.activityDone : null].filter(Boolean).join(" ")}>
+            {steps.map((line, i) => {
+              const current = working && !answering && i === steps.length - 1;
+              return (
+                <li
+                  key={`${line}-${i}`}
+                  className={[s.step, fresh ? s.stepEnter : null, current ? s.stepNow : s.stepDone]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  <span className={s.mark} aria-hidden="true" />
+                  {line}
+                </li>
+              );
+            })}
+            {/* Before the first tool reports there is nothing true to show, so
+                this one line is generic. It is also the only thing the 250ms
+                delay in .step applies to in practice, which is the point: a
+                turn answered quickly never flashes it. */}
+            {working && !steps.length && !answering ? (
+              <li className={[s.step, fresh ? s.stepEnter : null, s.stepNow].filter(Boolean).join(" ")}>
+                <span className={s.mark} aria-hidden="true" />
+                Understanding your request
               </li>
-            ))}
+            ) : null}
           </ul>
-        ) : null}
-
-        {thinking ? (
-          <p className={s.thinking}>
-            <span className={s.dot} />
-            <span className={s.dot} />
-            <span className={s.dot} />
-            <span className="sr-only">Thinking</span>
-          </p>
         ) : null}
 
         {message.text ? (
@@ -468,7 +537,7 @@ function Bubble({
           <div key={i} className={s.picks}>
             <div className={card.grid}>
               {pick.items.map((item) => (
-                <div key={item.id} className={s.pick}>
+                <div key={item.id} className={[s.pick, fresh ? s.pickEnter : null].filter(Boolean).join(" ")}>
                   <OpportunityCard item={item} />
                   {pick.why[item.id] ? (
                     <p className={s.why}>
