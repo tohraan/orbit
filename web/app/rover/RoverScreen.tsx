@@ -49,6 +49,7 @@ import { ErrorState } from "@/components/feedback/States";
 import { RichText } from "./RichText";
 import { PageHead } from "@/components/layout/AppShell";
 import { AGENT_NAME, APP_NAME } from "@/components/layout/brand";
+import type { IconName } from "@/components/ui/Icon";
 import type { OpportunitySummary } from "@rof/core";
 import { useProfile } from "@/lib/data";
 import { api } from "@/lib/api-base";
@@ -65,21 +66,59 @@ type Wire =
   | { t: "error"; message: string };
 
 
-/* The openers. Deliberately the awkward ones: each is vague or
- * multi-constraint in a way a keyword search cannot serve, which is the whole
- * reason this screen exists next to Explore.
+/* The six ways in.
  *
- * `label` is what the card leads with and `prompt` is what gets sent. Four
- * full sentences stacked as four identical rows read as a menu of commands the
- * screen would accept — the short label makes them scannable as the four
- * DIRECTIONS a student might be going in, with the sentence underneath as the
- * example rather than the instruction. */
-const OPENERS: { label: string; prompt: string }[] = [
-  { label: "Fits my degree", prompt: "What can I apply to as a second-year CS student?" },
-  { label: "Alongside college", prompt: "A fellowship I can do alongside college, in the US or Canada" },
-  { label: "Spare time this semester", prompt: "I have free time this semester — what's worth doing?" },
-  { label: "Funded master's", prompt: "Fully funded master's scholarships closing soon" },
+ * They are KINDS of opportunity rather than four phrasings of "find me
+ * something", because the first screen's job is to tell a student what is in
+ * the index at all. `prompt` is what gets sent — a full sentence, since that is
+ * what Rover answers best — and `title`/`blurb` are what the card shows.
+ *
+ * The icons come from @rof/ui, not from a second icon set: three of them
+ * (flask, briefcase, trophy) were added there for this screen. */
+const CARDS: { icon: IconName; title: string; blurb: string; prompt: string }[] = [
+  {
+    icon: "flask",
+    title: "Research programs",
+    blurb: "Undergrad AI/ML research roles and labs",
+    prompt:
+      "Find research programs and lab opportunities for an undergraduate CS student interested in AI/ML.",
+  },
+  {
+    icon: "briefcase",
+    title: "Internships",
+    blurb: "Summer and semester roles, remote or UAE",
+    prompt: "Find internships for a CS student that I can do remotely or from the UAE.",
+  },
+  {
+    icon: "globe",
+    title: "Fellowships abroad",
+    blurb: "US, Canada, UK, doable alongside college",
+    prompt: "Find fellowships in the US, Canada, or UK that I can do alongside college.",
+  },
+  {
+    icon: "school",
+    title: "Scholarships",
+    blurb: "Closing soon, sorted by deadline",
+    prompt: "Show scholarships closing soon, sorted by deadline.",
+  },
+  {
+    icon: "trophy",
+    title: "Hackathons & contests",
+    blurb: "Open now, with prizes and team sizes",
+    prompt: "Find hackathons and competitions open for registration right now.",
+  },
+  {
+    icon: "clock",
+    title: "Free time this semester",
+    blurb: "Pick what fits my schedule",
+    prompt: "I have free time this semester. What is worth doing, ranked by fit?",
+  },
 ];
+
+/* Narrowings, not questions. A chip is appended to whatever is already in the
+ * composer so it reads as one sentence the student assembled. */
+const CHIPS = ["Deadlines this week", "Fully funded", "Remote", "UAE-eligible", "Beginner-friendly"];
+
 
 export function RoverScreen() {
   const { profile, started } = useProfile();
@@ -157,6 +196,13 @@ export function RoverScreen() {
   }, []);
 
   useEffect(() => () => abort.current?.abort(), []);
+
+  /* The field is the point of the screen, so it has the caret on arrival.
+   * Once only: re-focusing on every render would fight a student who has
+   * clicked into a card or scrolled away to read one. */
+  useEffect(() => {
+    input.current?.focus({ preventScroll: true });
+  }, []);
 
   const send = useCallback(
     async (raw: string) => {
@@ -340,39 +386,50 @@ export function RoverScreen() {
                 : `${AGENT_NAME} answered.`;
             })();
 
+  /* The greeting is addressed when there is a name to address. The profile's
+   * own name first, the account's local part second, and when neither exists
+   * the question stands on its own — a greeting to "there" is worse than no
+   * greeting. */
+  const first = (profile.name.trim() || (user?.email ?? "").split("@")[0] || "").split(/[\s.]+/)[0];
+  const greeting = first ? `What are you looking for, ${first}?` : "What are you looking for?";
+
   return (
     <div className={[s.screen, empty ? s.cold : s.live].join(" ")}>
-      {/* One column, so the cold screen can centre the WHOLE composition —
-          identity, question, openers, composer — as a single object. With the
-          head outside it, centring the rest produced a gap under the
-          description and a left-aligned title sitting above a group that was
-          trying to be the middle of the page. Live: the same column, left
-          where every other screen puts it, growing down the page. */}
+      {/* The wallpaper. A fixed layer behind everything, masked twice: once by
+          the doodle tile itself and once by a radial that fades it out under
+          the column where the reading happens. Pointer-events off, aria-hidden,
+          and no DOM of its own — it is paint. */}
+      <div className={s.doodles} aria-hidden="true" />
+
       <div className={s.body}>
-        {/* The portal's own page head, deliberately, and the compact one.
-            Rover is a screen of Orbit in the same sense Explore and Compare are,
-            so it carries the same eyebrow, title and action slot — but a chat
-            needs the identity stated once and quietly, not a page-title block
-            competing with the question underneath it. The description is for the
-            cold screen only: once there is a conversation on the page, a line
-            explaining what Rover does is chrome in front of the content. */}
-        <div className={s.head}>
-          <PageHead
-            compact
-            eyebrow="Ask"
-            title={AGENT_NAME}
-            description={
-              empty ? `Your opportunity scout. Searches the whole ${APP_NAME} index for what fits you.` : undefined
-            }
-            actions={
-              !empty ? (
+        {empty ? (
+          <div className={s.greetWrap}>
+            {/* The one soft light on the screen, behind the mark. */}
+            <div className={s.glow} aria-hidden="true" />
+            <span className={s.mascot} aria-hidden="true">
+              <Icon name="rover" size={30} />
+            </span>
+            <h1 className={s.greeting}>{greeting}</h1>
+            <p className={s.greetSub}>
+              {AGENT_NAME} reads the whole {APP_NAME} index and comes back with what fits you.
+            </p>
+          </div>
+        ) : (
+          /* In a conversation the portal's own head comes back, for the page's
+             one action. The greeting has done its job by then. */
+          <div className={s.head}>
+            <PageHead
+              compact
+              eyebrow="Ask"
+              title={AGENT_NAME}
+              actions={
                 <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
                   New conversation
                 </Button>
-              ) : null
-            }
-          />
-        </div>
+              }
+            />
+          </div>
+        )}
 
         {/* A screen reader gets ONE announcement per answer, not one per token.
             aria-live on the transcript itself re-announced the whole growing
@@ -383,46 +440,43 @@ export function RoverScreen() {
           {announcement}
         </p>
 
-        <div className={s.transcript} aria-busy={busy}>
-          {empty ? (
-            <div className={s.opening}>
-              {/* A question, then the ways to answer it. The old version opened
-                  with a paragraph about how the screen worked, which is reading
-                  to do before you are allowed to start. */}
-              <h2 className={s.openingTitle}>What are you looking for?</h2>
-              <p className={s.openingLead}>
-                You do not need to know exactly. {AGENT_NAME} will ask what it needs, then search the{" "}
-                {APP_NAME} index for opportunities that actually fit.
-              </p>
-              <div className={s.openers}>
-                {OPENERS.map((o) => (
-                  <button key={o.prompt} type="button" className={s.opener} onClick={() => void send(o.prompt)}>
-                    <span className={s.openerLabel}>{o.label}</span>
-                    <span className={s.openerPrompt}>{o.prompt}</span>
-                  </button>
-                ))}
-              </div>
-              {/* One quiet line, not a notification card: it is context for
-                  something that has not happened yet, and the student came
-                  here to ask a question rather than to be told about a form. */}
-              {!started ? (
-                <p className={s.openingNote}>
-                  Your profile is not set up yet · {AGENT_NAME} will ask for your course and level when
-                  it needs them ·{" "}
-                  <Link href="/profile" className={s.openingNoteLink}>
-                    Complete profile
-                    <Icon name="arrow-right" size={13} />
-                  </Link>
-                </p>
-              ) : null}
-            </div>
-          ) : (
-            messages.map((m) => (
+        {empty ? (
+          <div className={s.cards}>
+            {CARDS.map((c, i) => (
+              <button
+                key={c.title}
+                type="button"
+                className={s.card}
+                style={{ animationDelay: `${i * 50}ms` }}
+                onClick={() => {
+                  /* Fill the composer, then send it: the student sees what was
+                     asked on their behalf, in their own words, in the
+                     transcript a moment later. */
+                  setDraft(c.prompt);
+                  void send(c.prompt);
+                }}
+              >
+                <span className={s.cardIcon} aria-hidden="true">
+                  <Icon name={c.icon} size={17} />
+                </span>
+                <span className={s.cardText}>
+                  <span className={s.cardTitle}>{c.title}</span>
+                  <span className={s.cardBlurb}>{c.blurb}</span>
+                </span>
+                <span className={s.cardGo} aria-hidden="true">
+                  <Icon name="arrow-right" size={15} />
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className={s.transcript} aria-busy={busy}>
+            {messages.map((m) => (
               <Bubble key={m.id} message={m} onRetry={retry} fresh={!restored.current.has(m.id)} />
-            ))
-          )}
-          <div ref={foot} className={s.foot} />
-        </div>
+            ))}
+            <div ref={foot} className={s.foot} />
+          </div>
+        )}
 
         {behind ? (
           <div className={s.behind}>
@@ -442,7 +496,7 @@ export function RoverScreen() {
         ) : null}
 
         <form
-          className={[s.composer, empty ? s.composerCold : null].filter(Boolean).join(" ")}
+          className={s.composer}
           onSubmit={(e) => {
             e.preventDefault();
             void send(draft);
@@ -466,31 +520,53 @@ export function RoverScreen() {
                 setDraft(e.target.value);
                 /* Grow with the text up to the CSS max-height, then scroll. */
                 e.target.style.height = "auto";
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
               }}
-              placeholder={empty ? `Ask ${AGENT_NAME} anything…` : `Continue with ${AGENT_NAME}…`}
+              placeholder={
+                empty ? "Describe what you want, or pick a card above" : `Continue with ${AGENT_NAME}…`
+              }
               aria-label={`Message ${AGENT_NAME}`}
             />
-            <Button
+            <button
               type="submit"
-              variant="primary"
-              size="sm"
-              icon={busy ? "refresh" : "arrow-right"}
+              className={s.send}
               disabled={!draft.trim()}
               aria-label={busy ? "Send and interrupt the current answer" : "Send"}
             >
-              {busy ? "Interrupt" : "Send"}
-            </Button>
+              <Icon name={busy ? "refresh" : "arrow-up"} size={18} />
+            </button>
           </div>
-          <p className={s.disclaimer}>
-            {AGENT_NAME} reports what the {APP_NAME} index holds. Check the funder&apos;s own page before
-            you apply.
-          </p>
         </form>
+
+        {empty ? (
+          <div className={s.chips}>
+            {CHIPS.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                className={s.chip}
+                onClick={() => {
+                  /* Appended, not sent. A filter is a narrowing of the question
+                     the student is still writing. */
+                  setDraft((d) => (d.trim() ? `${d.trim()}, ${chip.toLowerCase()}` : chip));
+                  input.current?.focus();
+                }}
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <p className={s.disclaimer}>
+          {AGENT_NAME} only reports what the index holds, and every card below is a live listing —
+          but check the funder&apos;s own page before you apply.
+        </p>
       </div>
     </div>
   );
 }
+
 
 /* ------------------------------------------------------------- one turn --- */
 

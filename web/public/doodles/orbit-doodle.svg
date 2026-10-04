@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480" fill="none">
+<!-- Orbit's wallpaper. Stroke only, no fills: it is used as a MASK, so
+     what matters here is alpha, and the colour is set in CSS by the
+     layer underneath (rover.module.css .doodles). Drawn in the same
+     24-unit box as the @rof/ui icon set. -->
+<g stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+<g transform="translate(56 58) rotate(-14) scale(1.9167) translate(-12 -12)" stroke-width="0.783"><path d="M21 3 2.5 10.6l7.3 2.9 2.9 7.3z"/><path d="M21 3 9.8 13.5"/></g>
+<g transform="translate(196 40) rotate(12) scale(1.5000) translate(-12 -12)" stroke-width="1.000"><path d="M12 3.5l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.9l6.1-.8z"/></g>
+<g transform="translate(318 62) rotate(-8) scale(2.1667) translate(-12 -12)" stroke-width="0.692"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4 13.4 13.4 8.4 15.6l2.2-5z"/></g>
+<g transform="translate(430 52) rotate(18) scale(1.2500) translate(-12 -12)" stroke-width="1.200"><path d="M12 6v12M6 12h12"/></g>
+<g transform="translate(36 176) rotate(16) scale(1.4167) translate(-12 -12)" stroke-width="1.059"><path d="M6 4.8A.8.8 0 0 1 6.8 4h10.4a.8.8 0 0 1 .8.8V20l-6-3.6L6 20z"/></g>
+<g transform="translate(138 158) rotate(-20) scale(2.0833) translate(-12 -12)" stroke-width="0.720"><path d="M12 2.5c3 2.4 4.6 6 4.6 9.6l-1.8 4.3H9.2L7.4 12.1c0-3.6 1.6-7.2 4.6-9.6z"/><circle cx="12" cy="10" r="1.9"/><path d="M9.2 16.4 6.4 19.2l2.8-.4M14.8 16.4l2.8 2.8-2.8-.4"/></g>
+<g transform="translate(268 168) rotate(9) scale(1.6667) translate(-12 -12)" stroke-width="0.900"><path d="M9 16.4a6 6 0 1 1 6 0v2.2H9z"/><path d="M10 21h4"/></g>
+<g transform="translate(386 164) rotate(-24) scale(1.9167) translate(-12 -12)" stroke-width="0.783"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.6 3.9 5.6 3.9 9S14.6 18.4 12 21c-2.6-2.6-3.9-5.6-3.9-9S9.4 5.6 12 3z"/></g>
+<g transform="translate(462 150) rotate(0) scale(0.5833) translate(-12 -12)" stroke-width="2.571"><path d="M12 12h.01"/></g>
+<g transform="translate(70 288) rotate(22) scale(2.0000) translate(-12 -12)" stroke-width="0.750"><path d="M12 4 22 8.6 12 13.2 2 8.6z"/><path d="M6 10.8V16c0 1.6 2.7 2.9 6 2.9s6-1.3 6-2.9v-5.2"/></g>
+<g transform="translate(198 282) rotate(-11) scale(1.5833) translate(-12 -12)" stroke-width="0.947"><path d="M4 20l1-4.2L16.2 4.6a1.8 1.8 0 0 1 2.6 0l.6.6a1.8 1.8 0 0 1 0 2.6L8.2 19z"/><path d="M14.6 6.2l3.2 3.2"/></g>
+<g transform="translate(316 294) rotate(15) scale(1.8333) translate(-12 -12)" stroke-width="0.818"><circle cx="12" cy="12" r="6"/><ellipse cx="12" cy="12" rx="11" ry="4" transform="rotate(-20 12 12)"/></g>
+<g transform="translate(424 282) rotate(-17) scale(1.5000) translate(-12 -12)" stroke-width="1.000"><rect x="4" y="5.5" width="16" height="10.5" rx="1.6"/><path d="M2 19h20"/></g>
+<g transform="translate(30 398) rotate(-19) scale(1.6667) translate(-12 -12)" stroke-width="0.900"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3.5v4M16 3.5v4"/></g>
+<g transform="translate(150 414) rotate(8) scale(1.1667) translate(-12 -12)" stroke-width="1.286"><circle cx="10.8" cy="10.8" r="6.3"/><path d="M15.4 15.4 20 20"/></g>
+<g transform="translate(258 400) rotate(20) scale(2.0833) translate(-12 -12)" stroke-width="0.720"><path d="M7.6 4.3h8.8v4.5a4.4 4.4 0 0 1-8.8 0z"/><path d="M7.6 5.7H5.2a2 2 0 0 0 0 4h.9M16.4 5.7h2.4a2 2 0 0 1 0 4h-.9"/><path d="M12 13.2v3.5M9.2 19.7h5.6"/></g>
+<g transform="translate(372 420) rotate(-13) scale(1.3333) translate(-12 -12)" stroke-width="1.125"><path d="M21 3 2.5 10.6l7.3 2.9 2.9 7.3z"/><path d="M21 3 9.8 13.5"/></g>
+<g transform="translate(452 388) rotate(0) scale(0.7500) translate(-12 -12)" stroke-width="2.000"><path d="M12 6v12M6 12h12"/></g>
+<g transform="translate(108 108) rotate(0) scale(0.5833) translate(-12 -12)" stroke-width="2.571"><path d="M12 12h.01"/></g>
+<g transform="translate(352 352) rotate(0) scale(0.5833) translate(-12 -12)" stroke-width="2.571"><path d="M12 12h.01"/></g>
+<g transform="translate(236 112) rotate(0) scale(0.6667) translate(-12 -12)" stroke-width="2.250"><path d="M12 6v12M6 12h12"/></g>
+<g transform="translate(16 64) rotate(0) scale(0.5833) translate(-12 -12)" stroke-width="2.571"><path d="M12 12h.01"/></g>
+</g></svg>

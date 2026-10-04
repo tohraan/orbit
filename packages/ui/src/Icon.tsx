@@ -28,6 +28,7 @@ export type IconName =
   | "chevron-left"
   | "arrow-right"
   | "arrow-down"
+  | "arrow-up"
   | "close"
   | "check"
   | "plus"
@@ -57,7 +58,13 @@ export type IconName =
      audit trail — neither has a counterpart on the student side, which is why
      they arrive here rather than being borrowed from a near-enough glyph. */
   | "list"
-  | "pulse";
+  | "pulse"
+  /* Rover's opener cards name six kinds of opportunity, and a kind of thing is
+     what an icon is for. Nothing else in either app names these as categories,
+     which is why they arrive now rather than having been here all along. */
+  | "flask"
+  | "briefcase"
+  | "trophy";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   home: <path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-5H9v5H5a1 1 0 0 1-1-1z" />,
@@ -108,6 +115,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
   "chevron-left": <path d="m14 7-5 5 5 5" />,
   "arrow-right": <path d="M5 12h13M13 7l5 5-5 5" />,
   "arrow-down": <path d="M12 5v13M7 13l5 5 5-5" />,
+  "arrow-up": <path d="M12 19V6M7 11l5-5 5 5" />,
   close: <path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5" />,
   check: <path d="m5 12.6 4.4 4.4L19 7" />,
   plus: <path d="M12 5.5v13M5.5 12h13" />,
@@ -150,6 +158,30 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   pulse: <path d="M3.5 12h3.8l2.2-5.4 3.4 10.8 2.3-5.4h5.3" />,
+
+  /* Stroke-only, same 24-box and 1.6 stroke as every other glyph here, so they
+     read as part of this set rather than as three imported from another. */
+  flask: (
+    <>
+      <path d="M9.5 3.6h5" />
+      <path d="M10.6 3.6v5.2L6 17.1a2 2 0 0 0 1.7 3h8.6a2 2 0 0 0 1.7-3l-4.6-8.3V3.6" />
+      <path d="M8.3 14h7.4" />
+    </>
+  ),
+  briefcase: (
+    <>
+      <rect x="3.4" y="7.6" width="17.2" height="12" rx="2" />
+      <path d="M9.1 7.6V5.9a1.3 1.3 0 0 1 1.3-1.3h3.2a1.3 1.3 0 0 1 1.3 1.3v1.7" />
+      <path d="M3.4 12.6h17.2" />
+    </>
+  ),
+  trophy: (
+    <>
+      <path d="M7.6 4.3h8.8v4.5a4.4 4.4 0 0 1-8.8 0z" />
+      <path d="M7.6 5.7H5.2a2 2 0 0 0 0 4h.9M16.4 5.7h2.4a2 2 0 0 1 0 4h-.9" />
+      <path d="M12 13.2v3.5M9.2 19.7h5.6M10.2 16.7h3.6" />
+    </>
+  ),
   menu: <path d="M4.5 7h15M4.5 12h15M4.5 17h15" />,
   clock: (
     <>

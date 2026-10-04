@@ -1,47 +1,52 @@
 /* Rover's screen.
  *
- * Built on the page's own scroll rather than an inner scrolling pane. A chat
- * window with its own scrollbar inside a page that also scrolls gives you two
- * of them and a composer that drifts; here the transcript simply grows down the
- * page and the composer sticks to the bottom of the viewport. It also means the
- * opportunity cards behave exactly as they do on Explore — same grid, same
- * scroll, nothing clipped by an overflow container.
- *
  * TWO COMPOSITIONS, ONE DOM. `.cold` is the screen before anything has been
- * said and `.live` is the conversation, and they differ in where the vertical
- * space goes rather than in what exists:
+ * said and `.live` is the conversation. They differ in what is in the column
+ * and where the space goes, not in which components exist:
  *
- *   .cold   the question, the four openers and the composer are ONE group,
- *           centred in a bounded canvas. The composer is part of the group
+ *   .cold   greeting, six cards, composer, chips, note — one group, centred in
+ *           the height the shell leaves. The composer is part of the group
  *           because at that point it is the whole interaction.
- *   .live   the transcript is the content and owns the page's height; the
- *           composer is a compact sticky bar with a hairline above it.
+ *   .live   the transcript owns the height; the composer is pinned to the
+ *           bottom with a fade above it.
  *
- * Neither state forces 100dvh on a column of content. That is what the screen
- * used to do — full viewport height, transcript on flex:1 under it — and with a
- * short conversation it stretched the transcript into a screen-tall empty
- * column, pushing the composer to the bottom of the window with nothing drawn
- * to hold it. One cause, two complaints: everything spaced apart, and an input
- * floating in the air.
+ * Neither forces a scroll at 1440x900, and nothing here stretches a transcript
+ * away from its composer — that was the bug that read as "the text field is
+ * floating in the air".
  *
- * WIDTHS ARE PER-PART, NOT PER-PAGE. Prose is held to a measure; the card grid
- * is allowed the whole column, because three columns of OpportunityCard is the
- * reason this screen answers in cards at all. */
+ * THE FROSTED SURFACE is four custom properties, not four rgba() literals
+ * repeated down the file. They are redefined for dark exactly where the shared
+ * tokens are (globals.css: the media query AND the explicit data-theme, since
+ * the toggle writes one and "system" writes neither), so every card, chip,
+ * pill and bubble changes theme together or not at all.
+ *
+ * THE DOODLE LAYER is a MASK rather than a background-image. An external SVG
+ * cannot read a CSS custom property, so painting the tile directly would fix
+ * its stroke colour in the file and make one of the two themes wrong. Masking
+ * a coloured layer with it puts the colour back under CSS control — and the
+ * same mask stack takes the radial fade that keeps the doodles off the text. */
 
 .screen {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
 
-  /* The reading measure for everything that is words. Cards ignore it. */
-  --measure: 72ch;
-  /* The cold group's width: narrow enough that the question, the openers and
-     the composer read as one object. */
-  --cold-w: 720px;
+  /* Light. Dark is below, in both of the places the shared tokens use. */
+  --frost-bg: rgba(255, 255, 255, 0.65);
+  --frost-border: rgba(0, 0, 0, 0.09);
+  --frost-border-hover: rgba(0, 0, 0, 0.22);
+  --frost-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --frost-top: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --doodle-ink: rgba(0, 0, 0, 0.06);
+  /* The badge glyph: #f8e070 on white is unreadable, so light mode deepens it
+     and keeps the same hue. */
+  --badge-ink: #7a5c00;
 
-  /* One motion scale for the whole screen, so nothing here is timed by eye.
-     Entrances ease out (fast, then settle); layout changes use a flatter
-     curve because a bounce on a block of text reads as instability. */
+  /* Widths, per the brief: the page content on 920, the composer on 720. */
+  --page-w: 920px;
+  --composer-w: 720px;
+
   --m-micro: 140ms;
   --m-standard: 200ms;
   --m-layout: 300ms;
@@ -49,143 +54,337 @@
   --m-layout-ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* The head is the portal's PageHead, deliberately — and the compact one. An
-   earlier version drew a bespoke identity block here (avatar, name, line of
-   role) on the reasoning that the subject of this screen is a character. It
-   read as a separate product sitting inside Orbit's chrome, which is the
-   opposite of what this screen is for. The compact variant then stops the page
-   title from competing with the question directly underneath it. */
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .screen {
+    --frost-bg: rgba(255, 255, 255, 0.06);
+    --frost-border: rgba(255, 255, 255, 0.12);
+    --frost-border-hover: rgba(255, 255, 255, 0.28);
+    --frost-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --frost-top: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --doodle-ink: rgba(255, 255, 255, 0.06);
+    --badge-ink: var(--accent-yellow);
+  }
+}
+:global(:root[data-theme="dark"]) .screen {
+  --frost-bg: rgba(255, 255, 255, 0.06);
+  --frost-border: rgba(255, 255, 255, 0.12);
+  --frost-border-hover: rgba(255, 255, 255, 0.28);
+  --frost-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --frost-top: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --doodle-ink: rgba(255, 255, 255, 0.06);
+  --badge-ink: var(--accent-yellow);
+}
 
-/* --- the body: the part that changes shape -------------------------------- */
-.body { display: flex; flex-direction: column; min-width: 0; }
+/* --- the wallpaper -------------------------------------------------------- */
+.doodles {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--doodle-ink);
+  /* Tile AND fade, intersected: the layer paints only where the doodle's own
+     ink is, and only outside the reading column. */
+  -webkit-mask-image: url("/doodles/orbit-doodle.svg"),
+    radial-gradient(
+      ellipse 1000px 760px at 50% 48%,
+      transparent 0%,
+      transparent 56%,
+      rgba(0, 0, 0, 0.5) 78%,
+      #000 100%
+    );
+  mask-image: url("/doodles/orbit-doodle.svg"),
+    radial-gradient(
+      ellipse 1000px 760px at 50% 48%,
+      transparent 0%,
+      transparent 56%,
+      rgba(0, 0, 0, 0.5) 78%,
+      #000 100%
+    );
+  -webkit-mask-repeat: repeat, no-repeat;
+  mask-repeat: repeat, no-repeat;
+  -webkit-mask-size: 480px 480px, 100% 100%;
+  mask-size: 480px 480px, 100% 100%;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
 
-/* Cold. The group is centred in the WHOLE of the space the shell leaves —
-   viewport, less the sticky header and the page's own padding — and centred
-   horizontally too, at a width narrow enough that the identity, the question,
-   the four openers and the composer read as one object.
+/* --- the column ----------------------------------------------------------- */
+.body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  width: 100%;
+  max-width: var(--page-w);
+  margin-inline: auto;
+  min-width: 0;
+}
 
-   The capped canvas that was here first (560px) was the worst of both: it
-   centred the group inside a box shorter than the viewport, so there was a gap
-   under the description AND a third of a screen of nothing below the
-   disclaimer. Space either belongs to the composition or it does not; split
-   evenly above and below, it reads as composition. This is also the only place
-   a viewport-height rule is safe, because what is centred is the whole group
-   and not a transcript stretched away from its composer. */
+/* The whole cold group is centred in the space the shell leaves: viewport less
+   the sticky header and the page's own padding. Capping it instead (an earlier
+   try at 560px) centred the group inside a box shorter than the screen, which
+   left a gap under the greeting AND a third of a screen empty below the note —
+   dead space twice, neither of it doing anything. */
 .cold .body {
   min-height: calc(100dvh - var(--header-h) - var(--space-8) - var(--space-16));
   justify-content: center;
-  gap: var(--s-6);
-  max-width: var(--cold-w);
-  margin-inline: auto;
-  /* Carries the head, the question, the lead, the profile line and the
-     disclaimer. The openers and the input opt out below: a card of two
-     sentences and a field you type into both read wrong centred. */
   text-align: center;
 }
-/* The group's own gap owns the spacing; PageHead's page margin would add 32px
-   between the description and the question on top of it. */
-.cold .head > * { margin-bottom: 0; }
-.cold .opener,
-.cold .input { text-align: left; }
-.cold .openingLead { max-width: 52ch; margin-inline: auto; }
-
-/* Live. The transcript's own height, and nothing added. */
-.live .body { gap: 0; }
-
-/* --- the transcript ------------------------------------------------------- */
-/* Turn-to-turn rhythm. One step tighter than it was: at --s-6 a question and
-   its answer read as two unrelated items rather than as an exchange. The gap
-   INSIDE a turn (.said) is smaller again, so the grouping is carried by
-   spacing rather than by boxes. */
-.transcript { display: flex; flex-direction: column; gap: var(--s-5); min-width: 0; }
-.foot { height: 1px; flex: none; }
-
-/* --- the cold open -------------------------------------------------------- */
-.opening { display: flex; flex-direction: column; gap: var(--s-4); }
-/* The question carries the screen, the line under it is support. Two sizes,
-   not four — the whole hierarchy here is title, support, choices. */
-.openingTitle {
-  font-size: 22px;
-  line-height: 29px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  color: var(--text-primary);
+/* A conversation claims the screen even when it is one short turn long. Without
+   this the column ended where the answer ended, which put the composer in the
+   middle of the page with nothing under it — the same dead space the cold state
+   was fixed for, arriving one message later. The transcript stays at the top
+   and the composer is pushed to the bottom of the column by the auto margin
+   below, where a chat's input belongs. */
+.live .body {
+  gap: var(--s-5);
+  min-height: calc(100dvh - var(--header-h) - var(--space-8) - var(--space-16));
 }
-.openingLead { font-size: 14.5px; line-height: 22px; color: var(--text-secondary); max-width: 54ch; }
+.live .composer { margin-top: auto; }
 
-/* The four ways in. Two columns, because four full-width rows of one sentence
-   each read as a settings menu — a list of commands the screen accepts. In a
-   grid they read as four directions a student might be going in, with the
-   sentence as the example rather than the instruction.
-   Equal rows, so a two-line prompt does not make its neighbour look clipped. */
-.openers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-auto-rows: 1fr;
-  gap: var(--s-2);
-  padding-top: var(--s-1);
-}
-
-/* Surface, not outline. At rest these are told apart from the page by their
-   background alone and the border is transparent — the screen was a stack of
-   identical outlined boxes, and every one of those outlines was competing with
-   the cards further down. The border appears on hover, where it is doing
-   something. Transparent rather than absent, so nothing shifts by a pixel. */
-.opener {
+/* --- the greeting --------------------------------------------------------- */
+.greetWrap {
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  width: 100%;
-  padding: var(--s-3) var(--s-4);
+  align-items: center;
+  gap: var(--s-3);
+  padding-top: var(--s-2);
+}
+
+/* One soft light, behind the mark, in the brand yellow at 8%. The only glow on
+   the screen: a second one would be a background, not an accent. */
+.glow {
+  position: absolute;
+  top: -180px;
+  left: 50%;
+  /* 600px of glow on a 390px screen is 105px of horizontal scroll on each
+     side; it is a light, so it can simply be as wide as the column. */
+  width: min(600px, 100%);
+  height: 600px;
+  transform: translateX(-50%);
+  border-radius: var(--radius-full);
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in srgb, var(--accent-yellow) 8%, transparent),
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.mascot {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  color: var(--badge-ink);
+  background: color-mix(in srgb, var(--accent-yellow) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-yellow) 26%, transparent);
+}
+
+.greeting {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.greetSub { font-size: 15px; line-height: 22px; color: var(--text-secondary); max-width: 52ch; }
+
+/* --- the six cards -------------------------------------------------------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-3);
   text-align: left;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: 18px 20px;
   font: inherit;
-  background: var(--surface);
-  border: 1px solid transparent;
-  border-radius: var(--radius-nested);
+  text-align: left;
+  color: var(--text-primary);
+  background: var(--frost-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--frost-border);
+  border-radius: 20px;
+  box-shadow: var(--frost-shadow), var(--frost-top);
   cursor: pointer;
   transition:
-    background-color var(--m-micro) var(--m-out),
-    border-color var(--m-micro) var(--m-out);
+    transform var(--m-micro) var(--m-out),
+    border-color var(--m-micro) var(--m-out),
+    background-color var(--m-micro) var(--m-out);
+  animation: cardUp 300ms var(--m-out) both;
 }
-.opener:hover { background: var(--surface-raised); border-color: var(--border-subtle); }
-.opener:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.openerLabel { font-size: 13.5px; line-height: 19px; font-weight: 600; color: var(--text-primary); }
-.openerPrompt { font-size: 12.5px; line-height: 18px; color: var(--text-tertiary); }
+.card:hover { transform: translateY(-2px); border-color: var(--frost-border-hover); }
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card:hover .cardGo { transform: translateX(3px); }
 
-/* The profile state: one quiet line, not a notification card. It is context
-   for something that has not happened yet. */
-.openingNote {
-  font-size: 12.5px;
-  line-height: 19px;
-  color: var(--text-tertiary);
-  padding-top: var(--s-1);
+@keyframes cardUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
 }
-.openingNoteLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  color: var(--accent-text);
-  font-weight: 500;
+
+.cardIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  color: var(--badge-ink);
+  background: color-mix(in srgb, var(--accent-yellow) 15%, transparent);
+}
+.cardText { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.cardTitle { font-size: 16px; line-height: 22px; font-weight: 600; }
+.cardBlurb {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.openingNoteLink:hover { text-decoration: underline; text-underline-offset: 2px; }
+.cardGo {
+  flex: none;
+  margin-top: 2px;
+  color: var(--text-tertiary);
+  transition: transform var(--m-micro) var(--m-out);
+}
+
+/* --- the composer ---------------------------------------------------------
+   A frosted pill on the same tokens as the cards. In the cold state it sits in
+   the group; in a conversation it pins to the bottom of the viewport with a
+   fade above it, so a card scrolling under it does not turn to mush. */
+.composer {
+  width: 100%;
+  max-width: var(--composer-w);
+  margin-inline: auto;
+}
+
+.live .composer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  padding-block: var(--s-4);
+  /* The fade is the page colour, not a translucent bar. */
+  background: linear-gradient(to bottom, transparent, var(--bg-app) 38%);
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 60px;
+  padding: 10px 10px 10px var(--s-5);
+  background: var(--frost-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--frost-border);
+  border-radius: 24px;
+  box-shadow: var(--frost-shadow), var(--frost-top);
+  transition: border-color var(--m-micro) var(--m-out), box-shadow var(--m-micro) var(--m-out);
+}
+.field:focus-within {
+  border-color: color-mix(in srgb, var(--accent-yellow) 70%, transparent);
+  box-shadow: var(--frost-shadow), 0 0 0 2px color-mix(in srgb, var(--accent-yellow) 45%, transparent);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 15px;
+  line-height: 22px;
+  text-align: left;
+  padding: 8px 0;
+  max-height: 120px;
+}
+.input::placeholder { color: var(--text-disabled); }
+
+/* The send control is a target, not a label: 40px, round, and the one piece of
+   solid brand colour on the screen. Dark ink on yellow in both themes. */
+.send {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--accent-yellow);
+  color: #16161c;
+  cursor: pointer;
+  transition: opacity var(--m-micro) var(--m-out), transform var(--m-micro) var(--m-out);
+}
+.send:hover:not(:disabled) { transform: translateY(-1px); }
+.send:disabled { opacity: 0.45; cursor: default; }
+.send:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- the chips ------------------------------------------------------------ */
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2); }
+.chip {
+  height: 32px;
+  padding-inline: var(--s-3);
+  font: inherit;
+  font-size: 13px;
+  line-height: 30px;
+  color: var(--text-secondary);
+  background: var(--frost-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--frost-border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: border-color var(--m-micro) var(--m-out), color var(--m-micro) var(--m-out);
+}
+.chip:hover { border-color: var(--frost-border-hover); color: var(--text-primary); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- the note -------------------------------------------------------------
+   The wording is unchanged on purpose; only its placement and weight are. */
+.disclaimer {
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--text-secondary);
+  max-width: var(--composer-w);
+  margin-inline: auto;
+}
+.live .disclaimer { text-align: center; }
+
+/* --- the transcript ------------------------------------------------------- */
+.transcript { display: flex; flex-direction: column; gap: var(--s-5); min-width: 0; }
+.foot { height: 1px; flex: none; }
+.head > * { margin-bottom: 0; }
 
 /* --- the student's turn ---------------------------------------------------
    Right-aligned, which is the one convention worth keeping from every other
    chat interface: it is how you find your own last question when scrolling
-   back. Filled with a surface rather than the accent — a navy block per
-   question turned the transcript into a messaging app, and the alignment alone
+   back. A frosted card rather than a filled accent block — the alignment
    already says whose turn it is. */
 .student { display: flex; justify-content: flex-end; }
 .studentText {
-  max-width: min(58ch, 72%);
+  max-width: min(58ch, 78%);
   padding: var(--s-3) var(--s-4);
-  background: var(--surface-raised);
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-nested);
+  background: var(--frost-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--frost-border);
+  border-radius: 18px;
   border-end-end-radius: var(--radius-tag);
+  box-shadow: var(--frost-shadow), var(--frost-top);
   font-size: 15px;
   line-height: 23px;
   white-space: pre-wrap;
@@ -193,10 +392,9 @@
 }
 
 /* --- Rover's turn ---------------------------------------------------------
-   No avatar column. The identity is a byline above the response, set like the
-   page eyebrow it sits under, which is both quieter and 42px wider on a phone.
-   The turn takes the full column: its PROSE is capped at a measure a few rules
-   down, and the card grid is meant to have the width. */
+   No avatar column. The identity is a byline above the response, which is both
+   quieter and 42px wider on a phone. Rover's own text is not boxed: a wall of
+   bubbles is a messaging app, and this one answers in cards. */
 .rover { display: flex; min-width: 0; }
 .said { display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; width: 100%; }
 .who {
@@ -210,11 +408,11 @@
 
 /* --- the process indicator ------------------------------------------------
    Its working, in the student's language: evidence that a search ran, not
-   something to read. Finished steps tick and recede; the step in flight
-   carries the only motion on the screen. Once the turn has an answer the whole
-   block folds to a summary row — five lines of grey text are interesting while
-   they are happening and are furniture afterwards. */
-.process { display: flex; flex-direction: column; gap: var(--s-2); max-width: var(--measure); }
+   something to read. Finished steps tick and recede; the step in flight carries
+   the only motion on the screen. Once the turn has an answer the block folds to
+   a summary row — five lines of grey text are interesting while they are
+   happening and furniture afterwards. */
+.process { display: flex; flex-direction: column; gap: var(--s-2); max-width: 72ch; }
 
 .processToggle {
   display: inline-flex;
@@ -226,16 +424,15 @@
   font-size: 12.5px;
   line-height: 18px;
   color: var(--text-tertiary);
-  background: var(--surface);
+  background: var(--frost-bg);
   border: 1px solid transparent;
   border-radius: var(--radius-full);
   cursor: pointer;
   transition:
-    background-color var(--m-micro) var(--m-out),
     border-color var(--m-micro) var(--m-out),
     color var(--m-micro) var(--m-out);
 }
-.processToggle:hover { background: var(--surface-raised); border-color: var(--border-subtle); color: var(--text-secondary); }
+.processToggle:hover { border-color: var(--frost-border); color: var(--text-secondary); }
 .processToggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .chev { flex: none; transition: transform var(--m-standard) var(--m-layout-ease); }
 .processToggleOpen .chev { transform: rotate(180deg); }
@@ -260,9 +457,6 @@
   list-style: none;
   transition: opacity var(--m-standard) var(--m-layout-ease);
 }
-
-/* Once the answer is arriving, the lines settle back: still legible, no longer
-   the thing on the screen asking to be read. */
 .activityDone { opacity: 0.6; }
 
 .step {
@@ -275,18 +469,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The anti-flicker delay, applied only to a step appearing for the first
-   time. A step that resolves inside 250ms never paints, so a fast turn shows
-   no indicator at all instead of a flash of one. A conversation restored on
-   re-mount does not carry this class and renders settled. */
+/* The anti-flicker delay, applied only to a step appearing for the first time.
+   A step that resolves inside 250ms never paints, so a fast turn shows no
+   indicator at all instead of a flash of one. */
 .stepEnter { animation: stepIn var(--m-standard) var(--m-out) 250ms both; }
 @keyframes stepIn {
   from { opacity: 0; transform: translateY(2px); }
   to { opacity: 1; transform: none; }
 }
 
-/* The marker. A ring while running, a tick once done — drawn in CSS so there
-   is no icon swap to mis-time. */
+/* The marker. A ring while running, a tick once done — drawn in CSS so there is
+   no icon swap to mis-time. */
 .mark {
   flex: none;
   width: 11px;
@@ -294,7 +487,7 @@
   border-radius: var(--radius-full);
   border: 1.5px solid currentColor;
 }
-.stepNow { color: var(--accent-text); }
+.stepNow { color: var(--badge-ink); }
 .stepNow .mark { animation: pulse 1.4s var(--m-layout-ease) infinite; }
 @keyframes pulse { 50% { opacity: 0.35; } }
 
@@ -302,7 +495,6 @@
 .stepDone .mark {
   border: 0;
   background: none;
-  /* A tick, from two borders on a rotated box. */
   width: 10px;
   height: 6px;
   margin-bottom: 2px;
@@ -313,61 +505,32 @@
 }
 
 /* `min-width: 0` is load-bearing, not tidiness: a flex child defaults to
-   min-width:auto, so a wide code block or an unbreakable URL inside the
-   prose column would widen the column, then the transcript, then give the
-   whole page a horizontal scrollbar. */
-.prose { max-width: var(--measure); min-width: 0; display: flex; flex-direction: column; gap: var(--s-3); }
+   min-width:auto, so a wide code block or an unbreakable URL would widen the
+   column, then the transcript, then give the page a horizontal scrollbar. */
+.prose { max-width: 72ch; min-width: 0; display: flex; flex-direction: column; gap: var(--s-3); }
 .prose p { font-size: 15px; line-height: 24px; color: var(--text-primary); overflow-wrap: anywhere; }
 .prose strong { font-weight: 600; }
 
-/* The streaming caret, so a pause between tokens reads as "still writing"
-   rather than "finished, oddly". */
 .caret {
   display: inline-block;
   width: 2px;
   height: 15px;
   margin-left: 1px;
   vertical-align: -2px;
-  background: var(--accent);
+  background: var(--accent-yellow);
   animation: blink 1s steps(2, start) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* Honour a reduced-motion preference. The STATE still changes — a finished
-   step is still a tick, the current one is still accented, the fold still
-   folds — only the movement goes. Nothing here is the sole carrier of
-   meaning. */
-@media (prefers-reduced-motion: reduce) {
-  .caret, .stepEnter, .stepNow .mark, .pickEnter, .behindButton { animation: none; }
-  .stepEnter, .pickEnter { opacity: 1; transform: none; }
-  .processBody, .chev { transition: none; }
-}
-
 /* --- the recommendations --------------------------------------------------
-   The one part allowed the full column: a three-column grid of real cards is
-   what this screen answers with. */
+   The one part allowed the full column: a grid of real cards is what this
+   screen answers with. */
 .picks { min-width: 0; padding-top: var(--s-1); }
-
-/* The card and its reason are one unit, so the reason cannot end up beside a
-   different card when the grid reflows. */
-/* A short stagger, so three cards read as one result arriving rather than as
-   three separate events. 60ms apart and done inside a fifth of a second —
-   long enough to see an order, far too short to wait for. Past the third the
-   delay stops growing; nobody should wait on card six. */
-.pick {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  min-width: 0;
-}
-.pickEnter { animation: cardIn var(--m-standard) var(--m-out) both; }
+.pick { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
+.pickEnter { animation: cardUp var(--m-standard) var(--m-out) both; }
 .pickEnter:nth-child(2) { animation-delay: 60ms; }
 .pickEnter:nth-child(3) { animation-delay: 120ms; }
 .pickEnter:nth-child(n + 4) { animation-delay: 160ms; }
-@keyframes cardIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
-}
 .pick > :first-child { flex: 1; }
 
 .why {
@@ -384,10 +547,7 @@
 }
 .why svg { color: var(--accent-text); margin-top: 1px; flex: none; }
 
-/* --- "there is more below" -------------------------------------------------
-   Shown only when something arrived while the student was reading further up.
-   It sits directly above the composer and is sticky with it, so it is the
-   last thing before the input rather than something floating over a card. */
+/* --- "there is more below" ------------------------------------------------- */
 .behind {
   position: sticky;
   bottom: 0;
@@ -395,8 +555,6 @@
   display: flex;
   justify-content: center;
   height: 0;
-  /* Lifted clear of the composer without taking part in the layout, so
-     showing and hiding it never moves the transcript. */
   transform: translateY(-12px);
 }
 .behindButton {
@@ -420,111 +578,49 @@
 .behindButton:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .behindButton svg { color: var(--text-tertiary); }
 
-/* --- the composer ---------------------------------------------------------
-   LIVE: sticky to the viewport bottom, inside the page's own column. The
-   background is opaque rather than blurred — a card scrolling under a
-   translucent bar turns into unreadable mush at exactly the moment the student
-   is reading it — and the hairline above it is a real edge. The soft shadow
-   that used to be there faded content out without ever drawing a line, so the
-   field appeared to hover over the page with nothing holding it. */
-.composer {
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  padding-top: var(--s-4);
-  padding-bottom: var(--s-4);
-  margin-top: var(--s-5);
-  background: var(--bg-app);
-  border-top: 1px solid var(--border-subtle);
-  /* The line spans the column's full width while the field inside stays on
-     the measure. */
-  margin-inline: calc(var(--s-4) * -1);
-  padding-inline: var(--s-4);
+/* --- motion preference ----------------------------------------------------
+   The STATE still changes — a finished step is still a tick, the fold still
+   folds — only the movement goes. */
+@media (prefers-reduced-motion: reduce) {
+  .caret, .stepEnter, .stepNow .mark, .pickEnter, .behindButton, .card { animation: none; }
+  .stepEnter, .pickEnter, .card { opacity: 1; transform: none; }
+  .processBody, .chev, .card, .cardGo, .send { transition: none; }
+  .card:hover { transform: none; }
 }
 
-/* COLD: not sticky, no edge, no negative margins. It is a member of the
-   centred group rather than a bar at the bottom of a window, and it is the
-   primary thing to do on the screen, so it is given the size to say so. */
-.composerCold {
-  position: static;
-  margin: 0;
-  padding: 0;
-  border-top: 0;
-  background: none;
-  gap: var(--s-3);
+/* A 768-tall laptop was overflowing by single-digit pixels, which is a
+   scrollbar for nothing. The group gives back four pixels a gap. */
+@media (max-height: 820px) {
+  .cold .body { gap: var(--s-5); }
+  .greetWrap { gap: var(--s-2); }
+  .greeting { font-size: 25px; line-height: 32px; }
 }
 
-.field {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4);
-  background: var(--surface-raised);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-nested);
-  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
-.field:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-subtle);
-}
-.composerCold .field {
-  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5);
-  border-radius: var(--radius-card);
-}
-
-.input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  resize: none;
-  background: transparent;
-  color: var(--text-primary);
-  font: inherit;
-  font-size: 15px;
-  line-height: 22px;
-  padding: 7px 0;
-  max-height: 160px;
-}
-.input::placeholder { color: var(--text-disabled); }
-.composerCold .input { font-size: 16px; line-height: 24px; }
-
-/* Quiet, and clearly not attached to the field: it is a standing caveat, not
-   a hint about what to type. */
-.disclaimer {
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--text-tertiary);
-  padding-inline: var(--s-1);
-}
-.composerCold .disclaimer { padding-inline: var(--s-2); }
-
-/* The page's own bottom padding (--space-16, for the gap under a grid of
-   cards) sits BELOW the sticky composer, so at the end of a scroll there was a
-   64px strip of empty app background under the field. The composer's box is
-   pulled down over it: desktop only, because below 1024 that padding is
-   clearance for the bottom bar and the composer is already lifted clear of it. */
-@media (min-width: 1024px) {
-  .live .composer { margin-bottom: calc(var(--space-16) * -1); padding-bottom: var(--s-5); }
-}
-
+/* --- below 1024 ----------------------------------------------------------- */
 @media (max-width: 1023px) {
-  /* Clear the bottom bar, and the home indicator under it. */
-  .composer { bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px)); }
-  .composerCold { bottom: auto; }
-  /* Different chrome below 1024: the slim mobile header, and 88px of bottom
-     padding holding the page clear of the navigation bar. */
-  .cold .body { min-height: calc(100dvh - var(--mobile-header-h) - var(--space-6) - 88px); }
+  .cold .body,
+  .live .body { min-height: calc(100dvh - var(--mobile-header-h) - var(--space-6) - 88px); }
+  .live .composer { bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px)); }
 }
 
+/* --- phones ---------------------------------------------------------------
+   One column of cards, and the composer leaves the group to pin to the bottom:
+   on a 390x844 screen the group cannot be both centred and reachable with a
+   thumb, and the field is the thing a thumb is reaching for. */
 @media (max-width: 767px) {
-  .openers { grid-template-columns: 1fr; grid-auto-rows: auto; }
-  .openingTitle { font-size: 20px; line-height: 27px; }
-  .studentText { max-width: 92%; }
+  .cards { grid-template-columns: 1fr; }
+  .greeting { font-size: 23px; line-height: 30px; }
   .cold .body { min-height: 0; justify-content: flex-start; gap: var(--s-5); }
-  .composerCold .field { padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); border-radius: var(--radius-nested); }
+  .cold .composer {
+    position: sticky;
+    bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px));
+    z-index: 10;
+    padding-block: var(--s-3);
+    background: linear-gradient(to bottom, transparent, var(--bg-app) 38%);
+  }
+  .studentText { max-width: 92%; }
+  .chips { justify-content: flex-start; }
+  .cold .body { text-align: left; }
+  .greetWrap { align-items: flex-start; text-align: left; }
+  .disclaimer { text-align: left; }
 }

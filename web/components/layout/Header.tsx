@@ -16,9 +16,13 @@
  *     explains the conversion it controls.
  *   - The THEME SWITCH lost its third segment; see ui/ThemeToggle.tsx.
  *
- * What the left side gained is the student's name, straight after the mark. The
- * header is the one piece of chrome on every screen, and "who am I signed in
- * as" was only answerable by opening a menu. */
+ * The left side carries a trail instead: the mark, then where you are. It held
+ * the student's name for a while, on the reasoning that "who am I signed in as"
+ * was otherwise only answerable by opening a menu — but the name sat against a
+ * divider that had nothing after it on every screen except a listing, so the
+ * one piece of chrome on every screen was ending in a bar hanging in mid-air.
+ * The avatar answers the identity question, and the crumb answers the one that
+ * changes as you move. */
 
 import Image from "next/image";
 import Link from "next/link";
@@ -184,28 +188,6 @@ function SignInButton() {
   );
 }
 
-/* Who is signed in, in the chrome rather than behind a menu.
- *
- * Absent while the session is resolving and absent when signed out, because the
- * only thing it could say then is a placeholder, and a placeholder name beside
- * the product mark reads as a real one. Falls back to the local part of the
- * email when the profile has no name yet — a new student has an account before
- * they have been through onboarding. */
-function CurrentUser() {
-  const { status, user } = useAuth();
-  const { profile } = useProfile();
-  if (status !== "signed-in") return null;
-
-  const name = profile.name.trim() || (user?.email ?? "").split("@")[0];
-  if (!name) return null;
-
-  return (
-    <Link href="/profile" className={s.currentUser} title="Your profile">
-      <span className={s.currentUserName}>{name}</span>
-    </Link>
-  );
-}
-
 function AccountMenu() {
   const [open, setOpen] = useState(false);
   const ref = useAway(() => setOpen(false));
@@ -334,31 +316,32 @@ export function Header() {
         </span>
       </Link>
 
-      <CurrentUser />
 
-      <span className={s.headerDivider} aria-hidden="true" />
+      {/* Where you are, as a trail from the product rather than as a label.
+          This slot held the signed-in student's name next to a divider, and on
+          every screen but a listing the divider had nothing after it — a bar
+          hanging in the middle of the bar. The name is still one click away on
+          the avatar, which is also where signing out lives; what the slot says
+          now is the thing that changes as you move.
 
-      {/* The current page's NAME is not shown here.
-          It said "Home" directly above a screen whose own heading said the
-          same thing, and "Explore" above a page titled "Find opportunities
-          that match your goals" - a label repeating what the eye has already
-          read, costing a slot in the one bar visible on every screen. The rail
-          already marks where you are.
-
-          What survives is the one case where the crumb is NAVIGATION rather
-          than a label: a listing is reached FROM the index, so it keeps a real
-          link back to it. */}
-      {pathname.startsWith("/opportunity/") ? (
-        <nav className={s.crumbs} aria-label="Breadcrumb">
-          <Link href="/explore" className={s.crumb}>
-            Explore
-          </Link>
-          <span className={s.crumbSep} aria-hidden="true">
-            <Icon name="chevron-right" size={14} />
-          </span>
-          <span className={`${s.crumb} ${s.crumbHere}`}>{here}</span>
-        </nav>
-      ) : null}
+          A listing keeps its real link back to the index, because there the
+          crumb is navigation and not just a label. */}
+      <nav className={s.crumbs} aria-label="Breadcrumb">
+        <span className={s.crumbSep} aria-hidden="true">
+          <Icon name="chevron-right" size={14} />
+        </span>
+        {pathname.startsWith("/opportunity/") ? (
+          <>
+            <Link href="/explore" className={s.crumb}>
+              Explore
+            </Link>
+            <span className={s.crumbSep} aria-hidden="true">
+              <Icon name="chevron-right" size={14} />
+            </span>
+          </>
+        ) : null}
+        <span className={`${s.crumb} ${s.crumbHere}`}>{here}</span>
+      </nav>
 
       <span className={s.headerSpacer} />
 
