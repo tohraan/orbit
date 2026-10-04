@@ -81,7 +81,41 @@ one when `NEXT_PUBLIC_API_BASE` is set, because the browser then sends every
 data request — Rover's included — straight here. In a single-deployment setup
 it goes on the frontend instead. It is never prefixed `NEXT_PUBLIC_`.
 
-It is set on `orbit-api` as a Secret, in Production and Preview. Preview also
+**`vercel --prod` does not move the alias the frontend actually calls.** This
+cost a whole deploy cycle. There are four hostnames per project, and only some
+of them follow a production deploy:
+
+| Host | Follows `--prod`? |
+|---|---|
+| `orbit-api-psi.vercel.app` | yes — the project's generated domain |
+| `orbit-bits-api.vercel.app` | **no** — pinned by `vercel alias set` |
+| `orbit-ruby-five-16.vercel.app` | yes |
+| `orbit-bits.vercel.app` | **no** — pinned |
+
+`NEXT_PUBLIC_API_BASE` on the `orbit` project is `https://orbit-bits-api.vercel.app`,
+the pinned one. So Rover was deployed, healthy and reachable on
+`orbit-api-psi` while the browser got a 404 from `orbit-bits-api`, which was
+still serving a deployment from before Rover existed. The symptom in the
+console is the giveaway:
+
+```
+orbit-bits-api.vercel.app/api/rover:1  Failed to load resource: 404
+```
+
+After any production deploy, re-point both pinned aliases at the deployment
+you just made:
+
+```bash
+vercel ls orbit-api | grep Production | head -1    # copy the deployment URL
+vercel alias set <that-url> orbit-bits-api.vercel.app
+vercel ls orbit | grep Production | head -1
+vercel alias set <that-url> orbit-bits.vercel.app
+```
+
+Then smoke-test against `orbit-bits-api`, never `orbit-api-psi` — the second
+one can be perfectly healthy while students see a 404.
+
+`OPENROUTER_API_KEY` is set on `orbit-api` as a Secret, in Production and Preview. Preview also
 needs it because `ALLOWED_ORIGINS`, `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`
 are Production-only, so a preview deployment serves the committed snapshot and
 sends no CORS header — a preview can prove the route and the key, never the
