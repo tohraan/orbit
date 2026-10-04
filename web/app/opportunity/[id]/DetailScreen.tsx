@@ -15,6 +15,7 @@ import s from "../detail.module.css";
 import { DeadlineIndicator, FundingIndicator, LevelChips, LocationIndicator } from "@/components/opportunities/Indicators";
 import { Money } from "@/components/opportunities/Money";
 import { CompareButton, SaveButton, TrackControl } from "@/components/opportunities/Actions";
+import { CopyBrief } from "@/components/opportunities/CopyBrief";
 import { Button, ButtonLink, ExternalButton } from "@/components/ui/Button";
 import { ExitPrompt } from "@/components/opportunities/ExitPrompt";
 import { Chip } from "@/components/ui/Chip";
@@ -122,6 +123,9 @@ export function DetailScreen({ id }: { id: string }) {
             <SaveButton id={o.id} title={o.title} labelled size="md" />
             <CompareButton id={o.id} title={o.title} size="md" />
             <TrackControl id={o.id} size="md" />
+            {/* Last in the row on purpose. Applying is the action this page is
+                for; this is what you do before you decide to. */}
+            <CopyBrief opportunity={o} />
           </div>
         </div>
 

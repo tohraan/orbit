@@ -14,3 +14,4 @@ export * from "./project";
 export * from "./match";
 export * from "./dossier";
 export * from "./overrides";
+export * from "./brief";

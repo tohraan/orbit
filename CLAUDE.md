@@ -52,6 +52,7 @@ node tests/parse.test.mjs      # parser unit + live-fixture tests
 node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover.test.mjs
 node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-loop.test.mjs
 node tests/tokens.test.mjs     # every var() in web/, admin/ and @rof/ui resolves
+node --import ./scripts/ts-resolve.mjs tests/brief.test.mjs   # the AI brief's claims
 python3 n8n/build.py --check   # generated JSON matches source
 ./scripts/probe-sources.sh     # all 15 source endpoints reachable
 
