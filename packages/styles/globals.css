@@ -42,33 +42,59 @@
   --bits-gold: #b08828;
 
   /* ===================================================================
-     THE PALETTE.
+     THE PALETTE — "Civic".
      These are canonical. Everything below them is an ALIAS, kept so the
      twenty-five CSS modules written against the old names pick the new
      values up without being edited one by one — which is the entire point
      of having tokens. New rules should use the names in this block.
+
+     What it replaced, and why. The old set read as violet-and-black, and
+     measurably so: in the old dark surface #1c1d22 the blue channel sat six
+     points above red and green, and that small bias over every surface in
+     the app is what the eye calls purple. The dark accent was #2164ca, a
+     stock blue that was not the crest navy at all.
+
+     Civic takes the opposite position. The neutrals have NO hue — #000000,
+     #0b0b0c, #ffffff, #eeeef0 — so the only colour on screen is colour that
+     means something: the crest navy for action, the crest red for a deadline,
+     the crest yellow for attention. Nothing is tinted to look designed.
+
+     TWO JUDGEMENT CALLS, both worth knowing before changing them:
+
+     1. --border-strong is near-black (#1a1a1c) and --border-subtle is not.
+        Civic's character is a visible rule, but --border-subtle is used in 39
+        places, most of them row separators; at near-black that is a page of
+        black grid lines rather than a list. So the severity lives in
+        --border-strong, for card outlines and emphasis, and the dividers stay
+        a clean neutral grey. Swapping --border-subtle to #1a1a1c is the
+        one-line change if the full brutalist version is wanted.
+
+     2. --border-default is #949498 light / #5d5d61 dark because it outlines
+        inputs and buttons, and WCAG 1.4.11 holds those to 3:1 against their
+        surface. The previous value (#d6d6de) was 1.3:1 — it had always been
+        failing, and Civic is the wrong palette to keep a soft edge on.
      =================================================================== */
 
-  --bg-app: #f2f2f5;
-  --surface: #fbfbfc;
+  --bg-app: #ffffff;
+  --surface: #ffffff;
   --surface-raised: #ffffff;
-  --surface-sunken: #ececf0;
-  --surface-hover: #f0f0f4;
-  --surface-active: #e7e7ec;
+  --surface-sunken: #eeeef0;
+  --surface-hover: #f4f4f5;
+  --surface-active: #e6e6e9;
 
-  --border-subtle: #e3e3e9;
-  --border-default: #d6d6de;
-  --border-strong: #bebec9;
+  --border-subtle: #d8d8da;
+  --border-default: #949498;
+  --border-strong: #1a1a1c;
 
-  --text-primary: #16161c;
-  --text-secondary: #505059;
+  --text-primary: #000000;
+  --text-secondary: #38383c;
   /* #6b6b77 measured 4.46:1 on --surface-sunken — under AA by four
      hundredths, which is invisible as a bug until it is measured, and the
      sunken surface is exactly where tertiary text lives (match reasons, the
      "unsure" score caption, tag captions). One step darker clears it at 4.96
      and still reads a step below --text-secondary, which is 6.77 there. */
-  --text-tertiary: #64646f;
-  --text-disabled: #a0a0ab;
+  --text-tertiary: #5c5c62;
+  --text-disabled: #8e8e94;
 
   /* The emblem's navy, unchanged — it is the one hue the product has earned. */
   --accent: var(--bits-navy);
@@ -79,23 +105,23 @@
   --accent-text: var(--accent);
   --on-accent: #ffffff;
 
-  --success-fg: #1b6b43;
-  --success-bg: #e9f5ee;
-  --success-border: #bfe0ce;
+  --success-fg: #15603a;
+  --success-bg: #e8f3ec;
+  --success-border: #b6d9c5;
   /* Red and yellow come off the emblem, not from a generic palette.
      --error-fg IS the logo red: 5.5:1 as text and 5.7:1 with white on it, so
      the same value serves a warning label and a filled destructive button.
      The logo gold only reaches 3.2:1 as text, so the INK is a darkened gold
      while the bright yellow stays where it belongs — on the surface. */
-  --warning-fg: #8a6a1e;
-  --warning-bg: #fdf6df;
-  --warning-border: #ecd9a0;
+  --warning-fg: #7a5a0f;
+  --warning-bg: #fdf5e0;
+  --warning-border: #ead79c;
   --error-fg: #c82020;
-  --error-bg: #fcebeb;
-  --error-border: #f2c7c7;
+  --error-bg: #fbeaea;
+  --error-border: #f0c4c4;
 
-  --shadow-sm: 0 1px 2px rgba(22, 22, 28, 0.06);
-  --shadow-md: 0 8px 24px rgba(22, 22, 28, 0.1);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.07);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.11);
 
   --radius-card: 16px;
   --radius-nested: 12px;
@@ -215,8 +241,11 @@
   --color-border-strong: var(--border-strong);
 
   --hover-wash: var(--surface-hover);
-  --scrim: rgba(22, 22, 28, 0.45);
-  --shimmer: transparent;
+  --scrim: rgba(0, 0, 0, 0.5);
+  /* The specular band. Spec: 55% white on light, 12% on dark. It reads as a
+     much softer thing than the number suggests, because it sweeps across
+     --surface-sunken rather than across the page. */
+  --shimmer: rgba(255, 255, 255, 0.78);
   --on-action-muted: rgba(255, 255, 255, 0.72);
 
   /* --- typography (§8.2) --- */
@@ -344,45 +373,45 @@
        back with it. --background is an alias for this now, so the two cannot
        disagree again. */
     --bg-app: #000000;
-    --surface: #15161a;
-    --surface-raised: #1c1d22;
-    --surface-sunken: #101114;
-    --surface-hover: #1f2025;
-    --surface-active: #26272d;
+    --surface: #0b0b0c;
+    --surface-raised: #141416;
+    --surface-sunken: #060607;
+    --surface-hover: #1a1a1d;
+    --surface-active: #232327;
 
-    --border-subtle: #24252b;
-    --border-default: #2f3037;
-    --border-strong: #42434d;
+    --border-subtle: #303034;
+    --border-default: #5d5d61;
+    --border-strong: #6a6a72;
 
-    --text-primary: #ececf1;
-    --text-secondary: #a9a9b5;
-    --text-tertiary: #858592;
-    --text-disabled: #5a5a66;
+    --text-primary: #ffffff;
+    --text-secondary: #c2c2c6;
+    --text-tertiary: #8e8e94;
+    --text-disabled: #6a6a70;
 
     /* NOT the navy lifted straight up. The logo's navy sits at hue 240, and
        lightening that hue for a dark page lands on periwinkle — which reads
        as purple, not as this institution's blue. This is the navy pulled
        toward the logo's own sky blue, at hue 216: unmistakably blue, and
        still the emblem's family. White on it is 5.6:1. */
-    --accent: #2164ca;
+    --accent: #8fa0f0;
     --accent-hover: color-mix(in srgb, var(--accent) 88%, white);
     --accent-active: color-mix(in srgb, var(--accent) 76%, white);
     --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
     --accent-border: color-mix(in srgb, var(--accent) 40%, var(--surface-raised));
-    --accent-text: #8cc0f5;
-    --on-accent: #ffffff;
+    --accent-text: #a9b6f5;
+    --on-accent: #000000;
 
-    --success-fg: #6fd3a0;
-    --success-bg: #12261c;
-    --success-border: #1f4733;
+    --success-fg: #5bd39a;
+    --success-bg: #0e2219;
+    --success-border: #1d4433;
     /* The logo yellow itself — 13.7:1 on the dark surface — and the logo red
        lifted just far enough to clear AA at 6.5:1. */
-    --warning-fg: #f8e070;
-    --warning-bg: #2b2412;
-    --warning-border: #4e3f1a;
-    --error-fg: #ef7676;
-    --error-bg: #2d1516;
-    --error-border: #55262a;
+    --warning-fg: #ebc05e;
+    --warning-bg: #221c0c;
+    --warning-border: #46381a;
+    --error-fg: #ff6b5b;
+    --error-bg: #26100e;
+    --error-border: #4d231e;
 
     --shadow-sm: none;
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
@@ -399,7 +428,7 @@
 
     /* Non-flat surfaces that cannot be expressed as an alias. */
     --scrim: rgba(0, 0, 0, 0.62);
-    --shimmer: transparent;
+    --shimmer: rgba(255, 255, 255, 0.14);
     --on-action-muted: rgba(14, 15, 18, 0.66);
   }
 }
@@ -413,42 +442,42 @@
      rather than reused: #282888 on a near-black page is unreadable. */
   /* Same values as the media-query block above; see the note there. */
   --bg-app: #000000;
-  --surface: #15161a;
-  --surface-raised: #1c1d22;
-  --surface-sunken: #101114;
-  --surface-hover: #1f2025;
-  --surface-active: #26272d;
+  --surface: #0b0b0c;
+  --surface-raised: #141416;
+  --surface-sunken: #060607;
+  --surface-hover: #1a1a1d;
+  --surface-active: #232327;
 
-  --border-subtle: #24252b;
-  --border-default: #2f3037;
-  --border-strong: #42434d;
+  --border-subtle: #303034;
+  --border-default: #5d5d61;
+  --border-strong: #6a6a72;
 
-  --text-primary: #ececf1;
-  --text-secondary: #a9a9b5;
-  --text-tertiary: #858592;
-  --text-disabled: #5a5a66;
+  --text-primary: #ffffff;
+  --text-secondary: #c2c2c6;
+  --text-tertiary: #8e8e94;
+  --text-disabled: #6a6a70;
 
   /* See the note in the OS-preference block: hue 216, not the navy's 240,
      because a lifted 240 reads purple on a dark page. */
-  --accent: #2164ca;
+  --accent: #8fa0f0;
   --accent-hover: color-mix(in srgb, var(--accent) 88%, white);
   --accent-active: color-mix(in srgb, var(--accent) 76%, white);
   --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
   --accent-border: color-mix(in srgb, var(--accent) 40%, var(--surface-raised));
-  --accent-text: #8cc0f5;
-  --on-accent: #ffffff;
+  --accent-text: #a9b6f5;
+  --on-accent: #000000;
 
-  --success-fg: #6fd3a0;
-  --success-bg: #12261c;
-  --success-border: #1f4733;
+  --success-fg: #5bd39a;
+  --success-bg: #0e2219;
+  --success-border: #1d4433;
   /* The logo yellow itself — 13.7:1 on the dark surface — and the logo red
      lifted just far enough to clear AA at 6.5:1. */
-  --warning-fg: #f8e070;
-  --warning-bg: #2b2412;
-  --warning-border: #4e3f1a;
-  --error-fg: #ef7676;
-  --error-bg: #2d1516;
-  --error-border: #55262a;
+  --warning-fg: #ebc05e;
+  --warning-bg: #221c0c;
+  --warning-border: #46381a;
+  --error-fg: #ff6b5b;
+  --error-bg: #26100e;
+  --error-border: #4d231e;
 
   --shadow-sm: none;
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
@@ -464,7 +493,7 @@
 
   /* Non-flat surfaces that cannot be expressed as an alias. */
   --scrim: rgba(0, 0, 0, 0.62);
-  --shimmer: transparent;
+  --shimmer: rgba(255, 255, 255, 0.14);
   --on-action-muted: rgba(14, 15, 18, 0.66);
 }
 
@@ -639,7 +668,10 @@ img, svg { max-width: 100%; display: block; }
     transparent 80%
   );
   transform: translateX(-100%);
-  animation: sweep 1.45s ease-in-out infinite;
+  /* linear, not ease-in-out. An eased sweep hesitates at both edges, which
+     reads as a thing stalling twice a second — the exact impression a loading
+     state must not give. Spec: 1.4s, linear, infinite. */
+  animation: sweep 1.4s linear infinite;
 }
 
 @keyframes sweep {
@@ -740,15 +772,12 @@ img, svg { max-width: 100%; display: block; }
   }
 }
 
-/* Step 8.3: a skeleton is the SHAPE of what is coming, breathing. The old
-   travelling gradient implied loading progress it had no knowledge of. */
-.skeleton {
-  background: var(--surface-sunken) !important;
-  border-radius: 8px;
-  animation: skeletonPulse 1.5s ease-in-out infinite;
-}
-.skeleton::after { content: none !important; }
-@keyframes skeletonPulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
+/* The sweep is the skeleton's whole signal, so it is NOT overridden here.
+   Step 8.3 once replaced it with an opacity pulse, on the argument that a
+   travelling gradient "implied loading progress it had no knowledge of". The
+   spec disagrees and so does the eye: a pulse is a block breathing, which
+   reads as a thing that is stuck, while a sweep reads as a thing being worked
+   on. Neither knows the progress; only one of them looks alive.
+
+   Reduced motion still removes it — the global rule above kills every
+   animation, and a skeleton that merely sits there is the correct fallback. */
