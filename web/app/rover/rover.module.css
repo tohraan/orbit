@@ -7,21 +7,37 @@
  * opportunity cards behave exactly as they do on Explore — same grid, same
  * scroll, nothing clipped by an overflow container.
  *
- * The measure is held at 68ch for prose. Cards are allowed the full width,
- * because a three-column grid of them is the point. */
+ * TWO COMPOSITIONS, ONE DOM. `.cold` is the screen before anything has been
+ * said and `.live` is the conversation, and they differ in where the vertical
+ * space goes rather than in what exists:
+ *
+ *   .cold   the question, the four openers and the composer are ONE group,
+ *           centred in a bounded canvas. The composer is part of the group
+ *           because at that point it is the whole interaction.
+ *   .live   the transcript is the content and owns the page's height; the
+ *           composer is a compact sticky bar with a hairline above it.
+ *
+ * Neither state forces 100dvh on a column of content. That is what the screen
+ * used to do — full viewport height, transcript on flex:1 under it — and with a
+ * short conversation it stretched the transcript into a screen-tall empty
+ * column, pushing the composer to the bottom of the window with nothing drawn
+ * to hold it. One cause, two complaints: everything spaced apart, and an input
+ * floating in the air.
+ *
+ * WIDTHS ARE PER-PART, NOT PER-PAGE. Prose is held to a measure; the card grid
+ * is allowed the whole column, because three columns of OpportunityCard is the
+ * reason this screen answers in cards at all. */
 
 .screen {
   display: flex;
   flex-direction: column;
-  /* NOT 100dvh.
-     The screen used to be forced to the full viewport with the transcript on
-     flex:1 under it. With a short conversation that stretched the transcript
-     into a tall empty column and pushed the composer to the bottom of the
-     window, which is what made it read as floating in space with the answer
-     marooned at the top. The column is now only as tall as what is in it; the
-     composer sticks to the viewport bottom when the conversation is long
-     enough to scroll, and simply follows the content when it is not. */
   min-height: 0;
+
+  /* The reading measure for everything that is words. Cards ignore it. */
+  --measure: 72ch;
+  /* The cold group's width: narrow enough that the question, the openers and
+     the composer read as one object. */
+  --cold-w: 740px;
 
   /* One motion scale for the whole screen, so nothing here is timed by eye.
      Entrances ease out (fast, then settle); layout changes use a flatter
@@ -33,89 +49,122 @@
   --m-layout-ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* The head is the portal's PageHead, deliberately. An earlier version drew a
-   bespoke identity block here — avatar, name, line of role — on the reasoning
-   that the subject of this screen is a character. It read as a separate
-   product sitting inside Orbit's chrome, which is the opposite of what this
-   screen is for, so the mark, .name and .role rules are gone and the eyebrow,
-   title and action come from AppShell like every other page. */
+/* The head is the portal's PageHead, deliberately — and the compact one. An
+   earlier version drew a bespoke identity block here (avatar, name, line of
+   role) on the reasoning that the subject of this screen is a character. It
+   read as a separate product sitting inside Orbit's chrome, which is the
+   opposite of what this screen is for. The compact variant then stops the page
+   title from competing with the question directly underneath it. */
+
+/* --- the body: the part that changes shape -------------------------------- */
+.body { display: flex; flex-direction: column; min-width: 0; }
+
+/* Cold. A bounded canvas rather than the viewport: capped, so a tall monitor
+   does not turn "centred" back into "a long way down the page", and centred,
+   so the space above and below the group is equal and reads as composition
+   instead of as content that failed to arrive. */
+.cold .body {
+  min-height: min(560px, calc(100dvh - 320px));
+  justify-content: center;
+  gap: var(--s-6);
+  max-width: var(--cold-w);
+}
+
+/* Live. The transcript's own height, and nothing added. */
+.live .body { gap: 0; }
 
 /* --- the transcript ------------------------------------------------------- */
 /* Turn-to-turn rhythm. One step tighter than it was: at --s-6 a question and
    its answer read as two unrelated items rather than as an exchange. The gap
    INSIDE a turn (.said) is smaller again, so the grouping is carried by
    spacing rather than by boxes. */
-.transcript { display: flex; flex-direction: column; gap: var(--s-5); }
+.transcript { display: flex; flex-direction: column; gap: var(--s-5); min-width: 0; }
 .foot { height: 1px; flex: none; }
 
 /* --- the cold open -------------------------------------------------------- */
-.opening { display: flex; flex-direction: column; gap: var(--s-4); max-width: 60ch; padding-top: var(--s-2); }
+.opening { display: flex; flex-direction: column; gap: var(--s-4); }
 /* The question carries the screen, the line under it is support. Two sizes,
    not four — the whole hierarchy here is title, support, choices. */
 .openingTitle {
-  font-size: 19px;
-  line-height: 26px;
+  font-size: 22px;
+  line-height: 29px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   color: var(--text-primary);
 }
-.openingLead { font-size: 14px; line-height: 21px; color: var(--text-secondary); }
-.openersLabel {
-  font-size: 11px;
-  line-height: 16px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  padding-bottom: var(--s-1);
-}
-.openingNote {
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--text-tertiary);
+.openingLead { font-size: 14.5px; line-height: 22px; color: var(--text-secondary); max-width: 54ch; }
+
+/* The four ways in. Two columns, because four full-width rows of one sentence
+   each read as a settings menu — a list of commands the screen accepts. In a
+   grid they read as four directions a student might be going in, with the
+   sentence as the example rather than the instruction.
+   Equal rows, so a two-line prompt does not make its neighbour look clipped. */
+.openers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 1fr;
+  gap: var(--s-2);
   padding-top: var(--s-1);
 }
 
-.openers { display: flex; flex-direction: column; gap: var(--s-2); }
-
-/* Full-width rows rather than a wrap of pills: these are sentences, and a
-   sentence broken across two lines of a pill reads as a label that did not
-   fit. One per row, left-aligned, the arrow pinned right. */
+/* Surface, not outline. At rest these are told apart from the page by their
+   background alone and the border is transparent — the screen was a stack of
+   identical outlined boxes, and every one of those outlines was competing with
+   the cards further down. The border appears on hover, where it is doing
+   something. Transparent rather than absent, so nothing shifts by a pixel. */
 .opener {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
   width: 100%;
   padding: var(--s-3) var(--s-4);
   text-align: left;
   font: inherit;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--text-primary);
   background: var(--surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid transparent;
   border-radius: var(--radius-nested);
   cursor: pointer;
-  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  transition:
+    background-color var(--m-micro) var(--m-out),
+    border-color var(--m-micro) var(--m-out);
 }
-.opener:hover { background: var(--surface-raised); border-color: var(--border-default); }
-.opener svg { color: var(--text-tertiary); }
-.opener:hover svg { color: var(--accent-text); }
+.opener:hover { background: var(--surface-raised); border-color: var(--border-subtle); }
+.opener:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.openerLabel { font-size: 13.5px; line-height: 19px; font-weight: 600; color: var(--text-primary); }
+.openerPrompt { font-size: 12.5px; line-height: 18px; color: var(--text-tertiary); }
+
+/* The profile state: one quiet line, not a notification card. It is context
+   for something that has not happened yet. */
+.openingNote {
+  font-size: 12.5px;
+  line-height: 19px;
+  color: var(--text-tertiary);
+  padding-top: var(--s-1);
+}
+.openingNoteLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent-text);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.openingNoteLink:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 /* --- the student's turn ---------------------------------------------------
-   Right-aligned and filled, which is the one convention worth keeping from
-   every other chat interface: it is how you find your own last question when
-   scrolling back. */
+   Right-aligned, which is the one convention worth keeping from every other
+   chat interface: it is how you find your own last question when scrolling
+   back. Filled with a surface rather than the accent — a navy block per
+   question turned the transcript into a messaging app, and the alignment alone
+   already says whose turn it is. */
 .student { display: flex; justify-content: flex-end; }
 .studentText {
-  /* 72% of the column at most, per the chat spec: wide enough for a
-     paragraph, narrow enough that it still reads as one side of a
-     conversation rather than as the page. */
-  max-width: min(60ch, 72%);
+  max-width: min(58ch, 72%);
   padding: var(--s-3) var(--s-4);
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-nested);
   border-end-end-radius: var(--radius-tag);
   font-size: 15px;
@@ -126,11 +175,11 @@
 
 /* --- Rover's turn ---------------------------------------------------------
    No avatar column. The identity is a byline above the response, set like the
-   page eyebrow it sits under, which is both quieter and 42px wider on a
-   phone. Rover's content runs to 80% so it reads as the page's own voice
-   rather than as a reply pinned to one side. */
+   page eyebrow it sits under, which is both quieter and 42px wider on a phone.
+   The turn takes the full column: its PROSE is capped at a measure a few rules
+   down, and the card grid is meant to have the width. */
 .rover { display: flex; min-width: 0; }
-.said { display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; max-width: 80%; }
+.said { display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; width: 100%; }
 .who {
   font-size: 11px;
   line-height: 16px;
@@ -143,7 +192,48 @@
 /* --- the process indicator ------------------------------------------------
    Its working, in the student's language: evidence that a search ran, not
    something to read. Finished steps tick and recede; the step in flight
-   carries the only motion on the screen. */
+   carries the only motion on the screen. Once the turn has an answer the whole
+   block folds to a summary row — five lines of grey text are interesting while
+   they are happening and are furniture afterwards. */
+.process { display: flex; flex-direction: column; gap: var(--s-2); max-width: var(--measure); }
+
+.processToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  align-self: flex-start;
+  padding: 5px var(--s-3) 5px var(--s-2);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--text-tertiary);
+  background: var(--surface);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition:
+    background-color var(--m-micro) var(--m-out),
+    border-color var(--m-micro) var(--m-out),
+    color var(--m-micro) var(--m-out);
+}
+.processToggle:hover { background: var(--surface-raised); border-color: var(--border-subtle); color: var(--text-secondary); }
+.processToggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chev { flex: none; transition: transform var(--m-standard) var(--m-layout-ease); }
+.processToggleOpen .chev { transform: rotate(180deg); }
+
+/* The fold. Animating the grid row rather than a measured max-height: the
+   list's height is not known until it is laid out, and a guessed max-height
+   either clips the last line or animates to a gap below it. A browser without
+   0fr -> 1fr support snaps instead, which is the right degradation. */
+.processBody {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows var(--m-layout) var(--m-layout-ease);
+}
+.processOpen { grid-template-rows: 1fr; }
+.processBody > * { min-height: 0; }
+
 .activity {
   display: flex;
   flex-direction: column;
@@ -152,10 +242,9 @@
   transition: opacity var(--m-standard) var(--m-layout-ease);
 }
 
-/* Once the answer is arriving, the whole block settles back. It stays in the
-   layout rather than unmounting, so the prose does not jump upward into the
-   space it was using. */
-.activityDone { opacity: 0.55; }
+/* Once the answer is arriving, the lines settle back: still legible, no longer
+   the thing on the screen asking to be read. */
+.activityDone { opacity: 0.6; }
 
 .step {
   display: flex;
@@ -208,7 +297,7 @@
    min-width:auto, so a wide code block or an unbreakable URL inside the
    prose column would widen the column, then the transcript, then give the
    whole page a horizontal scrollbar. */
-.prose { max-width: 68ch; min-width: 0; display: flex; flex-direction: column; gap: var(--s-3); }
+.prose { max-width: var(--measure); min-width: 0; display: flex; flex-direction: column; gap: var(--s-3); }
 .prose p { font-size: 15px; line-height: 24px; color: var(--text-primary); overflow-wrap: anywhere; }
 .prose strong { font-weight: 600; }
 
@@ -226,15 +315,19 @@
 @keyframes blink { 50% { opacity: 0; } }
 
 /* Honour a reduced-motion preference. The STATE still changes — a finished
-   step is still a tick, the current one is still accented — only the movement
-   goes. Nothing here is the sole carrier of meaning. */
+   step is still a tick, the current one is still accented, the fold still
+   folds — only the movement goes. Nothing here is the sole carrier of
+   meaning. */
 @media (prefers-reduced-motion: reduce) {
   .caret, .stepEnter, .stepNow .mark, .pickEnter, .behindButton { animation: none; }
   .stepEnter, .pickEnter { opacity: 1; transform: none; }
+  .processBody, .chev { transition: none; }
 }
 
-/* --- the recommendations -------------------------------------------------- */
-.picks { min-width: 0; }
+/* --- the recommendations --------------------------------------------------
+   The one part allowed the full column: a three-column grid of real cards is
+   what this screen answers with. */
+.picks { min-width: 0; padding-top: var(--s-1); }
 
 /* The card and its reason are one unit, so the reason cannot end up beside a
    different card when the grid reflows. */
@@ -309,9 +402,12 @@
 .behindButton svg { color: var(--text-tertiary); }
 
 /* --- the composer ---------------------------------------------------------
-   Sticky to the viewport bottom, inside the page's own column. The background
-   is opaque rather than blurred: a card scrolling under a translucent bar
-   turns into unreadable mush at exactly the moment the student is reading it. */
+   LIVE: sticky to the viewport bottom, inside the page's own column. The
+   background is opaque rather than blurred — a card scrolling under a
+   translucent bar turns into unreadable mush at exactly the moment the student
+   is reading it — and the hairline above it is a real edge. The soft shadow
+   that used to be there faded content out without ever drawing a line, so the
+   field appeared to hover over the page with nothing holding it. */
 .composer {
   position: sticky;
   bottom: 0;
@@ -323,15 +419,23 @@
   padding-bottom: var(--s-4);
   margin-top: var(--s-5);
   background: var(--bg-app);
-  /* A real edge. The soft shadow that used to be here faded content out
-     without ever drawing a line, so the field appeared to hover over the page
-     with nothing holding it. A hairline reads as the bottom of the
-     conversation and gives the composer something to sit on. The negative
-     margins let that line span the column's full width while the field inside
-     stays on the text measure. */
   border-top: 1px solid var(--border-subtle);
+  /* The line spans the column's full width while the field inside stays on
+     the measure. */
   margin-inline: calc(var(--s-4) * -1);
   padding-inline: var(--s-4);
+}
+
+/* COLD: not sticky, no edge, no negative margins. It is a member of the
+   centred group rather than a bar at the bottom of a window, and it is the
+   primary thing to do on the screen, so it is given the size to say so. */
+.composerCold {
+  position: static;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+  background: none;
+  gap: var(--s-3);
 }
 
 .field {
@@ -347,6 +451,10 @@
 .field:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+.composerCold .field {
+  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5);
+  border-radius: var(--radius-card);
 }
 
 .input {
@@ -364,20 +472,40 @@
   max-height: 160px;
 }
 .input::placeholder { color: var(--text-disabled); }
+.composerCold .input { font-size: 16px; line-height: 24px; }
 
-.disclaimer { font-size: 12px; line-height: 16px; color: var(--text-tertiary); padding-inline: var(--s-1); }
+/* Quiet, and clearly not attached to the field: it is a standing caveat, not
+   a hint about what to type. */
+.disclaimer {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-tertiary);
+  padding-inline: var(--s-1);
+}
+.composerCold .disclaimer { padding-inline: var(--s-2); }
+
+/* The page's own bottom padding (--space-16, for the gap under a grid of
+   cards) sits BELOW the sticky composer, so at the end of a scroll there was a
+   64px strip of empty app background under the field. The composer's box is
+   pulled down over it: desktop only, because below 1024 that padding is
+   clearance for the bottom bar and the composer is already lifted clear of it. */
+@media (min-width: 1024px) {
+  .live .composer { margin-bottom: calc(var(--space-16) * -1); padding-bottom: var(--s-5); }
+}
 
 @media (max-width: 1023px) {
   /* Clear the bottom bar, and the home indicator under it. */
   .composer { bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px)); }
-  /* Same reasoning as the desktop rule: no forced viewport height, so a short
-     conversation does not leave a screen of empty space above the composer. */
-  .screen { min-height: 0; }
+  .composerCold { bottom: auto; }
+  /* The cold canvas loses the desktop chrome it was allowing for, and the
+     bottom bar takes height off the viewport. */
+  .cold .body { min-height: min(520px, calc(100dvh - 280px)); max-width: none; }
 }
 
 @media (max-width: 767px) {
+  .openers { grid-template-columns: 1fr; grid-auto-rows: auto; }
+  .openingTitle { font-size: 20px; line-height: 27px; }
   .studentText { max-width: 92%; }
-  /* Rover takes the full width on a phone: at 320px an 80% column leaves a
-     card too narrow to read, and the byline already does the identifying. */
-  .said { max-width: 100%; }
+  .cold .body { min-height: 0; justify-content: flex-start; gap: var(--s-5); }
+  .composerCold .field { padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); border-radius: var(--radius-nested); }
 }

@@ -11,6 +11,19 @@
  * apply controls live. That is the point: a recommendation you can act on in
  * place, not a paragraph you have to go and search for.
  *
+ * TWO STATES, NOT ONE PAGE. Everything below is one of two compositions:
+ *
+ *   cold  nothing said yet. One centred group — the question, four ways to
+ *         answer it, and the composer — because the composer IS the screen at
+ *         that point. It used to be a block of copy at the top and an input
+ *         pinned to the bottom of the window with a screen of nothing between
+ *         them, which read as a page that had failed to load.
+ *   live  a conversation. The transcript is the content, it grows down the
+ *         page, and the composer is a compact sticky bar under it.
+ *
+ * The DOM is the same in both; `cold`/`live` on the root switches the
+ * composition. There is no second screen component and no second composer.
+ *
  * WHY THE TRANSCRIPT IS THE CLIENT'S. The server keeps nothing between turns
  * (packages/server/src/rover/agent.ts), so this component owns the history and
  * replays it with each request. Two consequences worth knowing:
@@ -26,6 +39,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import s from "./rover.module.css";
 import card from "@/components/opportunities/card.module.css";
 import { Icon } from "@/components/ui/Icon";
@@ -53,12 +67,18 @@ type Wire =
 
 /* The openers. Deliberately the awkward ones: each is vague or
  * multi-constraint in a way a keyword search cannot serve, which is the whole
- * reason this screen exists next to Explore. */
-const OPENERS = [
-  "What can I apply to as a second-year CS student?",
-  "A fellowship I can do alongside college, in the US or Canada",
-  "I have free time this semester — what's worth doing?",
-  "Fully funded master's scholarships closing soon",
+ * reason this screen exists next to Explore.
+ *
+ * `label` is what the card leads with and `prompt` is what gets sent. Four
+ * full sentences stacked as four identical rows read as a menu of commands the
+ * screen would accept — the short label makes them scannable as the four
+ * DIRECTIONS a student might be going in, with the sentence underneath as the
+ * example rather than the instruction. */
+const OPENERS: { label: string; prompt: string }[] = [
+  { label: "Fits my degree", prompt: "What can I apply to as a second-year CS student?" },
+  { label: "Alongside college", prompt: "A fellowship I can do alongside college, in the US or Canada" },
+  { label: "Spare time this semester", prompt: "I have free time this semester — what's worth doing?" },
+  { label: "Funded master's", prompt: "Fully funded master's scholarships closing soon" },
 ];
 
 export function RoverScreen() {
@@ -321,15 +341,19 @@ export function RoverScreen() {
             })();
 
   return (
-    <div className={s.screen}>
-      {/* The portal's own page head, not a bespoke one. Rover is a screen of
-          Orbit in the same sense Explore and Compare are — same eyebrow, same
-          title, same place for the page's one action — and a chat that drew
-          its own header read as a separate product bolted onto the side. */}
+    <div className={[s.screen, empty ? s.cold : s.live].join(" ")}>
+      {/* The portal's own page head, deliberately, and the compact one.
+          Rover is a screen of Orbit in the same sense Explore and Compare are,
+          so it carries the same eyebrow, title and action slot — but a chat
+          needs the identity stated once and quietly, not a page-title block
+          competing with the question underneath it. The description is for the
+          cold screen only: once there is a conversation on the page, a line
+          explaining what Rover does is chrome in front of the content. */}
       <PageHead
+        compact
         eyebrow="Ask"
         title={AGENT_NAME}
-        description={`Reads the whole ${APP_NAME} index and comes back with what fits you`}
+        description={empty ? `Your opportunity scout. Searches the whole ${APP_NAME} index for what fits you.` : undefined}
         actions={
           !empty ? (
             <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
@@ -348,103 +372,114 @@ export function RoverScreen() {
         {announcement}
       </p>
 
-      <div className={s.transcript} aria-busy={busy}>
-        {empty ? (
-          <div className={s.opening}>
-            {/* A question, then the ways to answer it. The old version opened
-                with a paragraph about how the screen worked, which is reading
-                to do before you are allowed to start. */}
-            <h2 className={s.openingTitle}>What are you looking for?</h2>
-            <p className={s.openingLead}>
-              Vague is fine — {AGENT_NAME} will ask a couple of questions before it goes looking.
-            </p>
-            <div className={s.openers}>
-              <p className={s.openersLabel}>Or start with one of these</p>
-              {OPENERS.map((o) => (
-                <button key={o} type="button" className={s.opener} onClick={() => void send(o)}>
-                  <span>{o}</span>
-                  <Icon name="arrow-right" size={15} />
-                </button>
-              ))}
-            </div>
-            {!started ? (
-              <p className={s.openingNote}>
-                You have not set up a profile yet, so {AGENT_NAME} will have to ask about your course
-                and level. Filling in your profile saves it asking every time.
+      {/* The part that changes shape. Cold: one centred group. Live: a column
+          that grows, with the composer sticky at the bottom of it. */}
+      <div className={s.body}>
+        <div className={s.transcript} aria-busy={busy}>
+          {empty ? (
+            <div className={s.opening}>
+              {/* A question, then the ways to answer it. The old version opened
+                  with a paragraph about how the screen worked, which is reading
+                  to do before you are allowed to start. */}
+              <h2 className={s.openingTitle}>What are you looking for?</h2>
+              <p className={s.openingLead}>
+                You do not need to know exactly. {AGENT_NAME} will ask what it needs, then search the{" "}
+                {APP_NAME} index for opportunities that actually fit.
               </p>
-            ) : null}
+              <div className={s.openers}>
+                {OPENERS.map((o) => (
+                  <button key={o.prompt} type="button" className={s.opener} onClick={() => void send(o.prompt)}>
+                    <span className={s.openerLabel}>{o.label}</span>
+                    <span className={s.openerPrompt}>{o.prompt}</span>
+                  </button>
+                ))}
+              </div>
+              {/* One quiet line, not a notification card: it is context for
+                  something that has not happened yet, and the student came
+                  here to ask a question rather than to be told about a form. */}
+              {!started ? (
+                <p className={s.openingNote}>
+                  Your profile is not set up yet · {AGENT_NAME} will ask for your course and level when
+                  it needs them ·{" "}
+                  <Link href="/profile" className={s.openingNoteLink}>
+                    Complete profile
+                    <Icon name="arrow-right" size={13} />
+                  </Link>
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            messages.map((m) => (
+              <Bubble key={m.id} message={m} onRetry={retry} fresh={!restored.current.has(m.id)} />
+            ))
+          )}
+          <div ref={foot} className={s.foot} />
+        </div>
+
+        {behind ? (
+          <div className={s.behind}>
+            <button
+              type="button"
+              className={s.behindButton}
+              onClick={() => {
+                pinned.current = true;
+                setBehind(false);
+                foot.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+              }}
+            >
+              <Icon name="arrow-down" size={14} />
+              New response
+            </button>
           </div>
-        ) : (
-          messages.map((m) => (
-            <Bubble key={m.id} message={m} onRetry={retry} fresh={!restored.current.has(m.id)} />
-          ))
-        )}
-        <div ref={foot} className={s.foot} />
+        ) : null}
+
+        <form
+          className={[s.composer, empty ? s.composerCold : null].filter(Boolean).join(" ")}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void send(draft);
+          }}
+        >
+          <div className={s.field}>
+            <textarea
+              ref={input}
+              className={s.input}
+              value={draft}
+              rows={1}
+              /* Enter sends, Shift-Enter breaks the line: this is a chat box, and
+                 a student who wants a second paragraph is the rare case. */
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void send(draft);
+                }
+              }}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                /* Grow with the text up to the CSS max-height, then scroll. */
+                e.target.style.height = "auto";
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+              }}
+              placeholder={empty ? `Ask ${AGENT_NAME} anything…` : `Continue with ${AGENT_NAME}…`}
+              aria-label={`Message ${AGENT_NAME}`}
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              icon={busy ? "refresh" : "arrow-right"}
+              disabled={!draft.trim()}
+              aria-label={busy ? "Send and interrupt the current answer" : "Send"}
+            >
+              {busy ? "Interrupt" : "Send"}
+            </Button>
+          </div>
+          <p className={s.disclaimer}>
+            {AGENT_NAME} reports what the {APP_NAME} index holds. Check the funder&apos;s own page before
+            you apply.
+          </p>
+        </form>
       </div>
-
-      {behind ? (
-        <div className={s.behind}>
-          <button
-            type="button"
-            className={s.behindButton}
-            onClick={() => {
-              pinned.current = true;
-              setBehind(false);
-              foot.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-            }}
-          >
-            <Icon name="arrow-down" size={14} />
-            New response
-          </button>
-        </div>
-      ) : null}
-
-      <form
-        className={s.composer}
-        onSubmit={(e) => {
-          e.preventDefault();
-          void send(draft);
-        }}
-      >
-        <div className={s.field}>
-          <textarea
-            ref={input}
-            className={s.input}
-            value={draft}
-            rows={1}
-            /* Enter sends, Shift-Enter breaks the line: this is a chat box, and
-               a student who wants a second paragraph is the rare case. */
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void send(draft);
-              }
-            }}
-            onChange={(e) => {
-              setDraft(e.target.value);
-              /* Grow with the text up to the CSS max-height, then scroll. */
-              e.target.style.height = "auto";
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
-            }}
-            placeholder={`Ask ${AGENT_NAME} for something…`}
-            aria-label={`Message ${AGENT_NAME}`}
-          />
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            icon={busy ? "refresh" : "arrow-right"}
-            disabled={!draft.trim()}
-            aria-label={busy ? "Send and interrupt the current answer" : "Send"}
-          >
-            {busy ? "Interrupt" : "Send"}
-          </Button>
-        </div>
-        <p className={s.disclaimer}>
-          {AGENT_NAME} only reports what the index holds, and every card below is a live listing —
-          but check the funder&apos;s own page before you apply.
-        </p>
-      </form>
     </div>
   );
 }
@@ -462,6 +497,10 @@ function Bubble({
      replay entrances the student already watched. */
   fresh: boolean;
 }) {
+  /* Whether this turn's working is expanded after it has finished. Collapsed
+   * by default once there is an answer to read — see below. */
+  const [showWork, setShowWork] = useState(false);
+
   if (message.role === "student") {
     return (
       <div className={s.student}>
@@ -481,6 +520,22 @@ function Bubble({
   const working = Boolean(message.streaming);
   const answering = Boolean(message.text || message.picks.length);
   const steps = message.activity;
+  const cards = message.picks.reduce((n, p) => n + p.items.length, 0);
+
+  /* Progressive disclosure, and the condition is "there is now something
+   * better to read". A finished turn's five activity lines are evidence, not
+   * the answer: left expanded they push every answer in the conversation down
+   * by a block of grey text that was only ever interesting while it was
+   * happening. So once the turn has stopped and produced an answer, the lines
+   * fold into one summary row the student can open again.
+   *
+   * A turn that finished with NO answer keeps them open — then the working is
+   * all there is to look at, and hiding it would be hiding the explanation. */
+  const foldable = !working && steps.length > 0 && answering;
+  const open = !foldable || showWork;
+  const summary = cards
+    ? `Activity · ${steps.length} ${steps.length === 1 ? "step" : "steps"} · ${cards} ${cards === 1 ? "opportunity" : "opportunities"} shown`
+    : `Activity · ${steps.length} ${steps.length === 1 ? "step" : "steps"}`;
 
   return (
     <div className={s.rover}>
@@ -497,37 +552,57 @@ function Bubble({
 
         {/* The process indicator.
             Each finished step is a tick and quiets down; the one in flight
-            carries the marker and the only motion on screen. Once the answer
-            starts arriving the whole block settles into its completed state
-            (see .done) rather than disappearing, so the response does not jump
-            up into the space the steps were using. */}
+            carries the marker and the only motion on screen. When the turn
+            settles the block folds to its summary row rather than vanishing,
+            so nothing the student watched happen becomes unverifiable. */}
         {steps.length || working ? (
-          <ul className={[s.activity, answering ? s.activityDone : null].filter(Boolean).join(" ")}>
-            {steps.map((line, i) => {
-              const current = working && !answering && i === steps.length - 1;
-              return (
-                <li
-                  key={`${line}-${i}`}
-                  className={[s.step, fresh ? s.stepEnter : null, current ? s.stepNow : s.stepDone]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  <span className={s.mark} aria-hidden="true" />
-                  {line}
-                </li>
-              );
-            })}
-            {/* Before the first tool reports there is nothing true to show, so
-                this one line is generic. It is also the only thing the 250ms
-                delay in .step applies to in practice, which is the point: a
-                turn answered quickly never flashes it. */}
-            {working && !steps.length && !answering ? (
-              <li className={[s.step, fresh ? s.stepEnter : null, s.stepNow].filter(Boolean).join(" ")}>
-                <span className={s.mark} aria-hidden="true" />
-                Understanding your request
-              </li>
+          <div className={s.process}>
+            {foldable ? (
+              <button
+                type="button"
+                className={[s.processToggle, showWork ? s.processToggleOpen : null].filter(Boolean).join(" ")}
+                aria-expanded={showWork}
+                onClick={() => setShowWork((v) => !v)}
+              >
+                <Icon name="chevron-down" size={14} className={s.chev} />
+                {summary}
+              </button>
             ) : null}
-          </ul>
+
+            {/* Height is animated by the grid row rather than by a measured
+                max-height: the list's height is unknown until it is laid out,
+                and a wrong max-height either clips the last line or animates
+                to a gap. A browser without 0fr→1fr support simply snaps, which
+                is the correct degradation. */}
+            <div className={[s.processBody, open ? s.processOpen : null].filter(Boolean).join(" ")}>
+              <ul className={[s.activity, answering ? s.activityDone : null].filter(Boolean).join(" ")}>
+                {steps.map((line, i) => {
+                  const current = working && !answering && i === steps.length - 1;
+                  return (
+                    <li
+                      key={`${line}-${i}`}
+                      className={[s.step, fresh ? s.stepEnter : null, current ? s.stepNow : s.stepDone]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      <span className={s.mark} aria-hidden="true" />
+                      {line}
+                    </li>
+                  );
+                })}
+                {/* Before the first tool reports there is nothing true to show,
+                    so this one line is generic. It is also the only thing the
+                    250ms delay in .step applies to in practice, which is the
+                    point: a turn answered quickly never flashes it. */}
+                {working && !steps.length && !answering ? (
+                  <li className={[s.step, fresh ? s.stepEnter : null, s.stepNow].filter(Boolean).join(" ")}>
+                    <span className={s.mark} aria-hidden="true" />
+                    Understanding your request
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+          </div>
         ) : null}
 
         {message.text ? (
@@ -583,4 +658,3 @@ function Bubble({
     </div>
   );
 }
-
