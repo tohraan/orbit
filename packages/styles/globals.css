@@ -163,8 +163,6 @@
   --header-rule: rgba(0, 0, 0, 0.08);
   --chrome-rule: rgba(0, 0, 0, 0.12);
   --chrome-wash: rgba(0, 0, 0, 0.08);
-  /* The measure the header and the page body share, so their edges line up. */
-  --shell-measure: 920px;
   --inset: color-mix(in srgb, var(--text-primary) 4%, var(--surface));
   --inset-strong: color-mix(in srgb, var(--text-primary) 7%, var(--surface));
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.07);

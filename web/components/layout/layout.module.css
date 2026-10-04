@@ -77,11 +77,9 @@
   align-items: center;
   height: 100%;
   width: 100%;
-  max-width: calc(var(--shell-measure) + (var(--space-4) * 2 + 64px));
-  margin-inline: auto;
   padding-inline: calc((var(--space-4) * 2 + 64px) + 20px) 20px;
 }
-@media (max-width: 1023px) { .headerInner { padding-inline: 20px; max-width: var(--shell-measure); } }
+@media (max-width: 1023px) { .headerInner { padding-inline: 20px; } }
 @media (max-width: 639px)  { .headerInner { padding-inline: 16px; } }
 
 .headerLeft { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -168,13 +166,19 @@
 /* Step 4.1: one container, centred in the space the rail leaves. The header
    below uses the identical measurements, so the crest sits exactly above the
    page title rather than approximately above it. */
-/* The same measure and the same side padding as .headerInner, so the crest in
-   the bar sits exactly above the h1 under it rather than approximately above
-   it. Change one and the other has to follow; that is why both read
-   --shell-measure instead of each carrying a number. */
+/* Full width, with the same side padding as .headerInner, so the crest in the
+   bar sits exactly above the h1 under it.
+
+   There is no measure cap any more. It was 920px, which read well for the
+   screens that are mostly prose and badly for the ones that are grids —
+   Explore was already exempted, and the result was that one screen used the
+   window and every other screen left two columns of empty gutter beside a list
+   the student was scrolling. Explore is the width the product should have been
+   all along, so it is the width all of them get. Anything that genuinely needs
+   a reading measure caps ITSELF: the detail page's prose is 65ch, which is a
+   property of running text rather than of the window. */
 .page {
   width: 100%;
-  max-width: var(--shell-measure);
   margin-inline: auto;
   padding: var(--space-8) 20px var(--space-16);
   min-width: 0;
@@ -563,7 +567,8 @@
    grid is not prose — capping it wasted two gutters of width and cost a whole
    column. The outer padding stays, so content never touches the viewport edge
    or sits under the floating rail. */
-.pageWide { max-width: none; }
+/* .pageWide is gone: every page is full width now, so a class that removed a
+   cap had nothing left to remove. */
 
 /* One focus ring for everything interactive in the chrome. The accent rather
    than a neutral, because on a frosted bar a grey ring disappears into
