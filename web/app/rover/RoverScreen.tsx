@@ -78,6 +78,23 @@ let nextId = 1;
 export function RoverScreen() {
   const { profile, started } = useProfile();
   const [messages, setMessages] = useState<Message[]>([]);
+  /* The transcript, readable SYNCHRONOUSLY.
+   *
+   * `send` has to put the whole conversation in the request body at the
+   * moment it builds it, and `messages` cannot give it that: a state updater
+   * does not run when you call the setter, it runs at render. An earlier
+   * version assigned the history out of the updater's body and read it on the
+   * next line, which meant the array was still empty — so the very first
+   * message of every conversation posted `turns: []` and came back 400
+   * "That conversation could not be read", from parseTurns rejecting an empty
+   * array. Every write goes through `commit` below so this ref and the state
+   * can never disagree. */
+  const transcript = useRef<Message[]>([]);
+  const commit = useCallback((next: (cur: Message[]) => Message[]) => {
+    transcript.current = next(transcript.current);
+    setMessages(transcript.current);
+    return transcript.current;
+  }, []);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const abort = useRef<AbortController | null>(null);
@@ -126,19 +143,16 @@ export function RoverScreen() {
       const student: Message = { id: nextId++, role: "student", text, activity: [], picks: [] };
       const reply: Message = { id: nextId++, role: "rover", text: "", activity: [], picks: [], streaming: true };
 
-      /* The transcript the server will see, built from what is on screen plus
-       * this turn — not from state, which has not updated yet. */
-      let history: Message[] = [];
-      setMessages((cur) => {
-        history = [...cur, student];
-        return [...history, reply];
-      });
+      /* The transcript the server will see: what is on screen plus this turn,
+       * read back from the ref so it is the real list and not an empty one. */
+      const history = [...transcript.current, student];
+      commit(() => [...history, reply]);
 
       const ac = new AbortController();
       abort.current = ac;
 
       const patch = (fn: (m: Message) => Message) =>
-        setMessages((cur) => cur.map((m) => (m.id === reply.id ? fn(m) : m)));
+        commit((cur) => cur.map((m) => (m.id === reply.id ? fn(m) : m)));
 
       try {
         const res = await fetch(api("/api/rover"), {
@@ -243,14 +257,14 @@ export function RoverScreen() {
         }
       }
     },
-    [profile, started, toBottom],
+    [profile, started, toBottom, commit],
   );
 
   const reset = () => {
     abort.current?.abort();
     abort.current = null;
     setBusy(false);
-    setMessages([]);
+    commit(() => []);
     setDraft("");
     input.current?.focus();
   };
