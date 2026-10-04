@@ -76,19 +76,26 @@
      clears WCAG 1.4.11 outright, so all three steps can hold one value in
      dark exactly as they do in light.
 
-     THE DARK ACCENT IS THE CREST YELLOW, and it is not a preference. Against
-     a black page the crest navy #282888 measures 1.75:1 and #1b1b63 measures
-     1.38:1 — a blue accent on this ground is not dark, it is invisible, and
-     lifting it until it reads is how the old palette arrived at a lilac
-     #8fa0f0 nobody asked for. Yellow is 15.89:1 on black and is the crest's
-     own second colour, so dark mode is black, white rule, yellow action,
-     red deadline, and no fourth hue anywhere.
+     THE DARK ACCENT IS THE CREST RED, DEEP: #c82020, straight off the logo.
+     It sits at 3.68:1 on black, which is what WCAG 1.4.11 asks of a filled
+     control (3:1) and short of what 1.4.3 asks of text (4.5:1). Those are two
+     different jobs and this file has always carried two tokens for them, so
+     --accent stays the deep logo red for fills and --accent-text is #dc4634,
+     the shallowest lift that reaches 4.5:1, used only where the accent has to
+     be READ rather than pressed. White on the deep red is 5.70:1.
 
-     --warning-fg moves to #ff9d3d in dark for the same reason. "Closing
-     soon" was #ebc05e, which against a yellow ACTION colour is a 1.3:1
-     separation — the eye would read a warning as a button. Orange holds
-     1.57:1 against the accent while still not being the red of a deadline
-     that has arrived.
+     Blue was ruled out by measurement, not taste: #282888 on this page is
+     1.75:1 and #1b1b63 is 1.38:1. A blue accent on black is not dark, it is
+     absent — and lifting a blue until it reads is exactly how the old palette
+     arrived at the lilac #8fa0f0 that started this.
+
+     WHICH RED MEANS WHAT. With the action colour red, the deadline scale
+     separates by LIGHTNESS rather than hue: #f8e070 yellow for closing soon,
+     #ff6b5b bright salmon for closing today or closed, and the deep #c82020
+     reserved for things you press. The deep red and the bright one measure
+     2.04:1 against each other, which is low for legibility and irrelevant
+     here — they are never set as text on one another. One is always a filled
+     block, the other always a line of type.
      =================================================================== */
 
   --bg-app: #ffffff;
@@ -410,20 +417,20 @@
        as purple, not as this institution's blue. This is the navy pulled
        toward the logo's own sky blue, at hue 216: unmistakably blue, and
        still the emblem's family. White on it is 5.6:1. */
-    --accent: #f8e070;
-    --accent-hover: color-mix(in srgb, var(--accent) 86%, black);
-    --accent-active: color-mix(in srgb, var(--accent) 74%, black);
+    --accent: #c82020;
+    --accent-hover: color-mix(in srgb, var(--accent) 86%, white);
+    --accent-active: color-mix(in srgb, var(--accent) 74%, white);
     --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
     --accent-border: color-mix(in srgb, var(--accent) 40%, var(--surface-raised));
-    --accent-text: #f8e070;
-    --on-accent: #000000;
+    --accent-text: #dc4634;
+    --on-accent: #ffffff;
 
     --success-fg: #5bd39a;
     --success-bg: #0e2219;
     --success-border: #1d4433;
     /* The logo yellow itself — 13.7:1 on the dark surface — and the logo red
        lifted just far enough to clear AA at 6.5:1. */
-    --warning-fg: #ff9d3d;
+    --warning-fg: #f8e070;
     --warning-bg: #221c0c;
     --warning-border: #46381a;
     --error-fg: #ff6b5b;
@@ -476,20 +483,20 @@
 
   /* See the note in the OS-preference block: hue 216, not the navy's 240,
      because a lifted 240 reads purple on a dark page. */
-  --accent: #f8e070;
-  --accent-hover: color-mix(in srgb, var(--accent) 86%, black);
-  --accent-active: color-mix(in srgb, var(--accent) 74%, black);
+  --accent: #c82020;
+  --accent-hover: color-mix(in srgb, var(--accent) 86%, white);
+  --accent-active: color-mix(in srgb, var(--accent) 74%, white);
   --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
   --accent-border: color-mix(in srgb, var(--accent) 40%, var(--surface-raised));
-  --accent-text: #f8e070;
-  --on-accent: #000000;
+  --accent-text: #dc4634;
+  --on-accent: #ffffff;
 
   --success-fg: #5bd39a;
   --success-bg: #0e2219;
   --success-border: #1d4433;
   /* The logo yellow itself — 13.7:1 on the dark surface — and the logo red
      lifted just far enough to clear AA at 6.5:1. */
-  --warning-fg: #ff9d3d;
+  --warning-fg: #f8e070;
   --warning-bg: #221c0c;
   --warning-border: #46381a;
   --error-fg: #ff6b5b;
