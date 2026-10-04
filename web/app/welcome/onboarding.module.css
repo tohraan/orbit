@@ -1,99 +1,46 @@
-/* Onboarding. Three short steps rather than one long form: §56 asks for
-   progressive disclosure, and a student who meets fourteen fields at once
-   fills in none of them.
+/* The /welcome ROUTE only. Everything the flow looks like lives in
+   components/onboarding/onboarding.module.css — this file is the page that
+   holds it, and nothing more.
 
-   Every step is skippable on purpose. The matcher degrades honestly when a
-   field is missing (packages/core/src/match.ts reports confidence), so a
-   half-finished profile still produces a usable product — which is a better
-   trade than a wall that has to be climbed before the portal does anything. */
+   The standalone page needs its own ground because there is no scrim behind
+   it: the shell is a raised surface, so the page beneath it has to be a step
+   DOWN, or the two merge and the setup card stops reading as a surface at all.
+   That was the "background is still as is" problem — the page and the card
+   were the same colour. */
 
-.shell { max-width: 680px; margin-inline: auto; }
-
-.intro { display: flex; flex-direction: column; gap: var(--s-2); margin-bottom: var(--s-7); }
-
-.progress { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-6); }
-.track { flex: 1 1 auto; height: 4px; border-radius: var(--radius-bar); background: var(--color-surface-muted); overflow: hidden; }
-/* No transition: the flow is deliberately unanimated (see page.tsx). A bar
-   that eases to its new width is the one moving thing in a form, and it draws
-   the eye away from the question being asked. */
-.fill { display: block; height: 100%; border-radius: var(--radius-bar); background: var(--color-action); }
-.pct {  font-size: var(--text-meta); color: var(--color-text-muted); font-variant-numeric: tabular-nums; flex: none; }
-
-.card {
+.page {
+  min-height: calc(100vh - var(--header-h, 64px));
   display: flex;
-  flex-direction: column;
-  gap: var(--s-5);
-  padding: var(--s-8) var(--s-6);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--space-10);
+  background: var(--bg-app);
 }
-@media (max-width: 639px) { .card { padding: var(--s-6) var(--s-5); } }
 
-/* Named steps rather than "Step 2 of 3": a label tells you what is being
-   asked, a number only tells you how much is left. */
-.stepRow { display: flex; flex-wrap: wrap; gap: var(--s-2); padding-bottom: var(--s-4); border-bottom: 1px solid var(--color-border); }
-
-.stepPip {
-  font-size: var(--text-micro);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  padding: 5px var(--s-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
+/* Two controls side by side on the optional last step. One column on a phone,
+   because two dropdowns at 360px leave neither enough room for its label. */
+/* Same reason as .field in the onboarding system: the row is a stacking
+   context of its own once its children animate, so it has to be raised too or
+   an open drop-down inside it is still trapped one level up. */
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  position: relative;
 }
-.stepPipOn { color: var(--color-action-text); background: var(--color-action); }
-.stepPipDone { color: var(--color-link); border-color: var(--color-border); }
-
-.row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
-@media (max-width: 639px) { .row { grid-template-columns: minmax(0, 1fr); } }
-
-.field { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
-.label { font-size: var(--text-body-sm); font-weight: 500; }
-.hint { font-size: var(--text-meta); color: var(--color-text-muted); }
-
-.input {
-  height: var(--control-md);
-  padding-inline: var(--s-3);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  font-size: var(--text-body-sm);
-  color: var(--color-text-primary);
-  width: 100%;
-}
-.input:focus { outline: 2px solid var(--color-action); outline-offset: 2px; border-color: var(--color-border-active); }
-
-.chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
-.chip {
-  height: var(--control-md);
-  padding-inline: var(--s-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  font-size: var(--text-body-sm);
-  color: var(--color-text-secondary);
-  transition: background var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
-}
-.chip:hover { border-color: var(--color-border-active); color: var(--color-link); }
-.chipOn { background: var(--color-action); border-color: var(--color-action); color: var(--color-action-text); }
-
-.foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding-top: var(--s-5); border-top: 1px solid var(--color-border); flex-wrap: wrap; }
-.footRight { display: flex; gap: var(--s-2); }
+.row:has([aria-expanded="true"]) { z-index: 60; }
 
 .privacy {
-  padding: var(--s-4);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
-  font-size: var(--text-meta);
-  line-height: 1.55;
-  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-tertiary, var(--color-text-muted));
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
 }
 
-/* Embedded in the first-run overlay: the card is the whole presentation, so
-   it drops the page shell's own width cap and vertical padding. */
-.embedded { width: 100%; }
-.embedded .card { margin: 0; max-width: none; }
+@media (max-width: 639px) {
+  .page { padding-block: var(--space-5); align-items: flex-start; }
+  .row { grid-template-columns: 1fr; }
+}

@@ -18,6 +18,7 @@ import s from "./command.module.css";
 import { Icon, type IconName } from "../ui/Icon";
 import { didYouMean, subsequenceScore } from "./fuzzy";
 import { api } from "@/lib/api-base";
+import { PHASES } from "@/lib/completeness";
 import type { OpportunitySummary } from "@rof/core";
 
 type Entry = {
@@ -71,7 +72,9 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       { id: "account", title: "Account", sub: "Sign in, sign up, or sign out", icon: "user", group: "Go to", keywords: "login signin signup register logout session", run: () => go("/account") },
       { id: "admin", title: "College desk", sub: "Staff — add an opportunity", icon: "shield", group: "Go to", keywords: "admin staff publish add manage", run: () => go("/admin") },
 
-      { id: "onboard", title: "Set up your profile", sub: "Three short steps", icon: "sparkle", group: "Actions", keywords: "onboarding welcome setup start", run: () => go("/welcome") },
+      /* The count comes from PHASES rather than a number typed here, which is
+         how this line came to say "three" while the flow had four steps. */
+      { id: "onboard", title: "Set up your profile", sub: `${PHASES.length} short steps`, icon: "sparkle", group: "Actions", keywords: "onboarding welcome setup start", run: () => go("/welcome") },
       { id: "soon", title: "Closing in the next 7 days", icon: "clock", group: "Actions", keywords: "urgent soon week deadline", run: () => go("/explore?deadline=d7&sort=deadline") },
       { id: "funded", title: "Fully funded only", icon: "coins", group: "Actions", keywords: "money funding free scholarship", run: () => go("/explore?funding=fully_funded") },
       { id: "college", title: "Added by the college", icon: "shield", group: "Actions", keywords: "bits staff official internal", run: () => go("/explore?source=college_desk") },

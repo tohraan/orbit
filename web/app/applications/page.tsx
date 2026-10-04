@@ -23,12 +23,18 @@ import { relativeTime, typeLabel } from "@rof/core";
 import type { OpportunitySummary } from "@rof/core";
 import { STATUSES, STATUS_LABELS, STATUS_TONE, useTracker, type Status } from "@/lib/data";
 import { StartHere } from "@/components/feedback/StartHere";
+import { Board } from "./Board";
+import { usePersistedView } from "@/lib/view";
 
 export default function ApplicationsPage() {
   const { entries, ready, clear } = useTracker();
   const ids = useMemo(() => entries.map((e) => e.id), [entries]);
   const { byId, missing, initial, error, reload } = useItemsByIds<OpportunitySummary>(ids);
   const [filter, setFilter] = useState<Status | "all">("all");
+  /* Remembered per browser: whichever view a student works in is the one they
+     keep working in, and making them re-pick it on every visit is a tax on the
+     page they open most. */
+  const [view, setView] = usePersistedView();
 
   const counts = useMemo(() => {
     const m = new Map<Status, number>();
@@ -81,6 +87,32 @@ export default function ApplicationsPage() {
       ) : (
         <>
           <div className={r.tabs}>
+            {/* The view switch sits with the filters because it is the same
+                kind of control: both change what you are looking at without
+                changing what is stored. */}
+            <div className={r.viewSwitch} role="group" aria-label="View">
+              <Button
+                variant={view === "list" ? "selected" : "secondary"}
+                size="sm"
+                aria-pressed={view === "list"}
+                onClick={() => setView("list")}
+              >
+                List
+              </Button>
+              <Button
+                variant={view === "board" ? "selected" : "secondary"}
+                size="sm"
+                aria-pressed={view === "board"}
+                onClick={() => setView("board")}
+              >
+                Board
+              </Button>
+            </div>
+
+            {/* The board groups BY status, so a status filter on top of it
+                would leave five empty columns and one populated. It belongs to
+                the list only. */}
+            {view === "list" ? (
             <Button
               variant={filter === "all" ? "selected" : "secondary"}
               size="sm"
@@ -89,21 +121,26 @@ export default function ApplicationsPage() {
             >
               All ({entries.length})
             </Button>
-            {STATUSES.filter((st) => counts.get(st)).map((st) => (
-              <Button
-                key={st}
-                variant={filter === st ? "selected" : "secondary"}
-                size="sm"
-                aria-pressed={filter === st}
-                onClick={() => setFilter(st)}
-              >
-                {STATUS_LABELS[st]} ({counts.get(st)})
-              </Button>
-            ))}
+            ) : null}
+            {view === "list"
+              ? STATUSES.filter((st) => counts.get(st)).map((st) => (
+                  <Button
+                    key={st}
+                    variant={filter === st ? "selected" : "secondary"}
+                    size="sm"
+                    aria-pressed={filter === st}
+                    onClick={() => setFilter(st)}
+                  >
+                    {STATUS_LABELS[st]} ({counts.get(st)})
+                  </Button>
+                ))
+              : null}
           </div>
 
           {initial ? (
             <RowsSkeleton count={Math.min(6, entries.length)} />
+          ) : view === "board" ? (
+            <Board entries={entries} byId={byId} />
           ) : rows.length === 0 ? (
             <EmptyState
               compact

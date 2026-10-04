@@ -31,6 +31,7 @@ import { Icon } from "@/components/ui/Icon";
 import { useToast } from "@/components/feedback/Toast";
 import { NEEDS_CONFIRMATION, useAuth } from "@/lib/auth";
 import { campusEmail, CAMPUS_DOMAIN } from "@/lib/supabase";
+import { DEMO_ENABLED, enterDemo } from "@/lib/demo";
 import { markFirstRun } from "@/lib/account";
 import { APP_NAME, APP_TAGLINE } from "@/components/layout/brand";
 
@@ -319,7 +320,46 @@ export default function AccountPage() {
           </p>
         ) : null}
       </div>
+
+      <JudgeDoor />
     </div>,
+  );
+}
+
+/* The way in for a reviewer who has no campus address.
+ *
+ * Sign-up is restricted to @dubai.bits-pilani.ac.in by a trigger on
+ * auth.users (db/019). For a judging panel that rule turns this screen into a
+ * locked door with the key on the other side, and a judge who cannot get in
+ * scores the sign-in screen rather than the product. So this says plainly what
+ * it is and lets them through.
+ *
+ * It renders only when NEXT_PUBLIC_DEMO_MODE=1, so the student deployment does
+ * not merely hide this button — it ships without one. See lib/demo.ts for what
+ * the flag does and, more importantly, what it does not. */
+function JudgeDoor() {
+  const router = useRouter();
+  if (!DEMO_ENABLED) return null;
+
+  return (
+    <div className={s.judge}>
+      <p className={s.judgeLabel}>Reviewing this project?</p>
+      <p className={s.note}>
+        Accounts are limited to {CAMPUS_DOMAIN} addresses, so there is no account we can give you. Open the
+        portal without one — the full index, matching, calendar and tracker, with anything you save kept in
+        this browser only.
+      </p>
+      <Button
+        variant="secondary"
+        block
+        onClick={() => {
+          enterDemo();
+          router.push("/");
+        }}
+      >
+        I am judging — open without an account
+      </Button>
+    </div>
   );
 }
 

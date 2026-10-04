@@ -1,0 +1,136 @@
+/* "Before you go". Frosted, so the listing stays visible behind it — the
+   question is ABOUT that listing, and replacing it with a solid panel would
+   remove the thing being asked about. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--bg-app) 68%, transparent);
+  /* No hand-written -webkit- twin: Lightning CSS reads the pair as "handled"
+     and emits only the prefixed property, which Firefox does not implement.
+     Left alone, the bundler prefixes it correctly for every target. */
+  backdrop-filter: blur(16px) saturate(120%);
+  animation: fadeIn 180ms var(--ease) both;
+}
+
+.dialog {
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  /* Opaque: a translucent panel over a blurred ground makes a date input
+     genuinely hard to read, which defeats the point of asking. */
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-modal);
+  animation: riseIn 220ms var(--ease) both;
+}
+
+.title { font-size: 18px; font-weight: 650; color: var(--text-primary); }
+.sub { font-size: 13px; color: var(--text-secondary); line-height: 1.45; }
+.question { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-top: var(--space-2); }
+
+.actions { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.primary, .secondary, .chip, .remindLink, .dismiss {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-control);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.primary {
+  justify-content: center;
+  min-height: var(--control-md, 40px);
+  font-weight: 600;
+  color: var(--on-accent, #fff);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+}
+.primary:hover { background: var(--accent-hover, var(--accent)); }
+
+.secondary {
+  justify-content: center;
+  min-height: var(--control-md, 40px);
+  color: var(--text-primary);
+  background: var(--bg-app);
+  border: 1px solid var(--border-default);
+}
+.secondary:hover { border-color: var(--border-strong); background: var(--surface-hover, var(--surface)); }
+
+.remindLink {
+  align-self: flex-start;
+  margin-top: var(--space-1, 4px);
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.remindLink:hover { color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
+
+.quick { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chip {
+  min-height: 32px;
+  padding-inline: var(--space-3);
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-app);
+  border: 1px solid var(--border-default);
+}
+.chip:hover { border-color: var(--border-strong); }
+.chipOn { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #fff); font-weight: 600; }
+
+.dateRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.dateLabel { font-size: 13px; color: var(--text-secondary); }
+.date {
+  min-height: var(--control-md, 40px);
+  padding-inline: var(--space-3);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-app);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  /* Dark mode otherwise renders the native calendar glyph as a black square on
+     a dark field, which looks like a rendering fault rather than a control. */
+  color-scheme: light dark;
+}
+.date:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.note { font-size: 12px; line-height: 1.5; color: var(--text-tertiary); }
+
+.dismiss {
+  align-self: center;
+  justify-content: center;
+  min-height: 32px;
+  padding-inline: var(--space-3);
+  font-size: 13px;
+  color: var(--text-tertiary);
+  background: none;
+  border: 0;
+}
+.dismiss:hover { color: var(--text-primary); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim, .dialog { animation: none; }
+  .primary, .secondary, .chip, .remindLink, .dismiss { transition: none; }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .scrim { background: color-mix(in srgb, var(--bg-app) 96%, transparent); }
+}

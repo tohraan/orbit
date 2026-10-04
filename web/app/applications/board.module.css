@@ -1,0 +1,89 @@
+/* Board view. §53: the status stays secondary to the opportunity, so the
+   columns are plain and the colour budget is spent on the deadline, where it
+   means urgency, rather than on six saturated status blocks. */
+
+.board {
+  display: grid;
+  grid-auto-flow: column;
+  /* Columns keep a real minimum and scroll rather than compressing: a column
+     too narrow to hold a title is not a column. */
+  grid-auto-columns: minmax(248px, 1fr);
+  gap: var(--space-4);
+  overflow-x: auto;
+  padding-bottom: var(--space-3);
+  margin-top: var(--space-4);
+  scroll-snap-type: x proximity;
+}
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.columnHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.columnTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+.columnCount {
+  margin-left: auto;
+  min-width: 20px;
+  padding-inline: 6px;
+  text-align: center;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+  background: var(--surface-active, var(--color-surface-muted));
+  border-radius: var(--radius-full);
+}
+
+.stack { display: flex; flex-direction: column; gap: var(--space-2); min-height: 48px; }
+
+/* Says so, rather than leaving a void that reads as a loading failure. */
+.empty {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: var(--space-3);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-nested);
+  text-align: center;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-nested);
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+.card:hover { border-color: var(--border-default); background: var(--surface-raised, var(--surface)); }
+
+.cardLink { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cardTitle { font-size: 13px; font-weight: 600; line-height: 1.35; color: var(--text-primary); }
+.cardMeta { font-size: 11px; color: var(--text-tertiary); }
+
+.cardFoot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+
+@media (max-width: 719px) {
+  /* One column at a time, swiped. Not a different design — the same columns,
+     sized so a card is still readable at 360px. */
+  .board { grid-auto-columns: minmax(228px, 82vw); scroll-snap-type: x mandatory; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+  .board { scroll-snap-type: none; }
+}

@@ -22,6 +22,7 @@ import { AuthProvider } from "@/lib/auth";
 import { GateProvider } from "@/lib/gate";
 import { ConsentBanner, SessionNotice } from "../consent/Consent";
 import { AuthWall } from "../auth/AuthWall";
+import { DemoBanner } from "../auth/DemoBanner";
 import { OnboardingOverlay } from "../auth/Onboarding";
 
 /* Routes that get the page and nothing else — no rail, no header, no trays.
@@ -36,6 +37,16 @@ import { OnboardingOverlay } from "../auth/Onboarding";
  * It is a prefix list because /account is one route today and the shape is the
  * same for any other screen whose whole job is to get you a session. */
 const BARE = ["/account"];
+
+/* Routes that take the whole width the rail leaves, rather than the reading
+ * container.
+ *
+ * The container exists for PROSE: a measure that stays readable. Explore is a
+ * grid of cards, and a grid does not get harder to read when it is wider — it
+ * gets more cards per row, which is the entire job of that screen. Capping it
+ * left two columns of empty gutter on a desktop and pushed the fourth card to
+ * a second scroll. Everything else keeps the container. */
+const WIDE = ["/explore"];
 
 export function AppShell({ children }: { children: ReactNode }) {
   /* ⌘K / Ctrl-K lives at the shell, so the shortcut works on every screen and
@@ -68,13 +79,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className={s.main}>
           <Header />
           <MobileHeader />
-          <main className={s.page} id="main">
+          <main className={[s.page, WIDE.some((p) => pathname === p) ? s.pageWide : null].filter(Boolean).join(" ")} id="main">
             <AuthWall>{children}</AuthWall>
           </main>
         </div>
         <CompareTray />
         <MobileNav />
         <CommandPalette open={open} onClose={() => setOpen(false)} />
+        <DemoBanner />
         <SessionNotice />
         <ConsentBanner />
         <OnboardingOverlay />

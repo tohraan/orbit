@@ -24,11 +24,17 @@ export const PRIMARY_NAV: NavItem[] = [
    * sits at the end of the primary group — reached often, but never the thing
    * you came to the portal for. */
   { href: "/dossier", label: "Dossier", icon: "file" },
-];
-
-export const SECONDARY_NAV: NavItem[] = [
+  /* Compare sat in a group of its own below a rule, which read as a different
+     CLASS of thing — a setting, or a tool belonging to someone else. It is a
+     way of looking at the index, exactly like Saved and Deadlines, so it
+     belongs in the same group as them. */
   { href: "/compare", label: "Compare", icon: "compare", count: "compare" },
 ];
+
+/** Kept empty rather than deleted: the rail and the bottom bar both read it,
+ *  and a future tool group should land here rather than at the end of the
+ *  primary list. */
+export const SECONDARY_NAV: NavItem[] = [];
 
 export const FOOTER_NAV: NavItem[] = [
   { href: "/profile", label: "Profile", icon: "user", mobile: true },

@@ -16,6 +16,7 @@ import { DeadlineIndicator, FundingIndicator, LevelChips, LocationIndicator } fr
 import { Money } from "@/components/opportunities/Money";
 import { CompareButton, SaveButton, TrackControl } from "@/components/opportunities/Actions";
 import { Button, ButtonLink, ExternalButton } from "@/components/ui/Button";
+import { ExitPrompt } from "@/components/opportunities/ExitPrompt";
 import { Chip } from "@/components/ui/Chip";
 import { ScanFacts, ScanText } from "@/components/opportunities/ScanText";
 import { ErrorState } from "@/components/feedback/States";
@@ -74,6 +75,12 @@ export function DetailScreen({ id }: { id: string }) {
 
   return (
     <>
+      {/* Asked once, when a student is leaving this listing — after they have
+          opened the apply link and come back, or on a desktop exit intent. The
+          tracker is only as true as what someone remembers to tell it, and
+          this is the one moment they reliably know the answer. */}
+      <ExitPrompt id={o.id} title={o.title} applyHref={applyHref} />
+
       {/* §48: the breadcrumb is the header's (components/layout/Header.tsx);
           the hero carries the title, so there is no second page heading. */}
       <div className={s.layout}>

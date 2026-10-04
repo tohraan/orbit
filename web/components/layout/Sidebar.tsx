@@ -73,13 +73,19 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className={s.navRule} />
-
-      <nav className={s.navGroup} aria-label="Tools">
-        {SECONDARY_NAV.map((item) => (
-          <Row key={item.href} item={item} counts={counts} />
-        ))}
-      </nav>
+      {/* Rendered only when there is something in it. An empty group still
+          drew its rules, which left two dividers stacked against each other
+          with nothing between them. */}
+      {SECONDARY_NAV.length ? (
+        <>
+          <div className={s.navRule} />
+          <nav className={s.navGroup} aria-label="Tools">
+            {SECONDARY_NAV.map((item) => (
+              <Row key={item.href} item={item} counts={counts} />
+            ))}
+          </nav>
+        </>
+      ) : null}
 
       <div className={s.navRule} />
 

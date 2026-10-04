@@ -338,19 +338,27 @@ export function Header() {
 
       <span className={s.headerDivider} aria-hidden="true" />
 
-      <nav className={s.crumbs} aria-label="Breadcrumb">
-        {pathname.startsWith("/opportunity/") ? (
-          <>
-            <Link href="/explore" className={s.crumb}>
-              Explore
-            </Link>
-            <span className={s.crumbSep} aria-hidden="true">
-              <Icon name="chevron-right" size={14} />
-            </span>
-          </>
-        ) : null}
-        <span className={`${s.crumb} ${s.crumbHere}`}>{here}</span>
-      </nav>
+      {/* The current page's NAME is not shown here.
+          It said "Home" directly above a screen whose own heading said the
+          same thing, and "Explore" above a page titled "Find opportunities
+          that match your goals" - a label repeating what the eye has already
+          read, costing a slot in the one bar visible on every screen. The rail
+          already marks where you are.
+
+          What survives is the one case where the crumb is NAVIGATION rather
+          than a label: a listing is reached FROM the index, so it keeps a real
+          link back to it. */}
+      {pathname.startsWith("/opportunity/") ? (
+        <nav className={s.crumbs} aria-label="Breadcrumb">
+          <Link href="/explore" className={s.crumb}>
+            Explore
+          </Link>
+          <span className={s.crumbSep} aria-hidden="true">
+            <Icon name="chevron-right" size={14} />
+          </span>
+          <span className={`${s.crumb} ${s.crumbHere}`}>{here}</span>
+        </nav>
+      ) : null}
 
       <span className={s.headerSpacer} />
 

@@ -34,8 +34,67 @@ function plain(html) {
  * immediately followed by an <h3> no longer yields an empty body.
  * Nested lower-rank headings are kept inline as part of the body text.
  */
+/* Remove everything that is not this page's own prose, then section what is
+ * left.
+ *
+ * WHY THIS EXISTS. sections() used to run over the entire document, and an
+ * opportunitiescircle listing carries SIXTEEN <article> elements: all of them
+ * related-post cards. Every heading inside them was treated as a section of
+ * the page being parsed, so one post's "How to Apply" became another post's
+ * instructions.
+ *
+ * Measured on 2026-10-04, before the fix: of 135 stored rows with a
+ * how_to_apply, only 48 were distinct, and 78 carried the SAME text — the
+ * Stanford Venture Fellowship's application steps — on listings for unrelated
+ * scholarships. A student reading how to apply was reading the wrong
+ * programme's instructions 58% of the time.
+ *
+ * SUBTRACTIVE, NOT SELECTIVE, and that distinction cost a round to learn. The
+ * first attempt picked the largest <article> as the post body, which is how
+ * most WordPress themes are built. Elementor is not most themes: the body
+ * lives in widget <div>s and the only <article> elements on the page are the
+ * cards. Selecting one kept 0.2% of the document and found no sections at all.
+ * So nothing is selected — known chrome and known card markup are removed, and
+ * whatever remains is the page.
+ *
+ * For the same reason "widget" is NOT in the class denylist, tempting as it
+ * reads: Elementor names every content block elementor-widget-*, so denying it
+ * deletes the article itself.
+ */
+function mainContent(html) {
+  let h = String(html || '');
+
+  // Chrome that never contains the listing's own prose.
+  h = h.replace(/<(nav|aside|footer|header|form|noscript|script|style)\b[\s\S]*?<\/\1>/gi, ' ');
+
+  // Post CARDS: a teaser for a different opportunity, carrying its headings.
+  // Matched on the markup grid/loop builders emit rather than on a site's
+  // bespoke class names, so this is not specific to one theme.
+  h = h.replace(
+    /<article\b[^>]*\bclass\s*=\s*["'][^"']*\b(?:grid-item|post-loop|elementor-post|post-card|entry-card)\b[^"']*["'][\s\S]*?<\/article>/gi,
+    ' ');
+
+  // Related / recommended / comment blocks named by class or id.
+  h = h.replace(
+    /<(section|div|ul)\b[^>]*\b(?:class|id)\s*=\s*["'][^"']*\b(?:related|recommend|popular|trending|also-like|you-may|more-from|comments?|post-navigation|nav-links)\b[^"']*["'][\s\S]*?<\/\1>/gi,
+    ' ');
+
+  /* A strip that removed nearly everything has misread the page, so the
+   * original is returned instead: parsing a document with some noise in it
+   * beats parsing an empty string.
+   *
+   * The test is PROPORTIONAL, and the first version was not. A flat "keep the
+   * original under 1000 characters" fired on every small document — including
+   * a fixture that was nothing BUT a card, where stripping correctly left
+   * almost nothing and the guard then handed the card straight back. Only a
+   * big page that collapsed to a sliver indicates a misread. */
+  const src = String(html || '');
+  if (src.length > 4000 && h.length < src.length * 0.02) return src;
+  return h;
+}
+
 function sections(html) {
-  const h = String(html || '');
+  const h = mainContent(html);
   const marks = [];
   const re = /<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
   let m;
@@ -56,12 +115,24 @@ function sections(html) {
   }).filter(s => s.heading);
 }
 
-/** First section whose heading matches any keyword; longest body wins on ties. */
+/* First section whose heading matches any keyword, IN DOCUMENT ORDER.
+ *
+ * It used to return the longest match, which is what let a foreign block win:
+ * when a page carried both its own "How to Apply" and a bigger one from a
+ * related post, the bigger one was chosen every time. Document order is the
+ * better rule because a page states its own business before it advertises
+ * anything else — the content is above the recommendations, always.
+ *
+ * mainContent() should now remove those blocks before this ever runs. This is
+ * the second line of defence, and it is kept deliberately: the class names a
+ * site uses for its related-post markup are not a contract, and the day one
+ * changes, the ordering rule still returns the page's own section rather than
+ * silently preferring a stranger's.
+ */
 function pickSection(secs, keywords, minLen = 25) {
-  const hits = secs.filter(s =>
+  const hit = secs.find(s =>
     keywords.some(k => s.heading.toLowerCase().includes(k)) && s.text.length >= minLen);
-  if (!hits.length) return '';
-  return hits.sort((a, b) => b.text.length - a.text.length)[0].text;
+  return hit ? hit.text : '';
 }
 
 /** "October 15, 2026" | "15 October 2026" | "2026-10-15" -> "2026-10-15" */

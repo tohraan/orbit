@@ -33,6 +33,21 @@
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: var(--s-6);
   align-items: start;
+  /* DENSE PACKING. Boxes are sized by importance (§24), so their spans do not
+     tile the 12 columns evenly — a span-7 next to a span-4 leaves one column
+     empty, and the default placement algorithm never backfills it: once the
+     cursor has moved past a hole, a later box that WOULD fit is pushed to the
+     next row and the hole stays open for the life of the page.
+
+     `dense` lets a later, narrower box move up into that hole. The cost is
+     that visual order can diverge from DOM order, which matters when the two
+     carry meaning — here they do not: every box is independently titled and
+     independently reachable, and nothing reads as a sequence. Tab and screen
+     reader order follow the DOM regardless, so the reading order is unchanged.
+
+     This is also what makes an expanding box behave: when one grows, the boxes
+     around it reflow and backfill rather than leaving the gap it vacated. */
+  grid-auto-flow: row dense;
 }
 
 /* §24: bento sizing follows content importance, never a wish to fill space.

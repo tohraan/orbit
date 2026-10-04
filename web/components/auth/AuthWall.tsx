@@ -27,17 +27,23 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { useDemo } from "@/lib/demo";
 
 /** Routes that must work without a session. */
 const OPEN = ["/account"];
 
 export function AuthWall({ children }: { children: React.ReactNode }) {
   const { status, configured } = useAuth();
+  const { demo, ready: demoReady } = useDemo();
   const pathname = usePathname();
   const router = useRouter();
 
   const open = OPEN.some((p) => pathname.startsWith(p));
-  const blocked = configured && status === "signed-out" && !open;
+  /* JUDGE MODE is a fourth state alongside the three above (lib/demo.ts): a
+   * reviewer with no campus address is let past this wall without a session.
+   * It opens route access only — every row-level security policy still applies,
+   * and with no `auth.uid()` a demo visitor can read no student's data. */
+  const blocked = configured && status === "signed-out" && !open && !demo;
 
   useEffect(() => {
     if (!blocked) return;
@@ -48,8 +54,11 @@ export function AuthWall({ children }: { children: React.ReactNode }) {
   }, [blocked, pathname, router]);
 
   /* Still resolving, or mid-redirect: render nothing rather than a flash of
-   * either the app or the wall. */
-  if (configured && status === "loading") return <Pending />;
+   * either the app or the wall. `demoReady` joins the session here for the
+   * same reason: until the flag has been read off sessionStorage, "not in
+   * demo mode" and "do not know yet" look identical, and acting on the second
+   * as if it were the first bounces a judge to /account mid-visit. */
+  if (configured && (status === "loading" || !demoReady)) return <Pending />;
   if (blocked) return <Pending />;
 
   return <>{children}</>;
