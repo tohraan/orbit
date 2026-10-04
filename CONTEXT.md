@@ -84,6 +84,32 @@ the portal on their own.
   and therefore closed, while the open machine-readable layer is funder-facing
   and therefore institutional. Read it before adding a source.
 
+- **Rover, the agent chat (`/rover`), added 2026-10-04.** A conversational
+  discovery layer over the same index the rest of the API serves: it qualifies
+  in conversation (one question at a time, not a questionnaire), searches
+  through `@rof/core`'s own `filter()`/`sort()`, and answers in the portal's
+  `OpportunityCard`. Four read-only tools, a manual streaming agent loop, and
+  server-sent events. `packages/server/src/rover/`, mounted at
+  `POST /api/rover` on both deployments; the screen is `web/app/rover/`.
+  **`OPENROUTER_API_KEY` is optional** — without it the endpoint answers 503 and
+  the screen says so, and nothing else in the portal changes. 67 assertions
+  across `tests/rover.test.mjs` (27 — the tools, against the real index),
+  `tests/rover-loop.test.mjs` (32 — the loop, the budget and the SSE wire,
+  against a fake OpenRouter) and `tests/rover-textgate.test.mjs` (8).
+
+- **The model is OpenRouter, not Anthropic, and that choice shapes the code.**
+  The transport is `rover/openrouter.ts` — plain fetch against the
+  chat-completions shape, no SDK. The default model is
+  `nvidia/nemotron-3-super-120b-a12b:free`, overridable with `ROVER_MODEL`. A
+  free OpenRouter key is **one shared bucket of 50 model requests per day for
+  the whole portal**, and one conversational turn spends two to four of them,
+  so the four rate-limiting layers in that file are load-bearing rather than
+  courtesy guards. Two consequences worth knowing before touching the prompt:
+  the free model is far weaker at following prose instructions than Opus was,
+  which is why the prompt now states limits as counted prohibitions with
+  worked counter-examples; and `rover/textgate.ts` exists because this class
+  of model sometimes answers by writing its tool call out as text.
+
 **NOT done yet — do not assume otherwise:**
 1. **W01 has never run inside n8n.** It has not been imported, because there is
    still no `N8N_API_KEY`. The local harness exercises the parsing and planning
@@ -102,6 +128,29 @@ the portal on their own.
 5. **W13 (student matching + digest) does not exist.** Tables are there, logic is not.
 6. **The portal integration is gone** with `W12`; `v_portal_feed` still exists.
 7. `opportunity_sources` cross-source dedupe is written but never exercised.
+8. **Rover's prompt is tuned against the real model, but only over four
+   scenarios.** On 2026-10-04 it was run live against
+   `nvidia/nemotron-3-super-120b-a12b:free` with the key in `web/.env.local`,
+   and the prompt was rewritten off what came back — each rule in
+   `prompt.ts` that reads as a counted prohibition with a "Not: … Yes: …"
+   example is there because the prose version of it failed live. Fixed that
+   way: re-asking the same question, menu questions ("scholarships,
+   internships, research, or something else?"), searching and then asking
+   instead of recommending, asking before searching on an already-complete
+   request, `q` stacked on three filters until the result was empty, an
+   `index_vocabulary` warm-up call, dropping half a two-country request,
+   asking a question after an empty search instead of relaxing it, brochure
+   closers, and inventing what a scholarship covers (a search row carries a
+   funding BUCKET; `toSummary` strips `benefits` and `amounts`).
+
+   What is still unproven: the four openers in `RoverScreen.tsx` are what it
+   was tested on, so a conversation that goes sideways — a student arguing,
+   switching topic mid-flow, or asking something the index cannot answer — has
+   not been watched. Known remaining inefficiency: it sometimes spends two
+   `get_opportunity` calls before `recommend` where the prompt says to
+   recommend first, which costs two of the fifty daily requests. Re-read a few
+   exchanges after any prompt edit; `ROVER_MODEL` is the dial to raise if the
+   judgement looks shallow, and a credited key would let it.
 
 ## 3. Architecture
 
@@ -377,6 +426,20 @@ so you can tell which rows need reprocessing.
 6. **Secrets stay in `.env`** (gitignored). `.env.example` lists the keys.
 7. **Dates:** store `date`/`timestamptz`; compare in UTC. Deadlines are dates,
    not timestamps — a deadline has no timezone.
+8. **Rover states nothing a tool did not return.** Every fact it reports — a
+   deadline, an amount, an eligibility rule, a link — comes back through one of
+   the four tools in `packages/server/src/rover/tools.ts`, and every
+   opportunity it shows is a row `recommend` named by id. Adding a fifth tool
+   is fine; letting the prompt answer from the model's own memory is not.
+9. **Both names live in `packages/core/src/identity.ts`.** `APP_NAME` ("Orbit")
+   and `AGENT_NAME` ("Rover") are there rather than in the frontend because the
+   system prompt needs them too. `web/components/layout/brand.ts` re-exports
+   them, so every screen imports from the place it always did.
+10. **Keep Rover's prompt split in two.** `DOCTRINE` is frozen and carries the
+    cache breakpoint; the date, the index size and the student's profile go in
+    `situation()` after it. Moving anything per-request into the first block
+    costs a full prompt re-read on every turn and fails nothing loudly —
+    `tests/rover-loop.test.mjs` asserts the split for that reason.
 
 ---
 
@@ -384,6 +447,11 @@ so you can tell which rows need reprocessing.
 
 ```bash
 node tests/parse.test.mjs          # parser unit + live-fixture tests (21 assertions)
+# Rover (the agent chat). The two flags let plain node load TypeScript that
+# imports across packages; see scripts/ts-resolve.mjs for why.
+node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover.test.mjs
+node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-loop.test.mjs
+node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-textgate.test.mjs
 node tests/normalize.test.mjs      # normalisers vs cached API payloads (27 assertions)
 python3 n8n/build.py --check       # workflows match source
 ./scripts/probe-sources.sh         # 15 endpoints, asserts records not just 200

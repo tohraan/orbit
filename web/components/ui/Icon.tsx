@@ -49,6 +49,7 @@ export type IconName =
   | "file"
   | "shield"
   | "sparkle"
+  | "rover"
   | "bell"
   | "school";
 
@@ -189,6 +190,21 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
   shield: <path d="M12 3.6l7 2.6v5.4c0 4-2.9 7.4-7 8.8-4.1-1.4-7-4.8-7-8.8V6.2z" />,
   sparkle: <path d="M12 4l1.7 4.6L18.4 10l-4.7 1.4L12 16l-1.7-4.6L5.6 10l4.7-1.4z" />,
+  /* The mascot. A rover reads at 20px from four things and no more: a body, a
+     mast, two wheels, and eyes — the eyes are what make it a character rather
+     than a machine, and they are drawn the way every other dot in this file is
+     (a zero-length stroke with a round cap). */
+  rover: (
+    <>
+      <path d="M12 4.2v2.9" />
+      <path d="M12 3.4v.2" />
+      <rect x="4.4" y="7.8" width="15.2" height="7.4" rx="2.2" />
+      <path d="M9.6 11.4v.2M14.4 11.4v.2" />
+      <circle cx="8.4" cy="18.4" r="1.9" />
+      <circle cx="15.6" cy="18.4" r="1.9" />
+      <path d="M10.3 18.4h3.4" />
+    </>
+  ),
   bell: (
     <>
       <path d="M18 9a6 6 0 0 0-12 0c0 5-2 6-2 6h16s-2-1-2-6z" />

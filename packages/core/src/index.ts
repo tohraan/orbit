@@ -4,6 +4,7 @@
  * projects. Everything they must agree on lives here, so a field renamed in
  * the projection cannot silently diverge from the type the browser renders. */
 
+export * from "./identity";
 export * from "./types";
 export * from "./format";
 export * from "./fx";

@@ -8,6 +8,7 @@
     "./handlers/*": "./src/handlers/*.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@rof/core": "0.1.0",
     "server-only": "^0.0.1"
   },

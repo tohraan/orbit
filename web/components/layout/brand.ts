@@ -1,11 +1,11 @@
-/* The product's name, in one place.
+/* The product's name, in one place — which is now packages/core/identity.ts,
+ * because the server needs the same strings: Rover's system prompt tells it
+ * what it is called and which portal it lives in, and a second copy of a name
+ * is how a mascot ends up called Rover in the sidebar and "the assistant" in
+ * its own opening line.
  *
- * "Orbit" — two syllables, says what the thing does (everything a student is
- * circling: deadlines, applications, places to go), and sits with the rocket
- * in the BITS emblem. Change the two strings here and it is renamed
- * everywhere; nothing else hard-codes it.
+ * Re-exported from here so every screen keeps importing it from the place it
+ * always did. Rename in core; nothing else hard-codes either name.
  */
-export const APP_NAME = "Orbit";
-export const APP_TAGLINE = "BITS Pilani Dubai";
-export const APP_DESCRIPTION =
-  "Funded research opportunities, scholarships, fellowships and internships a BITS Pilani Dubai student can apply to.";
+
+export { APP_NAME, APP_TAGLINE, APP_DESCRIPTION, AGENT_NAME, AGENT_BLURB } from "@rof/core";

@@ -19,6 +19,7 @@ import { Icon, type IconName } from "../ui/Icon";
 import { didYouMean, subsequenceScore } from "./fuzzy";
 import { api } from "@/lib/api-base";
 import type { OpportunitySummary } from "@rof/core";
+import { AGENT_NAME } from "../layout/brand";
 
 type Entry = {
   id: string;
@@ -63,6 +64,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     () => [
       { id: "home", title: "Home", sub: "Your dashboard", icon: "home", group: "Go to", keywords: "dashboard overview start", run: () => go("/") },
       { id: "explore", title: "Explore", sub: "Browse every opportunity", icon: "explore", group: "Go to", keywords: "search browse find scholarships fellowships internships grants", run: () => go("/explore") },
+      { id: "rover", title: AGENT_NAME, sub: "Ask for what you want in your own words", icon: "rover", group: "Go to", keywords: "chat agent ask assistant advisor recommend help rover", run: () => go("/rover") },
       { id: "deadlines", title: "Deadlines", sub: "Timeline and closing dates", icon: "calendar", group: "Go to", keywords: "timeline closing dates calendar urgent", run: () => go("/deadlines") },
       { id: "saved", title: "Saved", sub: "Opportunities you kept", icon: "bookmark", group: "Go to", keywords: "bookmarks favourites shortlist", run: () => go("/saved") },
       { id: "apps", title: "Applications", sub: "What you are tracking", icon: "applications", group: "Go to", keywords: "tracker status applied progress", run: () => go("/applications") },

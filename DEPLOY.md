@@ -68,17 +68,29 @@ Environment variables:
 | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
 | `SUPABASE_SERVICE_KEY` | the service role key |
 | `ALLOWED_ORIGINS` | the frontend's origin, comma-separated, no trailing slash |
+| `OPENROUTER_API_KEY` | optional — switches Rover on (see below) |
+| `ROVER_MODEL` | optional — overrides `nvidia/nemotron-3-super-120b-a12b:free` |
 
 `ALLOWED_ORIGINS` is the CORS allowlist and is enforced in `api/proxy.ts`. In
 production it is the *whole* list — localhost is only added in development. A
 Vercel preview deployment has a different hostname on every build, so either
 add the preview URL or point previews of the frontend at the production API.
 
+**`OPENROUTER_API_KEY` goes on whichever project serves `/api`.** That is this
+one when `NEXT_PUBLIC_API_BASE` is set, because the browser then sends every
+data request — Rover's included — straight here. In a single-deployment setup
+it goes on the frontend instead. It is never prefixed `NEXT_PUBLIC_`.
+
+Leaving it off is a supported configuration, not a broken one: `/api/rover`
+answers 503 with a sentence, the Rover screen says it is not switched on, and
+every other screen is unaffected. Rover is the only feature in the product that
+costs money per use, so switching it on is a deliberate act.
+
 Smoke test once it is up:
 
 ```bash
 curl https://<api>.vercel.app/
-# {"status":"ok","origin":"live","openCalls":431,...}
+# {"status":"ok","origin":"live","openCalls":431,"rover":"on",...}
 ```
 
 `origin` is the thing to read. `live` means it is reading Supabase; `snapshot`
@@ -100,7 +112,9 @@ Environment variables:
 |---|---|
 | `NEXT_PUBLIC_API_BASE` | `https://<api>.vercel.app` |
 
-That is the only one. No Supabase credentials belong on this project.
+That is the only one. No Supabase credentials belong on this project, and no
+Anthropic key either — with `NEXT_PUBLIC_API_BASE` set, `/api/rover` is served
+by the API project and the key lives there.
 
 `NEXT_PUBLIC_` is correct here and nowhere else: it is a public URL the
 browser has to know. It also widens the Content-Security-Policy's
