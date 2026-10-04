@@ -68,14 +68,27 @@
      the 72 rules that reference them. At 17.4:1 on white it clears WCAG
      1.4.11 by a wide margin, so nothing was traded for the look.
 
-     DARK KEEPS TWO STEPS, for one reason. The dark rule is #303034, as
-     previewed, and against #0b0b0c that is 1.5:1 — fine for a divider, which
-     1.4.11 exempts as decoration, and not fine for the outline of an input
-     or a button, which it does not. So --border-subtle is the previewed
-     #303034 and --border-default stays #5d5d61, the point at which a control
-     edge reaches 3:1. On a near-black ground the two are nearly
-     indistinguishable; on a form they are the difference between a visible
-     field and a guessed one.
+     DARK IS THE SAME RULE, INVERTED. A divider should be as present on black
+     as it is on white, so the dark rule is #f0f0f4 — 17.31:1 against the
+     #0b0b0c surface, against light's 17.38:1 on white. The same near-white
+     line, the same weight, the other way round. That also dissolves the
+     compromise this block used to describe: a light rule on a dark ground
+     clears WCAG 1.4.11 outright, so all three steps can hold one value in
+     dark exactly as they do in light.
+
+     THE DARK ACCENT IS THE CREST YELLOW, and it is not a preference. Against
+     a black page the crest navy #282888 measures 1.75:1 and #1b1b63 measures
+     1.38:1 — a blue accent on this ground is not dark, it is invisible, and
+     lifting it until it reads is how the old palette arrived at a lilac
+     #8fa0f0 nobody asked for. Yellow is 15.89:1 on black and is the crest's
+     own second colour, so dark mode is black, white rule, yellow action,
+     red deadline, and no fourth hue anywhere.
+
+     --warning-fg moves to #ff9d3d in dark for the same reason. "Closing
+     soon" was #ebc05e, which against a yellow ACTION colour is a 1.3:1
+     separation — the eye would read a warning as a button. Orange holds
+     1.57:1 against the accent while still not being the red of a deadline
+     that has arrived.
      =================================================================== */
 
   --bg-app: #ffffff;
@@ -364,8 +377,9 @@
     color-scheme: dark;
 
     /* Canonical dark palette. Only tokens are redefined — no component rule
-       below this point knows which theme it is in. The accent is lifted
-       rather than reused: #282888 on a near-black page is unreadable. */
+       below this point knows which theme it is in. The accent is the crest
+       YELLOW, not a lifted navy: #282888 on this page measures 1.75:1, and
+       lifting a blue until it reads is how the old palette got its lilac. */
     /* Solid black, asked for by name. It was #0e0f12 here, which is a very
        dark grey: against a true-black phone bezel or a black terminal it reads
        as a lifted panel rather than as the page. The surfaces above it
@@ -382,9 +396,9 @@
     --surface-hover: #1a1a1d;
     --surface-active: #232327;
 
-    --border-subtle: #303034;
-    --border-default: #5d5d61;
-    --border-strong: #6a6a72;
+    --border-subtle: #f0f0f4;
+    --border-default: #f0f0f4;
+    --border-strong: #f0f0f4;
 
     --text-primary: #ffffff;
     --text-secondary: #c2c2c6;
@@ -396,12 +410,12 @@
        as purple, not as this institution's blue. This is the navy pulled
        toward the logo's own sky blue, at hue 216: unmistakably blue, and
        still the emblem's family. White on it is 5.6:1. */
-    --accent: #8fa0f0;
-    --accent-hover: color-mix(in srgb, var(--accent) 88%, white);
-    --accent-active: color-mix(in srgb, var(--accent) 76%, white);
+    --accent: #f8e070;
+    --accent-hover: color-mix(in srgb, var(--accent) 86%, black);
+    --accent-active: color-mix(in srgb, var(--accent) 74%, black);
     --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
     --accent-border: color-mix(in srgb, var(--accent) 40%, var(--surface-raised));
-    --accent-text: #a9b6f5;
+    --accent-text: #f8e070;
     --on-accent: #000000;
 
     --success-fg: #5bd39a;
@@ -409,7 +423,7 @@
     --success-border: #1d4433;
     /* The logo yellow itself — 13.7:1 on the dark surface — and the logo red
        lifted just far enough to clear AA at 6.5:1. */
-    --warning-fg: #ebc05e;
+    --warning-fg: #ff9d3d;
     --warning-bg: #221c0c;
     --warning-border: #46381a;
     --error-fg: #ff6b5b;
@@ -441,8 +455,8 @@
   color-scheme: dark;
 
   /* Canonical dark palette. Only tokens are redefined — no component rule
-     below this point knows which theme it is in. The accent is lifted
-     rather than reused: #282888 on a near-black page is unreadable. */
+     below this point knows which theme it is in. The accent is the crest
+     YELLOW, not a lifted navy — see the note in the media-query block. */
   /* Same values as the media-query block above; see the note there. */
   --bg-app: #000000;
   --surface: #0b0b0c;
@@ -451,9 +465,9 @@
   --surface-hover: #1a1a1d;
   --surface-active: #232327;
 
-  --border-subtle: #303034;
-  --border-default: #5d5d61;
-  --border-strong: #6a6a72;
+  --border-subtle: #f0f0f4;
+  --border-default: #f0f0f4;
+  --border-strong: #f0f0f4;
 
   --text-primary: #ffffff;
   --text-secondary: #c2c2c6;
@@ -462,12 +476,12 @@
 
   /* See the note in the OS-preference block: hue 216, not the navy's 240,
      because a lifted 240 reads purple on a dark page. */
-  --accent: #8fa0f0;
-  --accent-hover: color-mix(in srgb, var(--accent) 88%, white);
-  --accent-active: color-mix(in srgb, var(--accent) 76%, white);
+  --accent: #f8e070;
+  --accent-hover: color-mix(in srgb, var(--accent) 86%, black);
+  --accent-active: color-mix(in srgb, var(--accent) 74%, black);
   --accent-subtle: color-mix(in srgb, var(--accent) 14%, var(--surface-raised));
   --accent-border: color-mix(in srgb, var(--accent) 40%, var(--surface-raised));
-  --accent-text: #a9b6f5;
+  --accent-text: #f8e070;
   --on-accent: #000000;
 
   --success-fg: #5bd39a;
@@ -475,7 +489,7 @@
   --success-border: #1d4433;
   /* The logo yellow itself — 13.7:1 on the dark surface — and the logo red
      lifted just far enough to clear AA at 6.5:1. */
-  --warning-fg: #ebc05e;
+  --warning-fg: #ff9d3d;
   --warning-bg: #221c0c;
   --warning-border: #46381a;
   --error-fg: #ff6b5b;
