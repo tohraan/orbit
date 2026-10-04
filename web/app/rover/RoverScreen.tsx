@@ -32,6 +32,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/Button";
 import { OpportunityCard } from "@/components/opportunities/OpportunityCard";
 import { ErrorState } from "@/components/feedback/States";
+import { PageHead } from "@/components/layout/AppShell";
 import { AGENT_NAME, APP_NAME } from "@/components/layout/brand";
 import type { OpportunitySummary } from "@rof/core";
 import { useProfile } from "@/lib/data";
@@ -277,20 +278,22 @@ export function RoverScreen() {
 
   return (
     <div className={s.screen}>
-      <header className={s.head}>
-        <span className={s.mark} aria-hidden="true">
-          <Icon name="rover" size={22} />
-        </span>
-        <div className={s.headText}>
-          <h1 className={s.name}>{AGENT_NAME}</h1>
-          <p className={s.role}>Reads the whole {APP_NAME} index and comes back with what fits you</p>
-        </div>
-        {!empty ? (
-          <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
-            New conversation
-          </Button>
-        ) : null}
-      </header>
+      {/* The portal's own page head, not a bespoke one. Rover is a screen of
+          Orbit in the same sense Explore and Compare are — same eyebrow, same
+          title, same place for the page's one action — and a chat that drew
+          its own header read as a separate product bolted onto the side. */}
+      <PageHead
+        eyebrow="Ask"
+        title={AGENT_NAME}
+        description={`Reads the whole ${APP_NAME} index and comes back with what fits you`}
+        actions={
+          !empty ? (
+            <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
+              New conversation
+            </Button>
+          ) : null
+        }
+      />
 
       {/* A screen reader gets ONE announcement per answer, not one per token.
           aria-live on the transcript itself re-announced the whole growing

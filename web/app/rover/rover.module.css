@@ -16,32 +16,12 @@
   min-height: calc(100dvh - var(--header-h) - var(--s-8) - var(--s-16));
 }
 
-/* --- who you are talking to ----------------------------------------------
-   Not the standard PageHead: this screen's subject is a character, so the
-   mark, the name and the one line of role sit together as an identity rather
-   than as an eyebrow over a title. */
-.head {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  padding-bottom: var(--s-5);
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: var(--s-6);
-}
-.mark {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  flex: none;
-  border-radius: var(--radius-full);
-  background: var(--accent-subtle);
-  border: 1px solid var(--accent-border);
-  color: var(--accent-text);
-}
-.headText { min-width: 0; flex: 1; }
-.name { font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.01em; }
-.role { font-size: 13px; line-height: 18px; color: var(--text-tertiary); }
+/* The head is the portal's PageHead, deliberately. An earlier version drew a
+   bespoke identity block here — avatar, name, line of role — on the reasoning
+   that the subject of this screen is a character. It read as a separate
+   product sitting inside Orbit's chrome, which is the opposite of what this
+   screen is for, so the mark, .name and .role rules are gone and the eyebrow,
+   title and action come from AppShell like every other page. */
 
 /* --- the transcript ------------------------------------------------------- */
 .transcript { display: flex; flex-direction: column; gap: var(--s-6); flex: 1; }
