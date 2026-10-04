@@ -72,7 +72,6 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       { id: "compare", title: "Compare", sub: "Two opportunities side by side", icon: "compare", group: "Go to", keywords: "versus side by side difference", run: () => go("/compare") },
       { id: "profile", title: "Profile", sub: "Your details and preferences", icon: "user", group: "Go to", keywords: "account settings preferences me", run: () => go("/profile") },
       { id: "account", title: "Account", sub: "Sign in, sign up, or sign out", icon: "user", group: "Go to", keywords: "login signin signup register logout session", run: () => go("/account") },
-      { id: "admin", title: "College desk", sub: "Staff — add an opportunity", icon: "shield", group: "Go to", keywords: "admin staff publish add manage", run: () => go("/admin") },
 
       /* The count comes from PHASES rather than a number typed here, which is
          how this line came to say "three" while the flow had four steps. */

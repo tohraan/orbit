@@ -1,27 +1,26 @@
-/* The college desk: writes to the index, and the only write path in the app.
+/* Validating and shaping a desk-written listing, on its way into raw_items.
  *
- * SECURITY. Everything else here is read-only against public listings; this is
- * not. A successful call puts a card in front of every student on the portal,
- * so it is gated three ways:
+ * The name is now the only thing left of the old shared-token admin route.
+ * What survives is the part that was never about authentication: turning a
+ * staff member's form into a row the index can hold, with every field checked
+ * here rather than trusted from the browser.
  *
- *   1. A bearer token (ADMIN_TOKEN), compared in constant time. With the
- *      variable unset the endpoint refuses EVERY request rather than running
- *      open — an admin API that is accidentally public is worse than one that
- *      is accidentally broken.
- *   2. Writes are pinned to source_slug = 'college_desk'. The caller cannot
- *      name a source, so this route cannot be used to forge a row attributed
- *      to UKRI or to overwrite a scraped listing.
- *   3. Every field is validated and length-bounded here, not trusted from the
- *      form, because the form is not the only thing that can call this.
+ * Two of the three guards that used to be listed here still apply and still
+ * matter:
  *
- * This is a stopgap and should be read as one. A shared token has no identity
- * behind it: the row records that "staff" added it, not WHO. Real per-user
- * accounts (Supabase Auth restricted to the campus domain) is the next step,
- * and `added_by` is already in the payload so it has somewhere to go.
+ *   1. Writes are pinned to source_slug = 'college_desk'. The caller cannot
+ *      name a source, so this path cannot forge a row attributed to UKRI or
+ *      overwrite a scraped listing.
+ *   2. Every field is validated and length-bounded here, not in the form,
+ *      because the form is not the only thing that can call this.
+ *
+ * The third was a bearer token compared in constant time, and it is gone with
+ * the route it guarded. Authentication is requireStaff() in staff.ts now,
+ * which asks the database who the caller is — the thing a shared string could
+ * never answer, and the reason the desk replaced it.
  */
 
 import "server-only";
-import { timingSafeEqual } from "node:crypto";
 
 export type AdminInput = {
   title: string;
@@ -196,18 +195,10 @@ export function toRow(input: AdminInput, externalId: string) {
   };
 }
 
-/** Constant-time bearer check. Absent or empty ADMIN_TOKEN refuses everything. */
-export function authorised(req: Request): boolean {
-  const expected = process.env.ADMIN_TOKEN ?? "";
-  if (expected.length < 16) return false; // unset, or too weak to be a secret
-  const got = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-  if (got.length !== expected.length) return false;
-  try {
-    return timingSafeEqual(Buffer.from(got), Buffer.from(expected));
-  } catch {
-    return false;
-  }
-}
+/* authorised() lived here: a constant-time bearer check against ADMIN_TOKEN.
+   It went with handlers/admin.ts. Every write now goes through requireStaff()
+   in staff.ts, which asks the database who the caller is instead of whether
+   they hold a shared string — the whole point of the desk replacing it. */
 
 /** Idempotent upsert, per CLAUDE.md: on_conflict + merge-duplicates. */
 export async function writeRow(row: ReturnType<typeof toRow>): Promise<void> {
@@ -231,14 +222,8 @@ export async function writeRow(row: ReturnType<typeof toRow>): Promise<void> {
   if (!res.ok) throw new Error(`supabase write ${res.status}`);
 }
 
-export async function deleteRow(externalId: string): Promise<void> {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY;
-  if (!url || !key) throw new Error("supabase not configured");
-  /* Pinned to college_desk: this route can never delete a scraped listing. */
-  const res = await fetch(
-    `${url.replace(/\/+$/, "")}/rest/v1/raw_items?source_slug=eq.college_desk&external_id=eq.${encodeURIComponent(externalId)}`,
-    { method: "DELETE", headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" },
-  );
-  if (!res.ok) throw new Error(`supabase delete ${res.status}`);
-}
+/* deleteRow() lived here. It was the old screen's "remove", which deleted the
+   raw_items row outright — and W01 would re-upsert it on the next scrape, so a
+   deletion lasted until the scraper next ran and then silently came back. The
+   desk suppresses instead (db/020), which is why that function has no caller
+   left to serve. */

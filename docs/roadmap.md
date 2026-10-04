@@ -99,26 +99,39 @@ and a rendered digest for it.
 
 ---
 
-## Phase 4 — admin review UI
+## Phase 4 — admin review UI — SUPERSEDED, do not build
 
-`v_review_queue` is the data. A single page: title, source link, what the
-classifier doubted, and approve / correct / suppress actions writing back to
-`opportunities.status`. Keep it to one static page against PostgREST; do not
-introduce a framework (PROMPT.md rule 9).
+This described a page over `v_review_queue`, writing back to
+`opportunities.status`. Both are dead ends, and checking before building is
+one query each:
+
+```
+opportunities    0 rows          v_review_queue   0 rows
+raw_items    2274 rows
+```
+
+The product never adopted the `opportunities` table. Listings are projected
+from `raw_items` at read time (`packages/core/src/project.ts`), so the view
+this phase is built on selects from a table nothing writes to and will return
+nothing no matter how long the scraper runs. A page built against it would
+render an empty state for ever.
+
+What the phase actually wanted — staff correcting and hiding listings — exists
+and is deployed: the desk at `admin/`, with corrections as override rows
+(`db/020`) applied at projection time so they survive the next scrape. That is
+the thing to extend, not this.
 
 ---
 
-## Phase 5 — real portal integration
+## Phase 5 — real portal integration — SUPERSEDED, do not build
 
-Replace the Sheet mirror as the interface of record:
-1. Enable RLS on every table.
-2. Grant an anon role `select` on `v_portal_feed` and `v_closing_soon` only.
-3. Give the portal the anon key + the PostgREST query patterns it needs
-   (filter by `degree_levels`, `fields_of_study`, `host_country`, `deadline`;
-   full-text via `search_tsv`).
-4. Document the contract in `docs/portal-api.md`. **Additive changes only** —
-   the view is a published interface.
-5. Keep W12 running as a fallback mirror; it costs nothing and demos well.
+Its first line is "replace the Sheet mirror as the interface of record". There
+is no Sheet mirror: no n8n code node references Sheets, and the portal has read
+from Supabase through `api/` since it was built. The RLS, the anon key and the
+PostgREST query patterns in this phase all landed during that work.
+
+Kept rather than deleted, both of them, because a roadmap that quietly loses
+two phases reads as if they were finished.
 
 ---
 

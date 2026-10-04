@@ -25,8 +25,8 @@
  *
  * CONSEQUENCES, STATED. Anything that genuinely needs a server-side owner is
  * unavailable in demo mode and says so rather than failing: the Dossier's
- * stored files and cross-device sync both need a real account. /admin is NOT
- * opened by this flag — it has its own token (see app/admin/page.tsx) and a
+ * stored files and cross-device sync both need a real account. The desk is NOT
+ * opened by this flag — it is a separate deployment behind a campus sign-in and a
  * demo visitor must not reach the staff desk.
  *
  * TWO SWITCHES, BOTH DELIBERATE.

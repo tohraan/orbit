@@ -272,12 +272,9 @@ function AccountMenu() {
             <Icon name="shield" size={16} />
             Settings
           </Link>
-          {isStaff || !configured ? (
-            <Link href="/admin" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
-              <Icon name="shield" size={16} />
-              College desk
-            </Link>
-          ) : null}
+          {/* The "College desk" row pointed at /admin, the shared-token screen the
+              desk deployment replaced. Staff go to orbit-desk-delta.vercel.app
+              and sign in as themselves; there is nothing here to link to. */}
 
           <div className={s.menuRule} />
 
