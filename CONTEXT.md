@@ -128,8 +128,24 @@ the portal on their own.
 5. **W13 (student matching + digest) does not exist.** Tables are there, logic is not.
 6. **The portal integration is gone** with `W12`; `v_portal_feed` still exists.
 7. `opportunity_sources` cross-source dedupe is written but never exercised.
-8. **Rover's prompt is tuned against the real model, but only over four
-   scenarios.** On 2026-10-04 it was run live against
+8. **Rover is live and tuned against the real model, but only over four
+   scenarios.** Deployed 2026-10-04 to `orbit-api` (which is what the browser
+   reaches, because `NEXT_PUBLIC_API_BASE` is set on `orbit`) with
+   `OPENROUTER_API_KEY` as a Secret in Production and Preview. Verified live:
+   `origin: live`, the CORS header for the frontend origin, and a full turn
+   end to end — one search, three cards, streamed prose.
+
+   **The grounding fix that mattered is structural, not a prompt rule.** Twice
+   on production Rover said a scholarship covered "tuition, stipend and
+   travel" with the prohibition written in the system prompt — once in "what
+   the index does not know", then again as a Not/Yes example in the
+   recommending section. What stopped it was the search and recommend
+   envelopes carrying `funding_covers: "NOT RECORDED"`. A model fills a gap it
+   cannot see and stops filling one the data names, so prefer declaring an
+   absent field over forbidding a sentence. Same lesson as `textgate.ts`:
+   enforce, do not hope.
+
+   Prompt history: On 2026-10-04 it was run live against
    `nvidia/nemotron-3-super-120b-a12b:free` with the key in `web/.env.local`,
    and the prompt was rewritten off what came back — each rule in
    `prompt.ts` that reads as a counted prohibition with a "Not: … Yes: …"

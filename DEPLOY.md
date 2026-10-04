@@ -81,6 +81,23 @@ one when `NEXT_PUBLIC_API_BASE` is set, because the browser then sends every
 data request — Rover's included — straight here. In a single-deployment setup
 it goes on the frontend instead. It is never prefixed `NEXT_PUBLIC_`.
 
+It is set on `orbit-api` as a Secret, in Production and Preview. Preview also
+needs it because `ALLOWED_ORIGINS`, `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`
+are Production-only, so a preview deployment serves the committed snapshot and
+sends no CORS header — a preview can prove the route and the key, never the
+whole path. Smoke-test Rover on production:
+
+```bash
+curl -s -N -X POST https://orbit-api-psi.vercel.app/api/rover \
+  -H 'content-type: application/json' \
+  -H 'origin: https://orbit-ruby-five-16.vercel.app' \
+  -d '{"turns":[{"role":"user","text":"Fully funded master'"'"'s scholarships closing soon"}],"profile":null}'
+```
+
+Expect `status`, `cards`, then `text` frames. `GET /` on the API reports
+`rover.status` and the day's remaining budget, which is the fastest check that
+the key is being read at all.
+
 Leaving it off is a supported configuration, not a broken one: `/api/rover`
 answers 503 with a sentence, the Rover screen says it is not switched on, and
 every other screen is unaffected. Rover is the only feature in the product that
