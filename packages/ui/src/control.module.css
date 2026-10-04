@@ -1,0 +1,133 @@
+/* Buttons, fields, pills and banners — the controls both deployments draw.
+ *
+ * Every number here comes off the scale in @rof/styles rather than being
+ * chosen. The desk's own copies were close but not equal: 38px buttons against
+ * a --control-md of 40, var(--space-7) which the scale does not define (it
+ * jumps 24 → 32, so the whole padding shorthand was invalid and the sign-in
+ * card rendered with none), and font-weight 650 where the type scale tops out
+ * at 600. Close-but-not-equal is exactly the failure a shared file prevents:
+ * nobody notices 38 against 40 in review, and everybody notices it when the
+ * two screens sit side by side.
+ */
+
+/* ------------------------------------------------------------ buttons --- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-md);
+  padding-inline: var(--space-5);
+  border-radius: var(--radius-control);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+.btn:disabled { cursor: not-allowed; }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.primary { background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); }
+.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.primary:disabled { background: var(--surface-sunken); border-color: var(--border-subtle); color: var(--text-disabled); }
+
+.secondary { background: var(--bg-app); color: var(--text-primary); border: 1px solid var(--border-default); }
+.secondary:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--border-strong); }
+.secondary:disabled { color: var(--text-disabled); }
+
+.ghost { background: transparent; color: var(--text-secondary); border: 1px solid transparent; }
+.ghost:hover:not(:disabled) { background: var(--surface-hover); color: var(--text-primary); }
+.ghost:disabled { color: var(--text-disabled); }
+
+.danger { background: transparent; color: var(--error-fg); border: 1px solid var(--error-border); }
+.danger:hover:not(:disabled) { background: var(--error-bg); }
+.danger:disabled { color: var(--text-disabled); border-color: var(--border-subtle); }
+
+/* The small variant, for controls that sit inside a table row. */
+.sm { min-height: var(--control-sm); padding-inline: var(--space-3); font-size: var(--text-micro); }
+
+/* ------------------------------------------------------------- fields --- */
+
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+.label { font-size: var(--text-body-sm); font-weight: 500; color: var(--text-primary); }
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  min-height: var(--control-md);
+  padding: 9px var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  font-size: var(--text-body-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+.input::placeholder, .textarea::placeholder { color: var(--text-disabled); }
+.textarea { min-height: 88px; resize: vertical; line-height: 1.5; }
+.hint { font-size: var(--text-micro); color: var(--text-tertiary); }
+
+/* §108: an invalid field is not communicated by a red border alone — the
+   message is the signal, the border agrees with it. */
+.invalid { border-color: var(--error-border); }
+.fieldError { font-size: var(--text-micro); color: var(--error-fg); }
+
+/* -------------------------------------------------------------- pills --- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-tag);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pillAccent { background: var(--accent-subtle); color: var(--accent-text); }
+.pillError { background: var(--error-bg); color: var(--error-fg); }
+.pillWarning { background: var(--warning-bg); color: var(--warning-fg); }
+.pillSuccess { background: var(--success-bg); color: var(--success-fg); }
+.pillNeutral { background: var(--surface-sunken); color: var(--text-secondary); }
+
+/* ----------------------------------------------------------- banners --- */
+
+.banner {
+  padding: var(--space-3);
+  border-radius: var(--radius-nested);
+  border: 1px solid;
+  font-size: var(--text-body-sm);
+}
+.bannerError { background: var(--error-bg); border-color: var(--error-border); color: var(--error-fg); }
+.bannerSuccess { background: var(--success-bg); border-color: var(--success-border); color: var(--success-fg); }
+.bannerWarning { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning-fg); }
+.bannerInfo { background: var(--accent-subtle); border-color: var(--accent-border); color: var(--accent-text); }
+
+/* ----------------------------------------------------------- spinner --- */
+
+.spinner {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--accent-border);
+  border-top-color: var(--accent);
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  /* The spinner keeps turning: it is the only thing reporting that work is
+     still happening, and a frozen one says the opposite. */
+  .spinner { animation-duration: 1400ms; }
+}

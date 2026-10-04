@@ -19,7 +19,8 @@
     "pdfjs-dist": "^4.10.38",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "@rof/styles": "*"
+    "@rof/styles": "*",
+    "@rof/ui": "*"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

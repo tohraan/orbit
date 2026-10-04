@@ -24,12 +24,24 @@ Non-negotiables:
   drift) and apply with `supabase db push --linked`. It starts at `016` on
   purpose: `000`–`015` predate the CLI and are absent from the remote history,
   so generating them would make `db push` re-run them, `003_seed.sql` included.
+- **Shared UI lives in `packages/ui` (`@rof/ui`), imported by both apps.** The
+  rail, buttons, fields, pills, banners, the icon set and the theme toggle are
+  one implementation. A second copy in an app is how the two deployments stop
+  agreeing what a button is — the same argument `@rof/styles` already settles
+  for tokens.
+- **Spacing, radius, type and control sizes come off the scale in
+  `packages/styles/globals.css`.** An undefined custom property voids its whole
+  declaration silently: `var(--space-7)` does not exist (the scale steps
+  24 → 32; the legacy `--s-7` is the 28px one), and it cost the desk's sign-in
+  card all of its padding. `tests/tokens.test.mjs` fails on any that do not
+  resolve.
 - **Run it before claiming it works.** Structural validation is not execution.
 
 Verify loop:
 
 ```bash
 node tests/parse.test.mjs      # parser unit + live-fixture tests
+node tests/tokens.test.mjs     # every var() in web/, admin/ and @rof/ui resolves
 python3 n8n/build.py --check   # generated JSON matches source
 ./scripts/probe-sources.sh     # all 15 source endpoints reachable
 ```

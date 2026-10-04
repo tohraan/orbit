@@ -1,0 +1,144 @@
+/* The rail: a floating vertical pill of icon targets, centred against the
+   viewport. §14 desktop, §19 mobile, §67 never both a full sidebar and a
+   bottom navigation at once.
+
+   Lifted out of web/components/layout/layout.module.css unchanged. The desk
+   had grown a top tab bar instead, which is the one structural rule this
+   product has — two deployments of one thing navigating differently is the
+   difference a user feels before they notice anything else.
+
+   This is the one pill shape in the product. Everything else uses the square
+   radius scale; a rail of circular icon targets is the case where the shape
+   is the component rather than decoration. */
+
+.sidebar {
+  position: fixed;
+  left: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 64px;
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 32px;
+  box-shadow: var(--shadow-sm);
+  z-index: 40;
+}
+
+@media (max-width: 1023px) {
+  .sidebar { display: none; }
+}
+
+/* A nav target: sized to the touch floor.
+
+   48, not 40. A 22px glyph inside a 40px tile left 9px of air on each side,
+   and the count badge — anchored outside the box — overlapped the glyph it was
+   counting. Both read as clipping. */
+.navItem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  /* A circle, matching the avatar at the foot of the rail — the rail is the
+     one pill-shaped thing in the product, so its targets are round rather
+     than squares with the corners taken off. */
+  border-radius: var(--radius-full);
+  color: var(--text-tertiary);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.navItem:hover { background: var(--surface-hover); color: var(--text-secondary); }
+
+/* The active target is filled, because at icon-only size the quieter signals
+   that worked on a labelled row (weight, a 3px bar) have nothing to attach to. */
+.navItemActive { background: var(--accent); color: var(--on-accent); }
+.navItemActive:hover { background: var(--accent); color: var(--on-accent); }
+
+/* The label, revealed on hover. A real element rather than `title`, because a
+   native tooltip is slow, unstyleable, and never appears on keyboard focus. */
+.navLabel {
+  position: absolute;
+  left: calc(100% + var(--space-3));
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  padding: 6px var(--space-3);
+  border-radius: var(--radius-tag);
+  background: var(--text-primary);
+  color: var(--bg-app);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  z-index: 1;
+}
+.navItem:hover .navLabel,
+.navItem:focus-visible .navLabel {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .navLabel { transition: none; }
+}
+
+/* Counts ride the icon as a small badge, since there is no row to sit in.
+   Inside the tile: anchored outside a 40px target it sat on the glyph and got
+   cropped by the rail's own rounded edge. */
+.navCount {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding-inline: 4px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 10px;
+  line-height: 16px;
+  font-weight: 600;
+  text-align: center;
+  border: 2px solid var(--surface-raised);
+}
+/* On the filled active item the badge inverts, or an accent chip on an accent
+   tile is invisible. */
+.navItemActive .navCount { background: var(--on-accent); color: var(--accent); border-color: var(--accent); }
+
+.navGroup { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.navRule { width: 28px; height: 1px; background: var(--border-subtle); margin: var(--space-2) auto; }
+
+.sidebarFoot { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+
+/* The account target matches a nav target exactly, so the pill has one column. */
+.account {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  transition: background-color var(--dur) var(--ease);
+}
+.account:hover { background: var(--surface-hover); }
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--text-micro);
+  font-weight: 600;
+}
+
+/* Clears the floating rail: its left offset + its width + the same gap again,
+   so the content column is optically centred in what is left beside it. */
+.main { margin-left: calc(var(--space-4) * 2 + 64px); min-width: 0; }
+@media (max-width: 1023px) { .main { margin-left: 0; } }

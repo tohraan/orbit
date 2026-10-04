@@ -1,108 +1,61 @@
 "use client";
 
-/* The rail: a floating vertical pill of icon targets, centred against the
- * viewport.
+/* The portal's rail.
  *
- * It replaced a 232px full-height panel. The names now arrive on hover, which
- * costs nothing and gives the content the whole width back — and because the
- * label is a real element rather than a `title` attribute, it is styled, it
- * appears instantly, and it shows on keyboard focus too, which a native
- * tooltip never does.
+ * The rail itself is @rof/ui now — the desk draws the same one, and two copies
+ * of a 64px pill with a 48px target and a badge that has to invert on the
+ * active tile is how the two deployments stop agreeing what navigation is.
  *
- * The brand moved out of here and into the top-left of the header, where it
- * belongs once the rail is icon-only.
+ * What stays here is the part that is the portal's: where the counts come from
+ * (saved, compare and tracker live in browser storage) and where the foot goes
+ * for a student who has not signed in yet. @rof/ui reads no store of its own,
+ * which is the line that lets one component serve both apps.
  */
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import s from "./layout.module.css";
-import { Icon } from "../ui/Icon";
-import { PRIMARY_NAV, SECONDARY_NAV, type NavItem } from "./nav";
+import { Rail, initialsOf, type RailItem } from "@rof/ui";
+import { PRIMARY_NAV, SECONDARY_NAV } from "./nav";
 import { useCompare, useProfile, useSaved, useTracker } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 
-function Row({ item, counts }: { item: NavItem; counts: Record<string, number> }) {
-  const pathname = usePathname();
-  const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-  const count = item.count ? counts[item.count] : 0;
-  return (
-    <Link
-      href={item.href}
-      className={[s.navItem, active ? s.navItemActive : null].filter(Boolean).join(" ")}
-      aria-current={active ? "page" : undefined}
-      aria-label={item.label}
-    >
-      <Icon name={active && item.icon === "bookmark" ? "bookmark-filled" : item.icon} size={22} />
-      {count ? (
-        <span className={s.navCount} aria-hidden="true">
-          {count > 9 ? "9+" : count}
-        </span>
-      ) : null}
-      {/* aria-hidden: the link already carries its name, and announcing it
-          twice is worse than not styling it at all. */}
-      <span className={s.navLabel} aria-hidden="true">
-        {item.label}
-        {count ? ` (${count})` : ""}
-      </span>
-    </Link>
-  );
-}
-
 export function Sidebar() {
+  const pathname = usePathname();
   const { saved } = useSaved();
   const { compare } = useCompare();
   const { entries } = useTracker();
   const { profile, started } = useProfile();
   const { status, user, configured } = useAuth();
   const signedIn = status === "signed-in";
-  const counts = { saved: saved.length, compare: compare.length, tracker: entries.length };
+
+  const counts: Record<string, number> = {
+    saved: saved.length,
+    compare: compare.length,
+    tracker: entries.length,
+  };
+
+  const decorate = (items: typeof PRIMARY_NAV): RailItem[] =>
+    items.map((item) => ({
+      href: item.href,
+      label: item.label,
+      icon: item.icon,
+      count: item.count ? counts[item.count] : undefined,
+      /* §78 makes a filled bookmark the saved state — a state change rather
+         than a second icon style. */
+      activeIcon: item.icon === "bookmark" ? "bookmark-filled" : undefined,
+    }));
 
   const name = profile.name.trim();
-  const initials =
-    (name || user?.email || "")
-      .split(/[\s@.]+/)
-      .slice(0, 2)
-      .map((part: string) => part[0]?.toUpperCase())
-      .join("") || "·";
 
   return (
-    <aside className={s.sidebar} aria-label="Main">
-      <nav className={s.navGroup} aria-label="Sections">
-        {PRIMARY_NAV.map((item) => (
-          <Row key={item.href} item={item} counts={counts} />
-        ))}
-      </nav>
-
-      {/* Rendered only when there is something in it. An empty group still
-          drew its rules, which left two dividers stacked against each other
-          with nothing between them. */}
-      {SECONDARY_NAV.length ? (
-        <>
-          <div className={s.navRule} />
-          <nav className={s.navGroup} aria-label="Tools">
-            {SECONDARY_NAV.map((item) => (
-              <Row key={item.href} item={item} counts={counts} />
-            ))}
-          </nav>
-        </>
-      ) : null}
-
-      <div className={s.navRule} />
-
-      <div className={s.sidebarFoot}>
-        <Link
-          href={signedIn || configured ? "/account" : started ? "/profile" : "/welcome"}
-          className={s.account}
-          aria-label={name || (signedIn ? "Your account" : "Sign in")}
-        >
-          <span className={s.avatar} aria-hidden="true">
-            {initials}
-          </span>
-          <span className={s.navLabel} aria-hidden="true">
-            {name || (signedIn ? user?.email : "Sign in to sync") || "Set up your profile"}
-          </span>
-        </Link>
-      </div>
-    </aside>
+    <Rail
+      items={decorate(PRIMARY_NAV)}
+      tools={decorate(SECONDARY_NAV)}
+      pathname={pathname}
+      foot={{
+        href: signedIn || configured ? "/account" : started ? "/profile" : "/welcome",
+        initials: initialsOf(name, user?.email),
+        label: name || (signedIn ? user?.email : "Sign in to sync") || "Set up your profile",
+      }}
+    />
   );
 }

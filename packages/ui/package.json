@@ -1,0 +1,20 @@
+{
+  "name": "@rof/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./rail.module.css": "./src/rail.module.css",
+    "./control.module.css": "./src/control.module.css"
+  },
+  "peerDependencies": {
+    "next": "^16",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "comment": "The components both deployments draw with. @rof/styles already stops the two apps disagreeing about what navy is; this stops them disagreeing about what a button, a field, a pill or a nav rail is. Ships as TypeScript source and is compiled by whichever app imports it, so a change here cannot go stale behind a build artefact.",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
