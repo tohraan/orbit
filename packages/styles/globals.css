@@ -152,6 +152,19 @@
      the text colour against the surface it sits on, with no edge at all.
      4% in light and 6% in dark, because the same percentage reads weaker
      against black than against white. */
+  /* Chrome: the translucent bar and the hairlines on round controls in it.
+     These are rgba rather than tokens mixed from --surface, because the bar is
+     meant to let the page show through it — a mix against an opaque surface
+     would be opaque. --header-solid is the same colour with the transparency
+     taken out, for the one thing that must NOT be see-through: the collar on
+     the notification badge, which exists to separate it from the bell's ring. */
+  --header-bg: rgba(255, 255, 255, 0.7);
+  --header-solid: #ffffff;
+  --header-rule: rgba(0, 0, 0, 0.08);
+  --chrome-rule: rgba(0, 0, 0, 0.12);
+  --chrome-wash: rgba(0, 0, 0, 0.08);
+  /* The measure the header and the page body share, so their edges line up. */
+  --shell-measure: 920px;
   --inset: color-mix(in srgb, var(--text-primary) 4%, var(--surface));
   --inset-strong: color-mix(in srgb, var(--text-primary) 7%, var(--surface));
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.07);
@@ -411,6 +424,11 @@
     --surface: #0b0b0c;
     --surface-raised: #141416;
     --surface-sunken: #060607;
+    --header-bg: rgba(0, 0, 0, 0.55);
+    --header-solid: #000000;
+    --header-rule: rgba(255, 255, 255, 0.08);
+    --chrome-rule: rgba(255, 255, 255, 0.12);
+    --chrome-wash: rgba(255, 255, 255, 0.08);
     --inset: color-mix(in srgb, var(--text-primary) 6%, var(--surface));
     --inset-strong: color-mix(in srgb, var(--text-primary) 10%, var(--surface));
     --surface-hover: #1a1a1d;
@@ -482,6 +500,11 @@
   --surface: #0b0b0c;
   --surface-raised: #141416;
   --surface-sunken: #060607;
+  --header-bg: rgba(0, 0, 0, 0.55);
+  --header-solid: #000000;
+  --header-rule: rgba(255, 255, 255, 0.08);
+  --chrome-rule: rgba(255, 255, 255, 0.12);
+  --chrome-wash: rgba(255, 255, 255, 0.08);
   --inset: color-mix(in srgb, var(--text-primary) 6%, var(--surface));
   --inset-strong: color-mix(in srgb, var(--text-primary) 10%, var(--surface));
   --surface-hover: #1a1a1d;

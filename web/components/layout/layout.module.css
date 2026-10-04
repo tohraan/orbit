@@ -44,43 +44,76 @@
    negative margin undoes that offset so the rule spans the viewport; .headerInner
    puts it back, with the page's own container and padding, so the crest lands on
    the same left edge as the h1 beneath it. */
+/* The bar is full-bleed, its content is not. .main is offset to clear the
+   rail, so a header inside it would begin its border at x=128 and the page
+   would look notched. The negative margin undoes that offset so the rule spans
+   the viewport; .headerInner puts it back with the same measure the page body
+   uses, so the crest lands on the left edge of the h1 beneath it.
+
+   The translucency is a real one now: 55% over black, 70% over white, with the
+   blur doing the work. Over an opaque bar the blur had nothing to blur. */
 .header {
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 50;
   height: 64px;
   margin-left: calc(-1 * (var(--space-4) * 2 + 64px));
-  background: color-mix(in srgb, var(--bg-app) 85%, transparent);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border-subtle);
+  background: var(--header-bg);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  border-bottom: 1px solid var(--header-rule);
+  transition: box-shadow 150ms var(--ease);
 }
+/* No shadow at rest; one appears once the page has moved under it, which is
+   the only moment the bar is actually overlapping anything. */
+.headerScrolled { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
 @media (max-width: 1023px) { .header { margin-left: 0; } }
 
+/* One flex row. The left group and the right group are the only two children;
+   the right is pushed over with margin-left auto rather than a spacer element,
+   so there is nothing in the middle to collapse unpredictably. */
 .headerInner {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
   height: 100%;
-  max-width: calc(var(--container) + (var(--space-4) * 2 + 64px));
+  width: 100%;
+  max-width: calc(var(--shell-measure) + (var(--space-4) * 2 + 64px));
   margin-inline: auto;
-  padding-inline: calc((var(--space-4) * 2 + 64px) + var(--space-8)) var(--space-8);
+  padding-inline: calc((var(--space-4) * 2 + 64px) + 20px) 20px;
 }
-@media (max-width: 1023px) { .headerInner { padding-inline: var(--space-8); max-width: var(--container); } }
-@media (max-width: 767px)  { .headerInner { padding-inline: var(--space-4); } }
+@media (max-width: 1023px) { .headerInner { padding-inline: 20px; max-width: var(--shell-measure); } }
+@media (max-width: 639px)  { .headerInner { padding-inline: 16px; } }
 
-/* Step 5: a divider between the wordmark and the breadcrumb. */
-.headerDivider { width: 1px; height: 24px; background: var(--border-subtle); flex: none; margin-inline: var(--space-4); }
+.headerLeft { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.headerRight { display: flex; align-items: center; gap: 12px; flex: none; margin-left: auto; }
 
 @media (max-width: 1023px) {
   .header { display: none; }
 }
 
-.crumbs { display: flex; align-items: center; gap: var(--s-2); min-width: 0; flex: 0 1 auto; }
-.crumb { font-size: var(--text-body-sm); color: var(--color-text-muted); white-space: nowrap; }
-.crumbHere { color: var(--color-text-primary); font-weight: 500; }
+/* The wordmark is one line: name in 700, campus in 500 at 70%. Two spans on a
+   baseline rather than a stacked block, because a two-line brand in a 64px bar
+   leaves nothing vertically centred with the controls opposite it. */
+/* The brand. These rules went missing when the rail moved to @rof/ui — the
+   block sat between the rail and the header and went out with it, leaving the
+   wordmark as unstyled inline text and the crest at its intrinsic size. */
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; text-decoration: none; }
+.mark { width: 32px; height: 32px; flex: none; object-fit: contain; }
+.wordmark {
+  font-size: 15px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+.wordName { font-weight: 700; }
+/* 70% of the text colour, not a lighter token: the pair has to read as one
+   line of type with two weights, and a second colour breaks that. */
+.wordSub { font-weight: 500; opacity: 0.7; margin-left: 6px; }
+@media (max-width: 639px) { .wordSub { display: none; } }
 
-.headerSpacer { flex: 1 1 auto; }
-.headerRight { display: flex; align-items: center; gap: var(--s-2); flex: none; }
+.crumbSlash { color: var(--text-primary); opacity: 0.4; flex: none; }
+.crumbHere { font-size: 15px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+@media (max-width: 639px) { .crumbSlash, .crumbHere { display: none; } }
 
 /* --------------------------------------------------- mobile header + nav ---
    §20: do not reproduce the desktop header. §19: the sidebar becomes a bottom
@@ -135,16 +168,20 @@
 /* Step 4.1: one container, centred in the space the rail leaves. The header
    below uses the identical measurements, so the crest sits exactly above the
    page title rather than approximately above it. */
+/* The same measure and the same side padding as .headerInner, so the crest in
+   the bar sits exactly above the h1 under it rather than approximately above
+   it. Change one and the other has to follow; that is why both read
+   --shell-measure instead of each carrying a number. */
 .page {
   width: 100%;
-  max-width: var(--container);
+  max-width: var(--shell-measure);
   margin-inline: auto;
-  padding: var(--space-8) var(--space-8) var(--space-16);
+  padding: var(--space-8) 20px var(--space-16);
   min-width: 0;
 }
 
-@media (max-width: 767px) {
-  .page { padding-inline: var(--space-4); }
+@media (max-width: 639px) {
+  .page { padding-inline: 16px; }
 }
 
 @media (max-width: 1023px) {
@@ -258,12 +295,15 @@
      10px radius sitting between the theme pill and the circular avatar was the
      one corner left in the row. */
   border-radius: var(--radius-full);
-  border: 1px solid var(--border-default);
-  background: var(--surface-raised);
+  /* A hairline at 12% of the text colour, not the full border token. Civic's
+     border is near-black in light and near-white in dark, which on a 36px
+     circle reads as a heavy ring rather than an edge. */
+  border: 1px solid var(--chrome-rule);
+  background: transparent;
   color: var(--text-secondary);
-  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: background-color 150ms var(--ease), border-color 150ms var(--ease), color 150ms var(--ease);
 }
-.iconBtn:hover { background: var(--surface-hover); border-color: var(--border-strong); color: var(--text-primary); }
+.iconBtn:hover { background: var(--chrome-wash); color: var(--text-primary); }
 
 /* The avatar is the same object as the rail's, so it is a filled circle, not
    a bordered square with initials in it. */
@@ -273,32 +313,41 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-full);
-  background: var(--accent);
-  color: var(--on-accent);
+  /* The crest yellow, in both themes, with dark type on it. The accent is the
+     deep red now, and an avatar in the same colour as every primary button
+     reads as another button rather than as who you are. */
+  background: var(--bits-yellow);
+  color: #1a1a1c;
   font-size: 14px;
   line-height: 20px;
-  font-weight: 600;
+  font-weight: 700;
   border: 0;
-  transition: background-color var(--dur) var(--ease);
+  transition: filter 150ms var(--ease);
 }
-.avatarBtn:hover { background: var(--accent-hover); }
+.avatarBtn:hover { filter: brightness(0.94); }
 
 /* §108: the count is the signal, the dot is only its shape. */
 .badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  min-width: 17px;
-  height: 17px;
-  padding-inline: 4px;
-  border-radius: var(--radius-chip);
-  background: var(--color-danger);
-  color: var(--on-accent);
-  font-variant-numeric: tabular-nums;
+  /* Outside the bell's own ring, with a 2px collar in the bar's colour so the
+     two circles read as separate objects instead of one dented one. */
+  top: -4px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  /* The crest red in BOTH themes, not --color-danger. Dark's danger token is
+     the bright #ff6b5b, which is correct for a line of urgent type on black
+     and gives only 2.80:1 under white — and this is 10px bold, the smallest
+     type in the chrome. The deep red holds 5.70:1 against white either way. */
+  background: var(--bits-red);
+  color: #ffffff;
   font-size: 10px;
-  line-height: 17px;
-  text-align: center;
-  border: 2px solid var(--color-bg);
+  line-height: 1;
+  font-weight: 700;
+  border: 2px solid var(--header-solid);
 }
 
 .menu {
@@ -309,14 +358,15 @@
   width: min(360px, calc(100vw - 32px));
   max-height: 60vh;
   overflow-y: auto;
-  padding: var(--s-2);
+  padding: 8px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border-hover);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--chrome-rule);
+  border-radius: 16px;
   box-shadow: var(--shadow-modal);
   transform-origin: top right;
   animation: menuIn 150ms var(--ease);
 }
+.menuAccount { width: 200px; }
 
 /* The one place frosting is right: this panel sits OVER the page, so blurring
    what is behind it says "this is temporary, the page is still there" in a way
@@ -333,7 +383,7 @@
 /* Opens from the corner it hangs off, so it reads as coming out of the button
    that was pressed rather than appearing beside it. */
 @keyframes menuIn {
-  from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+  from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: none; }
 }
 .menuNarrow { width: min(240px, calc(100vw - 32px)); }
@@ -514,3 +564,17 @@
    column. The outer padding stays, so content never touches the viewport edge
    or sits under the floating rail. */
 .pageWide { max-width: none; }
+
+/* One focus ring for everything interactive in the chrome. The accent rather
+   than a neutral, because on a frosted bar a grey ring disappears into
+   whatever happens to be scrolling underneath it.
+
+   In the module rather than globals.css: .header there is a hashed class, so a
+   global `.header button` selector would match nothing at all. */
+.header a:focus-visible,
+.header button:focus-visible,
+.mobileHeader a:focus-visible,
+.mobileHeader button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -7,8 +7,11 @@
   gap: 2px;
   height: 36px;
   align-items: center;
-  background: var(--surface-sunken);
-  border: 0;
+  /* Transparent over the frosted bar. A filled track read as a third control
+     sitting between the wordmark and the bell; the active segment is the only
+     thing here that needs a surface. */
+  background: transparent;
+  border: 1px solid var(--chrome-rule);
   /* A pill, because its two segments are circles: a 10px-radius track around
      two round thumbs leaves a visible sliver of track in each corner. */
   border-radius: var(--radius-full);
@@ -18,21 +21,23 @@
 .opt {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   /* Every icon target in the chrome is round — the rail's, the header's, the
      avatar's. These were the last squares in the row. */
   border-radius: var(--radius-full);
   color: var(--text-secondary);
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: background-color 150ms var(--ease), color 150ms var(--ease);
 }
-.opt:hover { color: var(--text-primary); }
+.opt:hover { background: var(--chrome-wash); color: var(--text-primary); }
 
+/* A wash of the text colour rather than a raised surface: on a translucent bar
+   a lifted white thumb has nothing to be lifted off. */
 .optActive {
-  background: var(--surface-raised);
+  background: var(--chrome-rule);
   color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
 }
+.optActive:hover { background: var(--chrome-rule); }
 
 @media (pointer: coarse) {
   .opt { width: var(--control-seg); height: var(--control-seg); }

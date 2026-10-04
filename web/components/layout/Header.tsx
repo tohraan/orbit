@@ -101,7 +101,7 @@ function Notifications() {
       <button
         type="button"
         className={s.iconBtn}
-        aria-label={`Notifications${notes.length ? `, ${notes.length} waiting` : ""}`}
+        aria-label={`Notifications${notes.length ? `, ${notes.length} unread` : ", none unread"}`}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
@@ -184,27 +184,10 @@ function SignInButton() {
   );
 }
 
-/* Who is signed in, in the chrome rather than behind a menu.
- *
- * Absent while the session is resolving and absent when signed out, because the
- * only thing it could say then is a placeholder, and a placeholder name beside
- * the product mark reads as a real one. Falls back to the local part of the
- * email when the profile has no name yet — a new student has an account before
- * they have been through onboarding. */
-function CurrentUser() {
-  const { status, user } = useAuth();
-  const { profile } = useProfile();
-  if (status !== "signed-in") return null;
-
-  const name = profile.name.trim() || (user?.email ?? "").split("@")[0];
-  if (!name) return null;
-
-  return (
-    <Link href="/profile" className={s.currentUser} title="Your profile">
-      <span className={s.currentUserName}>{name}</span>
-    </Link>
-  );
-}
+/* CurrentUser lived here: the student's name, in the bar, beside the wordmark
+ * and separated by a rule. It is gone. The name is the heading of the account
+ * menu now, which is the thing it identifies — in the bar it was a third piece
+ * of type competing with the product's own name for the same corner. */
 
 function AccountMenu() {
   const [open, setOpen] = useState(false);
@@ -249,7 +232,7 @@ function AccountMenu() {
       <button
         type="button"
         className={s.avatarBtn}
-        aria-label="Account"
+        aria-label="Account menu"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
@@ -257,7 +240,7 @@ function AccountMenu() {
       </button>
 
       {open ? (
-        <div className={[s.menu, s.menuNarrow].join(" ")} role="menu">
+        <div className={[s.menu, s.menuAccount].join(" ")} role="menu">
           {/* Who, and — the part that was missing — where the data lives. */}
           <div className={s.ident}>
             <span className={s.identAvatar} aria-hidden="true">
@@ -280,7 +263,14 @@ function AccountMenu() {
 
           <Link href="/profile" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
             <Icon name="user" size={16} />
-            Your profile
+            Profile
+          </Link>
+          {/* "Settings" in the spec. There is no /settings route and inventing
+              one would be a dead link, so it points at /account, which is where
+              every account-level control already lives. */}
+          <Link href="/account" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
+            <Icon name="shield" size={16} />
+            Settings
           </Link>
           {isStaff || !configured ? (
             <Link href="/admin" className={s.menuItem} role="menuitem" onClick={() => setOpen(false)}>
@@ -317,57 +307,56 @@ function AccountMenu() {
   );
 }
 
+/* True once the page has moved more than 8px under the bar — the only moment
+ * it is actually overlapping anything, and therefore the only moment a shadow
+ * is describing something real rather than decorating. Passive listener; the
+ * handler reads one number and sets one boolean. */
+function useScrolled(threshold = 8) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const read = () => setScrolled(window.scrollY > threshold);
+    read();
+    window.addEventListener("scroll", read, { passive: true });
+    return () => window.removeEventListener("scroll", read);
+  }, [threshold]);
+  return scrolled;
+}
+
 export function Header() {
   const pathname = usePathname();
-  const here = pathname.startsWith("/opportunity/") ? "Opportunity" : TITLES[pathname] ?? APP_NAME;
+  const scrolled = useScrolled();
+  const here = pathname.startsWith("/opportunity/") ? "Opportunity" : TITLES[pathname] ?? null;
 
   return (
-    <header className={s.header}>
-      {/* Full-bleed bar, page-aligned content (Step 5). */}
+    <header className={scrolled ? `${s.header} ${s.headerScrolled}` : s.header}>
       <div className={s.headerInner}>
-      {/* The emblem sits top-left now that the rail is icon-only. */}
-      <Link href="/" className={s.brand}>
-        <Image className={s.mark} src="/bits-logo-128.png" alt="" width={30} height={30} priority />
-        <span className={s.brandText}>
-          <span className={s.brandName}>{APP_NAME}</span>
-          <span className={s.brandSub}>{APP_TAGLINE}</span>
-        </span>
-      </Link>
-
-      <CurrentUser />
-
-      <span className={s.headerDivider} aria-hidden="true" />
-
-      {/* The current page's NAME is not shown here.
-          It said "Home" directly above a screen whose own heading said the
-          same thing, and "Explore" above a page titled "Find opportunities
-          that match your goals" - a label repeating what the eye has already
-          read, costing a slot in the one bar visible on every screen. The rail
-          already marks where you are.
-
-          What survives is the one case where the crumb is NAVIGATION rather
-          than a label: a listing is reached FROM the index, so it keeps a real
-          link back to it. */}
-      {pathname.startsWith("/opportunity/") ? (
-        <nav className={s.crumbs} aria-label="Breadcrumb">
-          <Link href="/explore" className={s.crumb}>
-            Explore
+        <div className={s.headerLeft}>
+          <Link href="/" className={s.brand}>
+            <Image className={s.mark} src="/bits-logo-128.png" alt="" width={32} height={32} priority />
+            {/* One line, two weights. The student's own name used to sit here
+                with a rule beside it; it moved into the account menu, where it
+                is the heading of the thing it identifies rather than a third
+                piece of text competing with the product's own name. */}
+            <span className={s.wordmark}>
+              <span className={s.wordName}>{APP_NAME}</span>
+              <span className={s.wordSub}>{APP_TAGLINE}</span>
+            </span>
           </Link>
-          <span className={s.crumbSep} aria-hidden="true">
-            <Icon name="chevron-right" size={14} />
-          </span>
-          <span className={`${s.crumb} ${s.crumbHere}`}>{here}</span>
-        </nav>
-      ) : null}
 
-      <span className={s.headerSpacer} />
+          {here ? (
+            <>
+              <span className={s.crumbSlash} aria-hidden="true">/</span>
+              <span className={s.crumbHere}>{here}</span>
+            </>
+          ) : null}
+        </div>
 
-      <div className={s.headerRight}>
-        <ThemeToggle />
-        <Notifications />
-        <SignInButton />
-        <AccountMenu />
-      </div>
+        <div className={s.headerRight}>
+          <ThemeToggle />
+          <Notifications />
+          <SignInButton />
+          <AccountMenu />
+        </div>
       </div>
     </header>
   );
