@@ -497,6 +497,10 @@ export function runTool(name: string, raw: unknown, index: Index): ToolOutcome {
                 "requirement you relaxed, and search once more — do not keep guessing.",
             }
           : {}),
+        funding_covers: "NOT RECORDED. These rows carry a funding bucket only. What the money " +
+          "covers — tuition, stipend, travel, insurance, accommodation — is not in the index and " +
+          "must not appear in your answer. Say the bucket (\"fully funded\") and nothing more. If " +
+          "the student asks what one covers, call get_opportunity for that id.",
         items: shown.map(brief),
       },
     };
@@ -575,6 +579,10 @@ export function runTool(name: string, raw: unknown, index: Index): ToolOutcome {
         note:
           "The cards are now on screen with their own save, compare and apply controls. Write your " +
           "introduction; do not repeat the per-card reasons or restate deadlines in prose.",
+        funding_covers: "NOT RECORDED. These cards carry a funding bucket only. What the money " +
+          "covers — tuition, stipend, travel, insurance, accommodation — is not in the index and " +
+          "must not appear in your answer. Say the bucket (\"fully funded\") and nothing more. If " +
+          "the student asks what one covers, call get_opportunity for that id.",
       },
     };
   }
