@@ -33,6 +33,9 @@ import {
 } from "@rof/core";
 
 const TTL_MS = 5 * 60 * 1000;
+/* The point past which a request stops being served stale and waits for the
+   truth. See getIndex(). */
+const HARD_MS = 2 * TTL_MS;
 const PAGE = 500;
 
 export type Index = {
@@ -220,12 +223,19 @@ export function invalidateIndex(): void {
   store.cache = null;
 }
 
-/** Kick off a refresh without waiting for it. Errors are swallowed on purpose:
- *  a failed background refresh must never surface to a request that is already
- *  being served perfectly well from cache. */
+/** Kick off a refresh without waiting for it.
+ *
+ *  A failed background refresh must never surface to a request already being
+ *  served perfectly well from cache, so it is caught here. It is LOGGED rather
+ *  than swallowed: this used to be `.catch(() => {})`, which meant a refresh
+ *  that threw every time was indistinguishable from one that never ran, and
+ *  the cache would sit at whatever it last held with nothing anywhere saying
+ *  why. */
 function refreshInBackground(): void {
   if (store.inflight) return;
-  void load().catch(() => {});
+  void load().catch((err) => {
+    console.error("[source] background refresh failed:", err instanceof Error ? err.message : err);
+  });
 }
 
 /** The whole open-call index.
@@ -242,7 +252,30 @@ function refreshInBackground(): void {
  */
 export async function getIndex(): Promise<Index> {
   if (store.cache) {
-    if (Date.now() - store.cache.loadedAt >= TTL_MS) refreshInBackground();
+    const age = Date.now() - store.cache.loadedAt;
+
+    /* Past HARD_MS the request waits. Stale-while-revalidate assumes the
+       revalidate half actually happens, and on a serverless host it often does
+       not: the instance is frozen the moment the response is returned, so a
+       promise nobody is awaiting is suspended mid-flight and may never finish.
+       Without this bound the next request finds the same expired cache, starts
+       another refresh that meets the same end, and serves the same stale data
+       — for as long as that instance keeps being reused.
+
+       Measured, rather than reasoned about: a listing deleted from the
+       database was still being served ten minutes later, against a five minute
+       TTL, while a fresh load of the same data locally returned the correct
+       set immediately. The load path was fine; only its scheduling was not.
+
+       So the window keeps its original purpose — nobody pays the reload just
+       for arriving a second after the TTL lapsed — and staleness is bounded at
+       HARD_MS instead of being bounded by luck. */
+    if (age >= HARD_MS) {
+      if (store.inflight) return store.inflight;
+      return load();
+    }
+
+    if (age >= TTL_MS) refreshInBackground();
     return store.cache;
   }
   if (store.inflight) return store.inflight;
