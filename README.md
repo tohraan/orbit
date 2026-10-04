@@ -190,6 +190,17 @@ source for this problem and it is not used.
 Generated artefacts (`n8n/workflows/*.json`, `supabase/migrations/`) are
 excluded from the counts — they are outputs, not source.
 
+**Advises, in conversation.** Rover — the portal's agent — takes a request in
+the words a student would actually use ("a fellowship I can do alongside
+college, in the US or Canada"), asks one or two questions to narrow it, then
+searches the index through the same filters Explore uses and answers in the
+portal's own opportunity cards. Chat is the interface; the index stays the
+source of truth. It states facts only from a tool result, so a card it shows
+is a listing that is open right now, and it says plainly when the index cannot
+express a constraint — weekly hours and selectivity are not recorded anywhere,
+and it will tell you so rather than invent them. Optional: with no Anthropic
+key the screen says it is switched off and nothing else changes.
+
 ---
 
 ## Reviewing this project
@@ -217,6 +228,9 @@ Start here, in this order:
 | Why the index is 431 and not 2,274 | `db/012_audience_fit.sql`, `db/013_record_kind_split.sql` |
 | Reviewer access, and what it deliberately does not do | `web/lib/demo.ts` |
 | Caching and the Supabase reads | `packages/server/src/source.ts` |
+| Rover's four tools, and what stops it inventing a listing | `packages/server/src/rover/tools.ts` |
+| What Rover is allowed to do, and the cached half of its prompt | `packages/server/src/rover/prompt.ts` |
+| The agent loop, and why it is manual rather than the SDK's runner | `packages/server/src/rover/agent.ts` |
 
 Every migration and most modules open with a comment explaining **why** the
 thing is shaped that way — including the alternatives that were tried and
@@ -256,6 +270,10 @@ node tests/parse.test.mjs                  # parser unit + live-fixture tests
 node tests/normalize.test.mjs              # normalisers vs cached API payloads
 node tests/dossier.test.mjs                # CV extraction, against a real PDF
 node tests/interest.test.mjs               # interest thresholds
+node --conditions react-server --import ./scripts/ts-resolve.mjs \
+  tests/rover.test.mjs                     # Rover's tools, against the real index
+node --conditions react-server --import ./scripts/ts-resolve.mjs \
+  tests/rover-loop.test.mjs                # Rover's agent loop, against a fake Messages API
 python3 n8n/build.py --check               # generated workflow matches source
 ./scripts/probe-sources.sh                 # every source endpoint reachable
 ./scripts/sync-supabase-migrations.sh --check

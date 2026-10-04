@@ -1,4 +1,5 @@
 import type { IconName } from "../ui/Icon";
+import { AGENT_NAME } from "./brand";
 
 /* §112: plain labels. "Explore", not "Opportunity Intelligence". §15 and §82
  * fix the groups and the routes; this is the single list both the sidebar and
@@ -17,6 +18,14 @@ export type NavItem = {
 export const PRIMARY_NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home", mobile: true },
   { href: "/explore", label: "Explore", icon: "explore", mobile: true },
+  /* Rover sits next to Explore because it is the same job approached from the
+   * other end: Explore is for a student who knows which filter they want,
+   * Rover for one who can only describe what they are after. It is on the
+   * mobile bar as a sixth item — §90 fixes five, and this is a deliberate
+   * exception: Deadlines, Dossier and Compare are reachable on a phone only
+   * through the command palette, and the flagship way into the index cannot be
+   * the fourth thing that is desktop-only. */
+  { href: "/rover", label: AGENT_NAME, icon: "rover", mobile: true },
   { href: "/saved", label: "Saved", icon: "bookmark", count: "saved", mobile: true },
   { href: "/applications", label: "Applications", icon: "applications", count: "tracker", mobile: true },
   { href: "/deadlines", label: "Deadlines", icon: "calendar" },
@@ -46,6 +55,7 @@ export const MOBILE_NAV: NavItem[] = [...PRIMARY_NAV, ...SECONDARY_NAV, ...FOOTE
 export const TITLES: Record<string, string> = {
   "/": "Home",
   "/explore": "Explore",
+  "/rover": AGENT_NAME,
   "/saved": "Saved",
   "/applications": "Applications",
   "/deadlines": "Deadlines",

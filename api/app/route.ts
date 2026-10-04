@@ -6,7 +6,7 @@
  * Deliberately says nothing about the Supabase project: no URL, no project
  * ref, no error text. */
 
-import { getIndex } from "@rof/server";
+import { getIndex, roverBudget, roverConfigured, roverModel } from "@rof/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +26,20 @@ export async function GET() {
       status: index ? "ok" : "degraded",
       origin: index?.origin ?? null,
       openCalls: index?.items.length ?? 0,
+      /* Whether the agent chat is switched on here. "off" is a valid
+       * deployment, not a fault — see DEPLOY.md — and this is the quickest way
+       * to tell a missing key from a broken one. The key itself is never
+       * echoed, only the fact that there is one. */
+      rover: roverConfigured()
+        ? {
+            status: "on",
+            model: roverModel(),
+            /* Null until a turn has run: the budget is read from OpenRouter
+             * during a turn, and a health check must not spend a request
+             * finding out. */
+            budget: roverBudget(),
+          }
+        : { status: "off" },
       indexedAt: index?.freshestAt ?? null,
       endpoints: [
         "/api/feed?seed=<opaque>&ids=<saved ids>&limit=12",
@@ -33,6 +47,7 @@ export async function GET() {
         "/api/opportunities/<id>",
         "/api/facets",
         "/api/stats",
+        "POST /api/rover  (server-sent events)",
       ],
     },
     {

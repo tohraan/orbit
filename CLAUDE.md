@@ -51,4 +51,10 @@ node tests/parse.test.mjs      # parser unit + live-fixture tests
 node tests/tokens.test.mjs     # every var() in web/, admin/ and @rof/ui resolves
 python3 n8n/build.py --check   # generated JSON matches source
 ./scripts/probe-sources.sh     # all 15 source endpoints reachable
+
+# The agent chat (Rover). Two flags, both about reaching TypeScript from plain
+# node rather than through Next — see scripts/ts-resolve.mjs.
+node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover.test.mjs
+node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-loop.test.mjs
+node --conditions react-server --import ./scripts/ts-resolve.mjs tests/rover-textgate.test.mjs
 ```
