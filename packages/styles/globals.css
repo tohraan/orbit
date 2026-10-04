@@ -143,6 +143,17 @@
   --error-bg: #fbeaea;
   --error-border: #f0c4c4;
 
+  /* The inset: a borderless lift for content sitting INSIDE a card.
+     Civic gave the app hard outer edges and, as a consequence, very flat
+     interiors — a panel was one white field with black rules around it and
+     nothing inside to separate a heading from the prose under it. More
+     borders would have been the wrong answer; the card is already outlined,
+     and a box inside a box reads as a mistake. So depth comes from a tint of
+     the text colour against the surface it sits on, with no edge at all.
+     4% in light and 6% in dark, because the same percentage reads weaker
+     against black than against white. */
+  --inset: color-mix(in srgb, var(--text-primary) 4%, var(--surface));
+  --inset-strong: color-mix(in srgb, var(--text-primary) 7%, var(--surface));
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.07);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.11);
 
@@ -400,6 +411,8 @@
     --surface: #0b0b0c;
     --surface-raised: #141416;
     --surface-sunken: #060607;
+    --inset: color-mix(in srgb, var(--text-primary) 6%, var(--surface));
+    --inset-strong: color-mix(in srgb, var(--text-primary) 10%, var(--surface));
     --surface-hover: #1a1a1d;
     --surface-active: #232327;
 
@@ -469,6 +482,8 @@
   --surface: #0b0b0c;
   --surface-raised: #141416;
   --surface-sunken: #060607;
+  --inset: color-mix(in srgb, var(--text-primary) 6%, var(--surface));
+  --inset-strong: color-mix(in srgb, var(--text-primary) 10%, var(--surface));
   --surface-hover: #1a1a1d;
   --surface-active: #232327;
 
@@ -805,3 +820,79 @@ img, svg { max-width: 100%; display: block; }
 
    Reduced motion still removes it — the global rule above kills every
    animation, and a skeleton that merely sits there is the correct fallback. */
+
+/* ============================================================== motion ===
+   Four effects, and one rule behind all of them: motion PERFORMS, it does not
+   breathe. Nothing here loops, nothing drifts while idle, and every one of
+   them is a response to something the student did or to data arriving. The
+   skeleton sweep is the single exception and it earns it — it is the only
+   thing on screen reporting that work is still happening.
+
+   The blanket `prefers-reduced-motion` rule further up kills every animation
+   and transition in the document, so each of these is written to leave the
+   element in its RESTING state when the animation never runs. That is why
+   `rise` uses `backwards` and not `both`, and why no effect here is the only
+   carrier of information.
+   ======================================================================= */
+
+/* --- content arriving ---------------------------------------------------
+   A short lift as a panel takes its data. 6px, not 20: this is the page
+   settling, not an entrance. `backwards` holds the from-state only during the
+   delay, so an element whose animation is stripped renders plainly. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.rise { animation: rise 260ms var(--ease) backwards; }
+/* Stagger by position, so a column of panels arrives as a sequence rather
+   than as one block appearing. Capped at six — past that it reads as lag. */
+.rise:nth-child(2) { animation-delay: 40ms; }
+.rise:nth-child(3) { animation-delay: 80ms; }
+.rise:nth-child(4) { animation-delay: 120ms; }
+.rise:nth-child(5) { animation-delay: 160ms; }
+.rise:nth-child(6) { animation-delay: 200ms; }
+
+/* --- the press ----------------------------------------------------------
+   Every button takes a 1px push on :active. It is the cheapest possible
+   confirmation that a click landed, and on a touch screen it is often the
+   only one before the next screen paints. Scale rather than margin, so
+   nothing around it moves. */
+.press { transition: transform 90ms var(--ease); }
+.press:active:not(:disabled) { transform: scale(0.975); }
+
+/* --- the wipe -----------------------------------------------------------
+   A solid fill that sweeps up from the bottom edge on hover, instead of a
+   background colour that simply swaps. The element needs `position:
+   relative` and a stacking context for its own text; both are set here so a
+   call site only has to add the class.
+
+   Bottom-up rather than left-right: the pointer arrives from above far more
+   often than from the side, so the fill meets the cursor. */
+.wipe { position: relative; overflow: hidden; z-index: 0; }
+.wipe::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--inset-strong);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 180ms var(--ease);
+}
+.wipe:hover::before,
+.wipe:focus-visible::before { transform: scaleY(1); }
+
+/* --- frosted ------------------------------------------------------------
+   For a surface that sits OVER content — a menu, a tray, a sticky bar. The
+   blur is the point; the translucent fill behind it is what keeps text
+   legible when the blur has nothing interesting to work with. `@supports`
+   because a browser without backdrop-filter would otherwise show type on a
+   half-transparent panel, which is worse than no effect at all. */
+.frosted { background: var(--surface-raised); }
+@supports (backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px)) {
+  .frosted {
+    background: color-mix(in srgb, var(--surface-raised) 72%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    backdrop-filter: blur(14px) saturate(1.3);
+  }
+}
