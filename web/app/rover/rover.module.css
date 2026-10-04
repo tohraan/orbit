@@ -37,7 +37,7 @@
   --measure: 72ch;
   /* The cold group's width: narrow enough that the question, the openers and
      the composer read as one object. */
-  --cold-w: 740px;
+  --cold-w: 720px;
 
   /* One motion scale for the whole screen, so nothing here is timed by eye.
      Entrances ease out (fast, then settle); layout changes use a flatter
@@ -59,16 +59,35 @@
 /* --- the body: the part that changes shape -------------------------------- */
 .body { display: flex; flex-direction: column; min-width: 0; }
 
-/* Cold. A bounded canvas rather than the viewport: capped, so a tall monitor
-   does not turn "centred" back into "a long way down the page", and centred,
-   so the space above and below the group is equal and reads as composition
-   instead of as content that failed to arrive. */
+/* Cold. The group is centred in the WHOLE of the space the shell leaves —
+   viewport, less the sticky header and the page's own padding — and centred
+   horizontally too, at a width narrow enough that the identity, the question,
+   the four openers and the composer read as one object.
+
+   The capped canvas that was here first (560px) was the worst of both: it
+   centred the group inside a box shorter than the viewport, so there was a gap
+   under the description AND a third of a screen of nothing below the
+   disclaimer. Space either belongs to the composition or it does not; split
+   evenly above and below, it reads as composition. This is also the only place
+   a viewport-height rule is safe, because what is centred is the whole group
+   and not a transcript stretched away from its composer. */
 .cold .body {
-  min-height: min(560px, calc(100dvh - 320px));
+  min-height: calc(100dvh - var(--header-h) - var(--space-8) - var(--space-16));
   justify-content: center;
   gap: var(--s-6);
   max-width: var(--cold-w);
+  margin-inline: auto;
+  /* Carries the head, the question, the lead, the profile line and the
+     disclaimer. The openers and the input opt out below: a card of two
+     sentences and a field you type into both read wrong centred. */
+  text-align: center;
 }
+/* The group's own gap owns the spacing; PageHead's page margin would add 32px
+   between the description and the question on top of it. */
+.cold .head > * { margin-bottom: 0; }
+.cold .opener,
+.cold .input { text-align: left; }
+.cold .openingLead { max-width: 52ch; margin-inline: auto; }
 
 /* Live. The transcript's own height, and nothing added. */
 .live .body { gap: 0; }
@@ -497,9 +516,9 @@
   /* Clear the bottom bar, and the home indicator under it. */
   .composer { bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px)); }
   .composerCold { bottom: auto; }
-  /* The cold canvas loses the desktop chrome it was allowing for, and the
-     bottom bar takes height off the viewport. */
-  .cold .body { min-height: min(520px, calc(100dvh - 280px)); max-width: none; }
+  /* Different chrome below 1024: the slim mobile header, and 88px of bottom
+     padding holding the page clear of the navigation bar. */
+  .cold .body { min-height: calc(100dvh - var(--mobile-header-h) - var(--space-6) - 88px); }
 }
 
 @media (max-width: 767px) {

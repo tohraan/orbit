@@ -342,39 +342,47 @@ export function RoverScreen() {
 
   return (
     <div className={[s.screen, empty ? s.cold : s.live].join(" ")}>
-      {/* The portal's own page head, deliberately, and the compact one.
-          Rover is a screen of Orbit in the same sense Explore and Compare are,
-          so it carries the same eyebrow, title and action slot — but a chat
-          needs the identity stated once and quietly, not a page-title block
-          competing with the question underneath it. The description is for the
-          cold screen only: once there is a conversation on the page, a line
-          explaining what Rover does is chrome in front of the content. */}
-      <PageHead
-        compact
-        eyebrow="Ask"
-        title={AGENT_NAME}
-        description={empty ? `Your opportunity scout. Searches the whole ${APP_NAME} index for what fits you.` : undefined}
-        actions={
-          !empty ? (
-            <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
-              New conversation
-            </Button>
-          ) : null
-        }
-      />
-
-      {/* A screen reader gets ONE announcement per answer, not one per token.
-          aria-live on the transcript itself re-announced the whole growing
-          reply on every delta, which is unusable; the transcript is a plain
-          log that can be read at leisure, and this says when there is
-          something new in it. */}
-      <p className="sr-only" role="status" aria-live="polite">
-        {announcement}
-      </p>
-
-      {/* The part that changes shape. Cold: one centred group. Live: a column
-          that grows, with the composer sticky at the bottom of it. */}
+      {/* One column, so the cold screen can centre the WHOLE composition —
+          identity, question, openers, composer — as a single object. With the
+          head outside it, centring the rest produced a gap under the
+          description and a left-aligned title sitting above a group that was
+          trying to be the middle of the page. Live: the same column, left
+          where every other screen puts it, growing down the page. */}
       <div className={s.body}>
+        {/* The portal's own page head, deliberately, and the compact one.
+            Rover is a screen of Orbit in the same sense Explore and Compare are,
+            so it carries the same eyebrow, title and action slot — but a chat
+            needs the identity stated once and quietly, not a page-title block
+            competing with the question underneath it. The description is for the
+            cold screen only: once there is a conversation on the page, a line
+            explaining what Rover does is chrome in front of the content. */}
+        <div className={s.head}>
+          <PageHead
+            compact
+            eyebrow="Ask"
+            title={AGENT_NAME}
+            description={
+              empty ? `Your opportunity scout. Searches the whole ${APP_NAME} index for what fits you.` : undefined
+            }
+            actions={
+              !empty ? (
+                <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
+                  New conversation
+                </Button>
+              ) : null
+            }
+          />
+        </div>
+
+        {/* A screen reader gets ONE announcement per answer, not one per token.
+            aria-live on the transcript itself re-announced the whole growing
+            reply on every delta, which is unusable; the transcript is a plain
+            log that can be read at leisure, and this says when there is
+            something new in it. */}
+        <p className="sr-only" role="status" aria-live="polite">
+          {announcement}
+        </p>
+
         <div className={s.transcript} aria-busy={busy}>
           {empty ? (
             <div className={s.opening}>
