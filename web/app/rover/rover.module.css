@@ -43,9 +43,14 @@
      and keeps the same hue. */
   --badge-ink: #7a5c00;
 
-  /* Widths, per the brief: the page content on 920, the composer on 720. */
+  /* Widths. The column grows with the viewport instead of sitting at one
+     measure inside a 1900px window — a 920px group centred on a wide monitor
+     leaves ~450px of nothing down each side, which is most of what reads as
+     dead space on this screen. The composer does NOT grow with it: a text
+     field as wide as a card grid looks like a search bar for the page, and
+     a question is not that long. */
   --page-w: 920px;
-  --composer-w: 720px;
+  --composer-w: 640px;
 
   --m-micro: 140ms;
   --m-standard: 200ms;
@@ -533,9 +538,18 @@
 .pickEnter:nth-child(n + 4) { animation-delay: 160ms; }
 .pick > :first-child { flex: 1; }
 
+/* Two lines, always. The note is one sentence of reasoning, but a one-line
+   note under one card and a three-line note under its neighbour made every
+   card in the row a different height — the row is a comparison, and a
+   comparison whose cells are different sizes is harder to read than it needs
+   to be. Longer text clamps and keeps the full sentence on hover. */
 .why {
-  display: flex;
-  align-items: flex-start;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: 54px;
   gap: var(--s-2);
   padding: var(--s-2) var(--s-3);
   font-size: 13px;
@@ -545,7 +559,7 @@
   border: 1px solid var(--accent-border);
   border-radius: var(--radius-tag);
 }
-.why svg { color: var(--accent-text); margin-top: 1px; flex: none; }
+.why svg { color: var(--accent-text); margin-top: 2px; margin-right: 2px; float: left; }
 
 /* --- "there is more below" ------------------------------------------------- */
 .behind {
@@ -586,6 +600,27 @@
   .stepEnter, .pickEnter, .card { opacity: 1; transform: none; }
   .processBody, .chev, .card, .cardGo, .send { transition: none; }
   .card:hover { transform: none; }
+}
+
+/* A wide monitor gets a third column rather than a wider pair: six cards in
+   two rows of three is both a shorter block and a fuller one, and the group
+   stops being an island. */
+@media (min-width: 1360px) {
+  .screen { --page-w: 1120px; }
+  .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* The composition is scaled to the screen it is on, not scaled up from a
+     laptop. At 1920 the old sizes left the group looking like a small object a
+     long way away, which is the other half of what reads as dead space. */
+  .card { padding: 20px 22px; }
+  .mascot { width: 64px; height: 64px; }
+  .greeting { font-size: 32px; line-height: 41px; }
+  .greetSub { font-size: 16px; line-height: 24px; }
+  .cardTitle { font-size: 16.5px; }
+  .field { min-height: 64px; }
+  .input { font-size: 16px; }
+}
+@media (min-width: 1700px) {
+  .screen { --page-w: 1240px; }
 }
 
 /* A 768-tall laptop was overflowing by single-digit pixels, which is a

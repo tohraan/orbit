@@ -122,20 +122,20 @@ const CHIPS = ["Deadlines this week", "Fully funded", "Remote", "UAE-eligible", 
 
 export function RoverScreen() {
   const { profile, started } = useProfile();
-  const { user } = useAuth();
+  const { user, status } = useAuth();
   /* Who this runtime currently belongs to. Not a key the chat is stored
    * under — see session.ts — only a value that, when it changes, means the
    * previous conversation must not be shown to whoever is here now. */
   const who = user?.id ?? "anonymous";
-  const [messages, setMessages] = useState<Message[]>(() => openSession(who));
+  const [messages, setMessages] = useState<Message[]>([]);
   /* Everything the session already held when this screen mounted.
    *
    * Entrance animations are for content the student watches arrive. Coming
-   * back to Rover from Explore re-mounts the screen with the whole
-   * conversation already in hand, and replaying every card's entrance would
+   * back to Rover from Explore — or reloading the tab — brings the whole
+   * conversation back at once, and replaying every card's entrance would
    * announce old news as if it were new. Only ids absent from this set get
    * the animation classes; the rest render in their settled state. */
-  const restored = useRef<Set<number>>(new Set(messages.map((m) => m.id)));
+  const restored = useRef<Set<number>>(new Set());
   /* The transcript, readable SYNCHRONOUSLY.
    *
    * `send` has to put the whole conversation in the request body at the
@@ -147,7 +147,7 @@ export function RoverScreen() {
    * "That conversation could not be read", from parseTurns rejecting an empty
    * array. Every write goes through `commit` below so this ref and the state
    * can never disagree. */
-  const transcript = useRef<Message[]>(messages);
+  const transcript = useRef<Message[]>([]);
   const commit = useCallback((next: (cur: Message[]) => Message[]) => {
     transcript.current = saveSession(next(transcript.current));
     setMessages(transcript.current);
@@ -196,6 +196,28 @@ export function RoverScreen() {
   }, []);
 
   useEffect(() => () => abort.current?.abort(), []);
+
+  /* The stored conversation is picked up AFTER the first render, never during
+   * it.
+   *
+   * sessionStorage does not exist on the server, so a component that read it
+   * while rendering would produce an empty screen on the server and a full one
+   * in the browser — which is a hydration mismatch, and React answers that by
+   * throwing the whole tree away and rebuilding it, with an error in the
+   * console for anyone looking. Rendering empty first and filling in on mount
+   * costs one frame and is correct in both places.
+   *
+   * It waits for the session to resolve, too: `who` is "anonymous" for the
+   * moment before auth answers, and restoring against that identity and then
+   * seeing the real one arrive would clear the transcript the student came
+   * back for. */
+  useEffect(() => {
+    if (status === "loading") return;
+    const stored = openSession(who);
+    restored.current = new Set(stored.map((m) => m.id));
+    transcript.current = stored;
+    setMessages(stored);
+  }, [who, status]);
 
   /* The field is the point of the screen, so it has the caret on arrival.
    * Once only: re-focusing on every render would fight a student who has
@@ -703,7 +725,9 @@ function Bubble({
                 <div key={item.id} className={[s.pick, fresh ? s.pickEnter : null].filter(Boolean).join(" ")}>
                   <OpportunityCard item={item} />
                   {pick.why[item.id] ? (
-                    <p className={s.why}>
+                    /* The title carries the whole sentence; the box shows two
+                       lines of it so the row's cards stay the same height. */
+                    <p className={s.why} title={pick.why[item.id]}>
                       <Icon name="sparkle" size={13} />
                       {pick.why[item.id]}
                     </p>
