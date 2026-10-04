@@ -13,7 +13,15 @@
 .screen {
   display: flex;
   flex-direction: column;
-  min-height: calc(100dvh - var(--header-h) - var(--s-8) - var(--s-16));
+  /* NOT 100dvh.
+     The screen used to be forced to the full viewport with the transcript on
+     flex:1 under it. With a short conversation that stretched the transcript
+     into a tall empty column and pushed the composer to the bottom of the
+     window, which is what made it read as floating in space with the answer
+     marooned at the top. The column is now only as tall as what is in it; the
+     composer sticks to the viewport bottom when the conversation is long
+     enough to scroll, and simply follows the content when it is not. */
+  min-height: 0;
 
   /* One motion scale for the whole screen, so nothing here is timed by eye.
      Entrances ease out (fast, then settle); layout changes use a flatter
@@ -33,12 +41,34 @@
    title and action come from AppShell like every other page. */
 
 /* --- the transcript ------------------------------------------------------- */
-.transcript { display: flex; flex-direction: column; gap: var(--s-6); flex: 1; }
+/* Turn-to-turn rhythm. One step tighter than it was: at --s-6 a question and
+   its answer read as two unrelated items rather than as an exchange. The gap
+   INSIDE a turn (.said) is smaller again, so the grouping is carried by
+   spacing rather than by boxes. */
+.transcript { display: flex; flex-direction: column; gap: var(--s-5); }
 .foot { height: 1px; flex: none; }
 
 /* --- the cold open -------------------------------------------------------- */
-.opening { display: flex; flex-direction: column; gap: var(--s-5); max-width: 68ch; }
-.openingLead { font-size: 15px; line-height: 24px; color: var(--text-secondary); }
+.opening { display: flex; flex-direction: column; gap: var(--s-4); max-width: 60ch; padding-top: var(--s-2); }
+/* The question carries the screen, the line under it is support. Two sizes,
+   not four — the whole hierarchy here is title, support, choices. */
+.openingTitle {
+  font-size: 19px;
+  line-height: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.openingLead { font-size: 14px; line-height: 21px; color: var(--text-secondary); }
+.openersLabel {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  padding-bottom: var(--s-1);
+}
 .openingNote {
   font-size: 13px;
   line-height: 18px;
@@ -291,10 +321,17 @@
   gap: var(--s-2);
   padding-top: var(--s-4);
   padding-bottom: var(--s-4);
-  margin-top: var(--s-6);
+  margin-top: var(--s-5);
   background: var(--bg-app);
-  /* A soft fade above it, so content does not appear to be cut off by a line. */
-  box-shadow: 0 -16px 16px -8px var(--bg-app);
+  /* A real edge. The soft shadow that used to be here faded content out
+     without ever drawing a line, so the field appeared to hover over the page
+     with nothing holding it. A hairline reads as the bottom of the
+     conversation and gives the composer something to sit on. The negative
+     margins let that line span the column's full width while the field inside
+     stays on the text measure. */
+  border-top: 1px solid var(--border-subtle);
+  margin-inline: calc(var(--s-4) * -1);
+  padding-inline: var(--s-4);
 }
 
 .field {
@@ -333,7 +370,9 @@
 @media (max-width: 1023px) {
   /* Clear the bottom bar, and the home indicator under it. */
   .composer { bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px)); }
-  .screen { min-height: calc(100dvh - var(--mobile-header-h) - var(--s-6) - 88px); }
+  /* Same reasoning as the desktop rule: no forced viewport height, so a short
+     conversation does not leave a screen of empty space above the composer. */
+  .screen { min-height: 0; }
 }
 
 @media (max-width: 767px) {

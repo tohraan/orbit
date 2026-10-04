@@ -351,11 +351,15 @@ export function RoverScreen() {
       <div className={s.transcript} aria-busy={busy}>
         {empty ? (
           <div className={s.opening}>
+            {/* A question, then the ways to answer it. The old version opened
+                with a paragraph about how the screen worked, which is reading
+                to do before you are allowed to start. */}
+            <h2 className={s.openingTitle}>What are you looking for?</h2>
             <p className={s.openingLead}>
-              Tell {AGENT_NAME} what you are after and it will ask a couple of questions before it
-              goes looking. Vague is fine — that is what the questions are for.
+              Vague is fine — {AGENT_NAME} will ask a couple of questions before it goes looking.
             </p>
             <div className={s.openers}>
+              <p className={s.openersLabel}>Or start with one of these</p>
               {OPENERS.map((o) => (
                 <button key={o} type="button" className={s.opener} onClick={() => void send(o)}>
                   <span>{o}</span>
