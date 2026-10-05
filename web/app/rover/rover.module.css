@@ -39,9 +39,17 @@
   --frost-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   --frost-top: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   --doodle-ink: rgba(0, 0, 0, 0.06);
-  /* The badge glyph: #f8e070 on white is unreadable, so light mode deepens it
-     and keeps the same hue. */
-  --badge-ink: #7a5c00;
+  /* ROVER IS BLUE. The shared accent is the crest navy in light and the crest
+     red in dark, and neither is Rover's: an agent that marks its own controls
+     in the page's accent disappears into the page, and in dark the red read as
+     a warning sitting next to real warnings. These four are local to this
+     screen and never leak out of it. Dark values are below, beside the rest of
+     the dark tokens. */
+  --rover-blue: #2f5fd0;
+  --rover-ink: #1e4bb8;
+  --rover-tint: color-mix(in srgb, var(--rover-blue) 12%, transparent);
+  --rover-on: #ffffff;
+  --badge-ink: var(--rover-ink);
 
   /* Widths. The column grows with the viewport instead of sitting at one
      measure inside a 1900px window — a 920px group centred on a wide monitor
@@ -70,7 +78,13 @@
     --frost-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     --frost-top: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     --doodle-ink: rgba(255, 255, 255, 0.06);
-    --badge-ink: var(--accent-yellow);
+    /* The crest sky: the logo's own blue, and the only one of the three
+       brand blues legible on a black page. */
+    --rover-blue: #58c8e8;
+    --rover-ink: #7ad4ef;
+    --rover-tint: color-mix(in srgb, var(--rover-blue) 16%, transparent);
+    --rover-on: #06212c;
+    --badge-ink: var(--rover-ink);
   }
 }
 :global(:root[data-theme="dark"]) .screen {
@@ -80,7 +94,13 @@
   --frost-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   --frost-top: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --doodle-ink: rgba(255, 255, 255, 0.06);
-  --badge-ink: var(--accent-yellow);
+  /* The crest sky: the logo's own blue, and the only one of the three
+     brand blues legible on a black page. */
+  --rover-blue: #58c8e8;
+  --rover-ink: #7ad4ef;
+  --rover-tint: color-mix(in srgb, var(--rover-blue) 16%, transparent);
+  --rover-on: #06212c;
+  --badge-ink: var(--rover-ink);
 }
 
 /* --- the wallpaper -------------------------------------------------------- */
@@ -155,37 +175,46 @@
 .live .body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--found-w);
-  grid-template-areas:
-    "bar   found"
-    "thread found"
-    "composer found"
-    "note  found";
-  column-gap: var(--s-6);
-  row-gap: var(--s-5);
-  align-items: start;
-  min-height: calc(100dvh - var(--header-h) - var(--space-8) - var(--space-16));
+  grid-template-areas: "chat found";
+  column-gap: var(--s-5);
+  /* The window is the viewport, less the shell. Both panes scroll inside
+     themselves from here up, so the page itself does not move and the two
+     halves can be read independently — which is the point of a split. */
+  height: calc(100dvh - var(--header-h) - var(--space-8) - var(--space-16));
+  min-height: 420px;
 }
-.live .bar { grid-area: bar; }
-.live .thread { grid-area: thread; }
+.live .chat { grid-area: chat; }
+
+/* --- the chat window ------------------------------------------------------
+   An actual window: one bordered surface holding the bar, the transcript and
+   the composer. They used to sit loose on the page with nothing drawing the
+   edge of the thing they belong to, which is also why the space beside them
+   read as missing rather than as margin. */
+.chat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
 .live .found { grid-area: found; }
-.live .composer { grid-area: composer; margin-top: auto; }
-.live .disclaimer { grid-area: note; }
 
 /* --- the conversation bar -------------------------------------------------
-   Sticky directly under the app header, which is where the student's eye goes
-   for "where am I and how do I start over". Opaque, because a transcript
-   scrolling under a translucent bar is unreadable at exactly the moment it is
-   passing behind it. */
+   The window's title bar: it belongs to the chat box, so it does not scroll
+   and does not need to stick to anything. "New conversation" is therefore
+   always in reach, which is the whole reason it left the page head. */
 .bar {
-  position: sticky;
-  top: var(--header-h);
-  z-index: 12;
   display: flex;
   align-items: center;
   gap: var(--s-3);
+  flex: none;
   min-height: var(--bar-h);
-  padding-block: var(--s-2);
-  background: var(--bg-app);
+  padding: var(--s-2) var(--s-4);
+  background: var(--surface-raised);
   border-bottom: 1px solid var(--border-subtle);
 }
 .barMark {
@@ -196,7 +225,7 @@
   flex: none;
   border-radius: var(--radius-full);
   color: var(--badge-ink);
-  background: color-mix(in srgb, var(--accent-yellow) 15%, transparent);
+  background: var(--rover-tint);
 }
 .barName { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 .barMeta {
@@ -220,8 +249,22 @@
   animation: pulse 1.4s var(--m-layout-ease) infinite;
 }
 
-/* --- the thread ------------------------------------------------------------ */
-.thread { display: flex; flex-direction: column; gap: var(--s-7); min-width: 0; width: 100%; }
+/* --- the thread -----------------------------------------------------------
+   The window's scroll area. `min-height: 0` is what lets a flex child scroll
+   at all: without it the child takes its content height and pushes the
+   composer out of the box instead of scrolling inside it. */
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-7);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  scrollbar-width: thin;
+}
 
 /* The exchange is the scroll unit, and `relative` is what scopes the sticky
    question to it: the header travels down with its own answer and stops at the
@@ -230,13 +273,16 @@
 
 .ask {
   position: sticky;
-  top: calc(var(--header-h) + var(--bar-h));
+  /* Zero, because the scroll container is the thread box rather than the
+     page: the header offsets that used to be here would push every question
+     a header's height down inside its own window. */
+  top: 0;
   z-index: 11;
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: var(--s-4) 0 var(--s-3);
-  background: var(--bg-app);
+  background: var(--surface);
   /* A rule under the heading. Without it, a card passing behind the sticky
      question butts straight against the text and reads as crowding rather
      than as something scrolling underneath. */
@@ -265,25 +311,24 @@
    Sticky under the bar and scrolls inside itself, so a long list never makes
    the page taller than the conversation does. */
 .found {
-  position: sticky;
-  top: calc(var(--header-h) + var(--bar-h) + var(--s-4));
   display: flex;
   flex-direction: column;
-  max-height: calc(100dvh - var(--header-h) - var(--bar-h) - var(--s-8));
-  padding: var(--s-3);
-  background: var(--frost-bg);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid var(--frost-border);
-  border-radius: 18px;
-  box-shadow: var(--frost-shadow), var(--frost-top);
+  min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  overflow: hidden;
 }
 .foundHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--s-2);
-  padding: 2px var(--s-2) var(--s-3);
+  flex: none;
+  min-height: var(--bar-h);
+  padding: var(--s-2) var(--s-3) var(--s-2) var(--s-4);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border-subtle);
 }
 .foundTitle {
   font-size: 11px;
@@ -300,10 +345,40 @@
   line-height: 18px;
   text-align: center;
   color: var(--badge-ink);
-  background: color-mix(in srgb, var(--accent-yellow) 18%, transparent);
+  background: var(--rover-tint);
   font-variant-numeric: tabular-nums;
 }
-.foundList { list-style: none; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+/* Back out of a detail view. Left-pointing and first in the bar, so it reads
+   as "up a level" rather than as another thing to look at. */
+.foundBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px 4px 4px;
+  margin-left: -4px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-tag);
+  cursor: pointer;
+}
+.foundBack:hover { color: var(--text-primary); background: var(--surface-hover); }
+.foundBack:focus-visible { outline: 2px solid var(--rover-blue); outline-offset: 1px; }
+
+.foundList {
+  list-style: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-2);
+  scrollbar-width: thin;
+}
 .foundRow {
   display: flex;
   flex-direction: column;
@@ -320,7 +395,7 @@
   transition: background-color var(--m-micro) var(--m-out);
 }
 .foundRow:hover { background: var(--surface-hover); }
-.foundRow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.foundRow:focus-visible { outline: 2px solid var(--rover-blue); outline-offset: -2px; }
 .foundName {
   font-size: 13px;
   line-height: 18px;
@@ -332,6 +407,92 @@
   overflow: hidden;
 }
 .foundMeta { font-size: 11.5px; line-height: 16px; color: var(--text-tertiary); }
+.foundHint {
+  flex: none;
+  padding: var(--s-3) var(--s-4);
+  font-size: 11.5px;
+  line-height: 16px;
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* --- one opportunity, opened out -----------------------------------------
+   The fields a card has no room for. It owns no data and no state: every value
+   here came off the row the agent already sent, and save/compare/.ics stay on
+   the card in the thread, which is the one place they are implemented. */
+.detail {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  scrollbar-width: thin;
+}
+.detailTitle { font-size: 15px; line-height: 21px; font-weight: 600; color: var(--text-primary); }
+.detailOrigin { font-size: 12px; line-height: 17px; color: var(--text-tertiary); }
+.detailTags { display: flex; flex-wrap: wrap; gap: 4px; }
+.detailTag {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11.5px;
+  line-height: 17px;
+  color: var(--text-secondary);
+  background: var(--surface-sunken);
+  text-transform: capitalize;
+}
+.detailFacts { display: flex; flex-direction: column; gap: var(--s-2); }
+.detailFacts > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
+.detailFacts dt {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.detailFacts dd { font-size: 13px; line-height: 19px; color: var(--text-primary); text-align: right; }
+.detailQuiet { color: var(--text-tertiary); }
+.detailWhy {
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--text-secondary);
+  padding: var(--s-2) var(--s-3);
+  background: var(--rover-tint);
+  border-radius: var(--radius-tag);
+}
+.detailWhy svg { color: var(--badge-ink); float: left; margin: 2px 6px 0 0; }
+.detailSummary { font-size: 12.5px; line-height: 19px; color: var(--text-secondary); }
+.detailActions { display: flex; align-items: center; gap: var(--s-2); margin-top: auto; padding-top: var(--s-2); }
+.detailGhost,
+.detailLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+  padding: 7px var(--s-3);
+  font: inherit;
+  font-size: 12.5px;
+  border-radius: var(--radius-tag);
+  cursor: pointer;
+}
+.detailGhost {
+  color: var(--text-secondary);
+  background: none;
+  border: 1px solid var(--border-default);
+}
+.detailGhost:hover { color: var(--text-primary); background: var(--surface-hover); }
+.detailLink {
+  color: var(--rover-on);
+  background: var(--rover-blue);
+  border: 1px solid transparent;
+}
+.detailLink:hover { filter: brightness(1.06); }
+.detailGhost:focus-visible,
+.detailLink:focus-visible { outline: 2px solid var(--rover-blue); outline-offset: 2px; }
+
 .foundSoon { color: var(--error-text, #c0392b); font-weight: 500; }
 
 /* --- the greeting --------------------------------------------------------- */
@@ -358,7 +519,7 @@
   border-radius: var(--radius-full);
   background: radial-gradient(
     circle closest-side,
-    color-mix(in srgb, var(--accent-yellow) 8%, transparent),
+    color-mix(in srgb, var(--rover-blue) 10%, transparent),
     transparent 100%
   );
   pointer-events: none;
@@ -371,8 +532,8 @@
   height: 56px;
   border-radius: var(--radius-full);
   color: var(--badge-ink);
-  background: color-mix(in srgb, var(--accent-yellow) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent-yellow) 26%, transparent);
+  background: var(--rover-tint);
+  border: 1px solid color-mix(in srgb, var(--rover-blue) 30%, transparent);
 }
 
 .greeting {
@@ -430,7 +591,7 @@
   height: 36px;
   border-radius: var(--radius-full);
   color: var(--badge-ink);
-  background: color-mix(in srgb, var(--accent-yellow) 15%, transparent);
+  background: var(--rover-tint);
 }
 .cardText { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .cardTitle { font-size: 16px; line-height: 22px; font-weight: 600; }
@@ -459,14 +620,13 @@
    of the field scrolled past it with nothing over them. */
 .composer { width: 100%; }
 
+/* The window's footer. No sticky and no gradient: the box has an edge of its
+   own now, and the transcript stops at it rather than running under it. */
 .live .composer {
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-  padding-block: var(--s-7) var(--s-4);
-  /* The fade is the page colour, not a translucent bar, and it reaches full
-     opacity above the field so no card edge arrives behind the glass. */
-  background: linear-gradient(to bottom, transparent 0%, var(--bg-app) 32%);
+  flex: none;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  background: var(--surface-raised);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .field {
@@ -487,8 +647,8 @@
   transition: border-color var(--m-micro) var(--m-out), box-shadow var(--m-micro) var(--m-out);
 }
 .field:focus-within {
-  border-color: color-mix(in srgb, var(--accent-yellow) 70%, transparent);
-  box-shadow: var(--frost-shadow), 0 0 0 2px color-mix(in srgb, var(--accent-yellow) 45%, transparent);
+  border-color: var(--rover-blue);
+  box-shadow: var(--frost-shadow), 0 0 0 2px color-mix(in srgb, var(--rover-blue) 40%, transparent);
 }
 
 .input {
@@ -529,8 +689,8 @@
   height: 40px;
   border: 0;
   border-radius: var(--radius-full);
-  background: var(--accent-yellow);
-  color: #16161c;
+  background: var(--rover-blue);
+  color: var(--rover-on);
   cursor: pointer;
   transition: opacity var(--m-micro) var(--m-out), transform var(--m-micro) var(--m-out);
 }
@@ -690,7 +850,7 @@
   height: 15px;
   margin-left: 1px;
   vertical-align: -2px;
-  background: var(--accent-yellow);
+  background: var(--rover-blue);
   animation: blink 1s steps(2, start) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
@@ -814,16 +974,26 @@
   .greeting { font-size: 25px; line-height: 32px; }
 }
 
-/* Below 1360 there is no room for a second column — and nothing is lost by
-   dropping it, since every row in the dossier is a card in the thread. 1360 is
-   where --page-w steps up to 1120, which is the width at which the thread can
-   give up 272px and still hold two cards side by side. */
+/* Below 1360 there is no room for a second pane, and nothing is lost by
+   dropping it: every row in the dossier is a card in the thread. The window
+   also gives up its own scroll here and hands it back to the page — two
+   scrollbars in a narrow column is worse than one long page, and a fixed-height
+   box on a short laptop screen is a 300px porthole. */
 @media (max-width: 1359px) {
   .live .body {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "bar" "thread" "composer" "note";
+    grid-template-areas: "chat";
+    height: auto;
+    min-height: calc(100dvh - var(--header-h) - var(--space-8) - var(--space-16));
   }
   .found { display: none; }
+  .chat { min-height: inherit; }
+  .thread { overflow-y: visible; min-height: 0; }
+  /* Back to the page's scroll, so the question sticks under the app header and
+     the bar and composer stick to the viewport. */
+  .bar { position: sticky; top: var(--header-h); z-index: 12; }
+  .ask { top: calc(var(--header-h) + var(--bar-h)); }
+  .live .composer { position: sticky; bottom: 0; z-index: 10; }
 }
 
 /* --- below 1024 ----------------------------------------------------------- */
@@ -832,9 +1002,10 @@
      below it moves up by the difference. */
   .bar { top: var(--mobile-header-h); }
   .ask { top: calc(var(--mobile-header-h) + var(--bar-h)); }
+  .live .composer { bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px)); }
+  .live .body { min-height: calc(100dvh - var(--mobile-header-h) - var(--space-6) - 88px); }
   .cold .body,
   .live .body { min-height: calc(100dvh - var(--mobile-header-h) - var(--space-6) - 88px); }
-  .live .composer { bottom: calc(var(--mobile-nav-h) + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* --- phones ---------------------------------------------------------------
