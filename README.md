@@ -25,6 +25,24 @@ GDG Ideathon · Ideaverse · BITS Pilani, Dubai Campus.
 
 ![Orbit pipeline](docs/img/architecture.png)
 
+## Demo
+
+- **Physical demo:** we present Orbit running on an iPhone, as close to the finished product as we can get it.
+- **Videos:** _to be added here._
+- **Hosted link:** none for this submission.
+
+### Run it locally
+
+No credentials needed: with none set, the API serves a committed snapshot of 431 open calls.
+
+```bash
+npm install --workspaces --include-workspace-root   # repo root
+cd api && npm run dev      # http://localhost:3101  data service
+cd web && npm run dev      # http://localhost:3100  frontend, open this
+```
+
+Optional: `NEXT_PUBLIC_DEMO_MODE=1` in `web/.env.local` for the judge door. `OPENROUTER_API_KEY` enables Rover; without it Rover reports unavailable and the rest is unaffected.
+
 ## At a glance
 
 | Problem | Orbit's answer |
@@ -62,7 +80,9 @@ flowchart LR
 > built you a door instead of asking you to score a sign-in screen.
 >
 > **On the sign-in page, press “I am judging — open without an account”.**
-> Or open the deployed link with `?judge=1` appended.
+> Or append `?judge=1` to the app URL.
+>
+> **There is no public hosted link for this submission.** Run it locally in about two minutes with no credentials (see [Run it locally](#run-it-locally)), or see the physical demo and the demo videos below. Set `NEXT_PUBLIC_DEMO_MODE=1` in `web/.env.local` to show the judge button locally.
 >
 > You get the entire product: the full index, matching, the deadline calendar,
 > comparison and the application tracker. The only difference is that anything
@@ -76,7 +96,7 @@ flowchart LR
 
 | | |
 | --- | --- |
-| **Live** | _see **Deployment** below_ |
+| **Demo** | Physical iPhone demo (in person) · demo videos coming · runs locally, see [Run it locally](#run-it-locally) |
 | **Index** | **431 open calls** from 6 publishing sources · 111 with a firm deadline · 155 with full eligibility and an apply link |
 | **Collected** | **2,274 raw records** from 14 enabled sources, nightly at 02:00 |
 | **Stack** | Next.js 16 · React 19 · TypeScript · Supabase (Postgres + Auth + Storage) · n8n · Python · Vercel |
