@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="520" viewBox="0 0 1400 520" font-family="Helvetica, Arial, sans-serif">
+<rect width="1400" height="520" fill="#0F1030"/>
+<text x="60" y="64" font-size="30" font-weight="700" fill="#fff">2,274 collected. 431 shown. On purpose.</text>
+<rect x="60" y="110" width="1280" height="90" rx="14" fill="#2B2B88"/><text x="90" y="165" font-size="26" fill="#fff" font-weight="700">2,274 raw records · 14 enabled sources</text>
+<rect x="60" y="225" width="900" height="90" rx="14" fill="#3D3DB0"/><text x="90" y="280" font-size="24" fill="#fff">1,363 open calls after audience-fit filters</text>
+<rect x="60" y="340" width="400" height="90" rx="14" fill="#5CCAE8"/><text x="90" y="395" font-size="28" fill="#0F1030" font-weight="700">431 student-actionable</text>
+<text x="500" y="380" font-size="20" fill="#C9D0FF">removed: awarded-grant registers, university-only calls,</text>
+<text x="500" y="408" font-size="20" fill="#C9D0FF">paid course catalogues, Africa-targeted and nationality-locked listings</text>
+<text x="60" y="480" font-size="20" fill="#FFE275">111 with a firm deadline · 155 with full eligibility and apply link</text>
+</svg>

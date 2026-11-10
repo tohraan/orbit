@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="560" viewBox="0 0 1600 560" font-family="Helvetica, Arial, sans-serif">
+<rect width="1600" height="560" fill="#0F1030"/>
+<text x="60" y="64" font-size="30" font-weight="700" fill="#fff">Orbit pipeline: from 16 public sources to one student view</text>
+<text x="60" y="98" font-size="18" fill="#5CCAE8">n8n · registry-driven · nightly 02:00 Asia/Dubai · idempotent upserts</text>
+<g font-size="20" fill="#fff" text-anchor="middle">
+<rect x="60" y="150" width="270" height="270" rx="18" fill="#2B2B88"/><text x="195" y="195" font-weight="700">sources registry</text>
+<text x="195" y="240" font-size="17" fill="#C9D0FF">16 rows · 14 enabled</text><text x="195" y="272" font-size="17" fill="#C9D0FF">wp_rest · rss</text><text x="195" y="304" font-size="17" fill="#C9D0FF">post_api · json_api</text><text x="195" y="360" font-size="17" fill="#FFE275">add a source = 1 INSERT</text>
+<rect x="390" y="150" width="270" height="270" rx="18" fill="#1B1B5E" stroke="#5CCAE8" stroke-width="2"/><text x="525" y="195" font-weight="700">W01 scraper</text>
+<text x="525" y="240" font-size="17" fill="#C9D0FF">1 workflow · 31 nodes</text><text x="525" y="272" font-size="17" fill="#C9D0FF">incremental fetch</text><text x="525" y="304" font-size="17" fill="#C9D0FF">polite · fail-soft</text><text x="525" y="360" font-size="17" fill="#FFE275">~18 changed of ~3,000</text>
+<rect x="720" y="150" width="270" height="270" rx="18" fill="#1B1B5E" stroke="#5CCAE8" stroke-width="2"/><text x="855" y="195" font-weight="700">raw_items</text>
+<text x="855" y="240" font-size="17" fill="#C9D0FF">2,274 records</text><text x="855" y="272" font-size="17" fill="#C9D0FF">verbatim payload + hash</text><text x="855" y="304" font-size="17" fill="#C9D0FF">detail enrichment</text><text x="855" y="360" font-size="17" fill="#FFE275">re-process, no re-crawl</text>
+<rect x="1050" y="150" width="240" height="270" rx="18" fill="#B78A2D"/><text x="1170" y="195" font-weight="700" fill="#0F1030">record_kind</text>
+<text x="1170" y="240" font-size="17" fill="#0F1030">open_call</text><text x="1170" y="272" font-size="17" fill="#0F1030">awarded · institutional</text><text x="1170" y="304" font-size="17" fill="#0F1030">programme</text><text x="1170" y="360" font-size="17" font-weight="700" fill="#0F1030">allowlist: open_call</text>
+<rect x="1350" y="150" width="190" height="270" rx="18" fill="#5CCAE8"/><text x="1445" y="195" font-weight="700" fill="#0F1030">Orbit</text>
+<text x="1445" y="240" font-size="17" fill="#0F1030">431 open calls</text><text x="1445" y="272" font-size="17" fill="#0F1030">search · match</text><text x="1445" y="304" font-size="17" fill="#0F1030">deadlines · Rover</text>
+</g>
+<g stroke="#fff" stroke-width="3" fill="none"><path d="M330 285h60M660 285h60M990 285h60M1290 285h60"/></g>
+<g fill="#fff"><path d="M390 285l-12-8v16zM720 285l-12-8v16zM1050 285l-12-8v16zM1350 285l-12-8v16z"/></g>
+<text x="60" y="500" font-size="18" fill="#C9D0FF">Supabase (Postgres 15, Auth, RLS) · Next.js 16 / React 19 / TypeScript · two Vercel deployments so the service key never reaches a browser</text>
+</svg>

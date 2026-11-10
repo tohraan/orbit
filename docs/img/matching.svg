@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="360" viewBox="0 0 1400 360" font-family="Helvetica, Arial, sans-serif">
+<rect width="1400" height="360" fill="#0F1030"/>
+<text x="60" y="60" font-size="30" font-weight="700" fill="#fff">A match score that shows its working</text>
+<rect x="60" y="100" width="1280" height="90" rx="12" fill="#1B1B5E"/>
+<rect x="60" y="100" width="435" height="90" rx="12" fill="#2B2B88"/><rect x="495" y="100" width="333" height="90" fill="#5CCAE8"/><rect x="828" y="100" width="230" height="90" fill="#B78A2D"/><rect x="1058" y="100" width="154" height="90" fill="#FFE275"/><rect x="1212" y="100" width="128" height="90" rx="0" fill="#CF2027"/>
+<g font-size="20" fill="#fff" text-anchor="middle"><text x="277" y="152" font-weight="700">Degree 34%</text><text x="661" y="152" font-weight="700" fill="#0F1030">Field 26%</text><text x="943" y="152" font-weight="700" fill="#0F1030">Funding 18%</text><text x="1135" y="152" font-weight="700" fill="#0F1030">Country 12%</text><text x="1276" y="152" font-weight="700">Time 10%</text></g>
+<text x="60" y="250" font-size="20" fill="#C9D0FF">Published weights, not a trained model. Every score lists the reasons behind it.</text>
+<text x="60" y="285" font-size="20" fill="#C9D0FF">Below the confidence floor, a listing is shown as uncertain, never as a recommendation.</text>
+</svg>

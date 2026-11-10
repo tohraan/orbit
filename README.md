@@ -10,6 +10,46 @@ them, strips the ones a student cannot apply to, and presents what is left as
 something you can plan against.
 
 Hackathon entry — **Research / Academic Administration.**
+GDG Ideathon · Ideaverse · BITS Pilani, Dubai Campus.
+
+![Next.js](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=fff)
+![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Auth-3ECF8E?logo=supabase&logoColor=000)
+![n8n](https://img.shields.io/badge/n8n-automation-EA4B71?logo=n8n&logoColor=fff)
+![Sources](https://img.shields.io/badge/sources-16-2B2B88)
+![Open calls](https://img.shields.io/badge/open%20calls-431-5CCAE8)
+![Tests](https://img.shields.io/badge/Rover%20tests-67%20assertions-B78A2D)
+
+**Jump to:** [Judges](#for-the-judging-panel) · [At a glance](#at-a-glance) · [Features](#features) · [Pipeline](#the-pipeline) · [Honest limits](#what-is-deliberately-not-here) · [Docs](#documentation-map)
+
+![Orbit pipeline](docs/img/architecture.png)
+
+## At a glance
+
+| Problem | Orbit's answer |
+| --- | --- |
+| Opportunities are scattered across 16+ sites | One registry-driven nightly pipeline |
+| Most public listings are not for students | `record_kind` filter: 2,274 collected, **431** shown |
+| Lists go stale | Incremental fetch and expiry removal, with no manual upkeep |
+| Generic aggregators miss the campus | Audience-fit rules for ~99% Indian-national students |
+| Scores feel arbitrary | Published match weights with reasons shown |
+
+![Funnel](docs/img/funnel.png)
+
+```mermaid
+flowchart LR
+  S[(sources registry<br/>16 rows)] --> W[n8n W01<br/>31 nodes, 02:00 nightly]
+  W --> R[(raw_items<br/>2,274)]
+  R --> K{record_kind}
+  K -->|open_call| P[Orbit portal<br/>431 open calls]
+  K -->|awarded / institutional / programme| X[collected, hidden]
+  P --> M[Match + Gaps]
+  P --> D[Deadlines + .ics]
+  P --> C[Rover chat]
+```
+
+![Matching weights](docs/img/matching.png)
 
 ---
 
@@ -358,6 +398,21 @@ Stated plainly, because a reviewer should not have to discover it:
 - **India, UAE and Gulf sources are absent.** For this audience that is a real
   gap. Those bodies publish HTML only, with no feed or API, so they need a
   fifth ingester shape or staff curation through the college desk.
-- **Not built:** email and push notifications, the chatbot, public comments,
+- **Not built:** email and push notifications, public comments,
   historical round data, click-through analytics. See
   [HANDOVER.md](HANDOVER.md).
+
+---
+
+## Documentation map
+
+| Doc | Read it for |
+| --- | --- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System diagram, n8n node graph, schema |
+| [docs/sources.md](docs/sources.md) | Every source decision and the audience-fit numbers |
+| [docs/opportunity-landscape.md](docs/opportunity-landscape.md) | Where students find opportunities and where those sites get data |
+| [docs/roadmap.md](docs/roadmap.md) | What is next |
+| [HANDOVER.md](HANDOVER.md) | Built vs not built |
+| [CONTEXT.md](CONTEXT.md) | Authoritative project brief |
+
+*Rover, the conversational agent at `/rover`, runs on a free-tier model with a shared daily request budget; the rest of the portal does not depend on it.*
